@@ -1,4 +1,7 @@
 services:
+  # ---------------------------------------------------------------------------
+  # 1. FastAPI Backend Web Service
+  # ---------------------------------------------------------------------------
   - type: web
     name: bidverify-backend
     env: python
@@ -13,10 +16,26 @@ services:
       - key: ENVIRONMENT
         value: production
       - key: DATABASE_URL
-        sync: false
+        value: postgresql+psycopg://postgres.bkurmypdscmlxpmuvror:adithyaaparna@aws-0-ap-northeast-1.pooler.supabase.com:6543/postgres
       - key: SECRET_KEY
         generateValue: true
       - key: ALGORITHM
         value: HS256
       - key: CORS_ORIGINS
         value: "*"
+
+  # ---------------------------------------------------------------------------
+  # 2. Next.js 16 Frontend Web Service
+  # ---------------------------------------------------------------------------
+  - type: web
+    name: bidverify-frontend
+    env: node
+    rootDir: frontend
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_VERSION
+        value: 20.18.0
+      - key: NEXT_PUBLIC_API_URL
+        sync: false
