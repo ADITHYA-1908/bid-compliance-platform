@@ -31,13 +31,22 @@ def build_current_user_response(user: User) -> CurrentUserResponse:
     )
 
 
-def signup_bidder(db: Session, data: SignupRequest) -> Tuple[User, str]:
+def signup_user(
+    db: Session,
+    data: SignupRequest,
+    target_role: Optional[str] = None,
+) -> Tuple[User, str]:
     """
-    Registers a new public Bidder user.
-    Enforces security rule: public registrations always receive the BIDDER role.
+    Registers a new user with the specified or requested platform role:
+    - BIDDER
+    - PROCUREMENT_OFFICER
+    - ADMIN
     Creates Organization, Profile, and User inside a single atomic transaction.
     """
     normalized_email = data.email.strip().lower()
+    selected_role = (target_role or data.role or "BIDDER").strip().upper()
+    if selected_role in ["PROCUREMENT", "OFFICER"]:
+        selected_role = "PROCUREMENT_OFFICER"
 
     # 1. Check for existing account
     existing_user = db.scalars(
@@ -58,21 +67,30 @@ def signup_bidder(db: Session, data: SignupRequest) -> Tuple[User, str]:
             detail="A profile with this email address already exists.",
         )
 
-    # 2. Lookup standard BIDDER role
-    bidder_role = db.scalars(
-        select(Role).where(Role.name == "BIDDER")
+    # 2. Lookup role from database
+    role_obj = db.scalars(
+        select(Role).where(Role.name == selected_role)
     ).first()
-    if not bidder_role:
+    if not role_obj:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="System role 'BIDDER' is not configured in database.",
+            detail=f"System role '{selected_role}' is not configured in database.",
         )
+
+    # Determine default organization type based on role
+    default_org_type = "Vendor / Bidder"
+    if selected_role == "PROCUREMENT_OFFICER":
+        default_org_type = "Government Ministry / Public Sector"
+    elif selected_role == "ADMIN":
+        default_org_type = "Platform Oversight Authority"
+
+    org_type = data.organization_type or default_org_type
 
     try:
         # 3. Create Organization
         organization = Organization(
             name=data.organization_name.strip(),
-            organization_type=data.organization_type or "Vendor / Bidder",
+            organization_type=org_type,
             is_active=True,
         )
         db.add(organization)
@@ -82,7 +100,7 @@ def signup_bidder(db: Session, data: SignupRequest) -> Tuple[User, str]:
         profile = Profile(
             full_name=data.full_name.strip(),
             email=normalized_email,
-            role_id=bidder_role.id,
+            role_id=role_obj.id,
             organization_id=organization.id,
             is_active=True,
         )
@@ -120,15 +138,20 @@ def signup_bidder(db: Session, data: SignupRequest) -> Tuple[User, str]:
         db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to register user account.",
+            detail=f"Failed to register user account: {str(e)}",
         )
+
+
+def signup_bidder(db: Session, data: SignupRequest) -> Tuple[User, str]:
+    """Backward compatibility alias for public Bidder registration."""
+    return signup_user(db=db, data=data, target_role="BIDDER")
 
 
 def authenticate_user(db: Session, data: LoginRequest) -> Tuple[User, str]:
     """
     Authenticates a user via email and password.
+    Optionally enforces expected role for isolated portal access.
     Returns the User model and a signed JWT access token.
-    Uses generic error message to prevent account enumeration.
     """
     normalized_email = data.email.strip().lower()
 
@@ -154,6 +177,16 @@ def authenticate_user(db: Session, data: LoginRequest) -> Tuple[User, str]:
             status_code=status.HTTP_403_FORBIDDEN,
             detail="User account is inactive. Please contact support.",
         )
+
+    # Optional expected_role check for portal isolation
+    if data.expected_role:
+        user_role = user.profile.role.name if user.profile and user.profile.role else None
+        if user_role != data.expected_role:
+            readable_role = user_role.replace("_", " ").title() if user_role else "Unknown"
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"This account is registered with role '{readable_role}'. Please use the {readable_role} Portal to sign in.",
+            )
 
     token = create_access_token(subject=str(user.id), email=user.email)
     return user, token

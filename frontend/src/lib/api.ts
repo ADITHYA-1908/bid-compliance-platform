@@ -25,11 +25,13 @@ export interface SignupPayload {
   password: string;
   organization_name: string;
   organization_type?: string;
+  role?: "BIDDER" | "PROCUREMENT_OFFICER" | "ADMIN" | string;
 }
 
 export interface LoginPayload {
   email: string;
   password: string;
+  expected_role?: "BIDDER" | "PROCUREMENT_OFFICER" | "ADMIN" | string;
 }
 
 export interface RoleTestResponse {
@@ -205,11 +207,11 @@ export class ApiError extends Error {
 }
 
 export const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+  process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8001";
 
 if (typeof window !== "undefined" && !process.env.NEXT_PUBLIC_API_URL) {
   console.warn(
-    "[BidVerify API] NEXT_PUBLIC_API_URL is not explicitly set in environment. Using default http://127.0.0.1:8000"
+    "[BidVerify API] NEXT_PUBLIC_API_URL is not explicitly set in environment. Using default http://127.0.0.1:8001"
   );
 }
 
@@ -372,6 +374,18 @@ export const api = {
   // Authentication
   async signup(payload: SignupPayload): Promise<AuthResponse> {
     return api.post<AuthResponse>("/api/v1/auth/signup", payload);
+  },
+
+  async signupBidder(payload: Omit<SignupPayload, "role">): Promise<AuthResponse> {
+    return api.post<AuthResponse>("/api/v1/auth/signup/bidder", payload);
+  },
+
+  async signupProcurement(payload: Omit<SignupPayload, "role">): Promise<AuthResponse> {
+    return api.post<AuthResponse>("/api/v1/auth/signup/procurement", payload);
+  },
+
+  async signupAdmin(payload: Omit<SignupPayload, "role">): Promise<AuthResponse> {
+    return api.post<AuthResponse>("/api/v1/auth/signup/admin", payload);
   },
 
   async login(payload: LoginPayload): Promise<AuthResponse> {
