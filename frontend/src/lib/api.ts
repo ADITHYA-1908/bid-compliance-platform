@@ -222,7 +222,12 @@ export async function apiRequest<T>(
   endpoint: string,
   options: RequestOptions = {}
 ): Promise<T> {
-  let url = `${API_BASE_URL}${endpoint}`;
+  const normalizedEndpoint =
+    endpoint.startsWith("/health") || endpoint.startsWith("/api/")
+      ? endpoint
+      : `/api/v1${endpoint.startsWith("/") ? endpoint : `/${endpoint}`}`;
+
+  let url = `${API_BASE_URL}${normalizedEndpoint}`;
 
   if (options.params) {
     const searchParams = new URLSearchParams();
