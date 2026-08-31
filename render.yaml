@@ -1,41 +1,70 @@
 services:
-  # ---------------------------------------------------------------------------
-  # 1. FastAPI Backend Web Service
-  # ---------------------------------------------------------------------------
   - type: web
     name: bidverify-backend
-    env: python
+    runtime: python
     rootDir: backend
     plan: free
+
     buildCommand: pip install -r requirements.txt && alembic upgrade head
+
     startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+
     healthCheckPath: /health
+
     envVars:
       - key: PYTHON_VERSION
         value: 3.12.0
+
       - key: ENVIRONMENT
         value: production
-      - key: DATABASE_URL
-        value: postgresql+psycopg://postgres.bkurmypdscmlxpmuvror:adithyaaparna@aws-0-ap-northeast-1.pooler.supabase.com:6543/postgres
-      - key: SECRET_KEY
-        generateValue: true
-      - key: ALGORITHM
-        value: HS256
-      - key: CORS_ORIGINS
-        value: "*"
 
-  # ---------------------------------------------------------------------------
-  # 2. Next.js 16 Frontend Web Service
-  # ---------------------------------------------------------------------------
+      - key: DATABASE_URL
+        sync: false
+
+      - key: JWT_SECRET_KEY
+        generateValue: true
+
+      - key: JWT_ALGORITHM
+        value: HS256
+
+      - key: ACCESS_TOKEN_EXPIRE_MINUTES
+        value: 60
+
+      - key: FRONTEND_URL
+        sync: false
+
+      - key: CORS_ORIGINS
+        sync: false
+
+      - key: SUPABASE_URL
+        sync: false
+
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+
+      - key: SUPABASE_STORAGE_BUCKET
+        value: bid-documents
+
+      - key: LLM_PROVIDER
+        value: local_fallback
+
+      - key: EMBEDDING_PROVIDER
+        value: local_fallback
+
+
   - type: web
     name: bidverify-frontend
-    env: node
+    runtime: node
     rootDir: frontend
     plan: free
-    buildCommand: npm install && npm run build
+
+    buildCommand: npm ci && npm run build
+
     startCommand: npm start
+
     envVars:
       - key: NODE_VERSION
         value: 20.18.0
+
       - key: NEXT_PUBLIC_API_URL
         sync: false

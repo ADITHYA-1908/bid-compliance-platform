@@ -37,6 +37,7 @@ from app.schemas.bid_decision import (
     DecisionReadinessResponse,
     DisqualificationReasonCategoryEnum,
     EvaluationSnapshotReference,
+    RecordBidDecisionRequest,
 )
 from app.db.models.audit_event import AuditActorSource, AuditEntityType, AuditEventType
 from app.schemas.audit import RecordAuditEventDTO
