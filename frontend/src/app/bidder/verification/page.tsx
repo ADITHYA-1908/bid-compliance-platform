@@ -33,11 +33,20 @@ export default function BidderVerificationPage() {
   const [loadingVerifications, setLoadingVerifications] = useState<boolean>(false);
   const [retryingId, setRetryingId] = useState<string | null>(null);
 
-  useEffect(() => {
-    loadBids();
+  const loadBidVerifications = React.useCallback(async (bidId: string) => {
+    setLoadingVerifications(true);
+    try {
+      const data = await api.getBidVerifications(bidId);
+      setVerificationData(data);
+    } catch (err) {
+      console.error("Failed to load bid verifications:", err);
+      setVerificationData(null);
+    } finally {
+      setLoadingVerifications(false);
+    }
   }, []);
 
-  const loadBids = async () => {
+  const loadBids = React.useCallback(async () => {
     setLoading(true);
     try {
       const res = await api.getMyBids();
@@ -51,20 +60,11 @@ export default function BidderVerificationPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [loadBidVerifications]);
 
-  const loadBidVerifications = async (bidId: string) => {
-    setLoadingVerifications(true);
-    try {
-      const data = await api.getBidVerifications(bidId);
-      setVerificationData(data);
-    } catch (err) {
-      console.error("Failed to load bid verifications:", err);
-      setVerificationData(null);
-    } finally {
-      setLoadingVerifications(false);
-    }
-  };
+  useEffect(() => {
+    loadBids();
+  }, [loadBids]);
 
   const handleSelectBid = async (bidId: string) => {
     setSelectedBidId(bidId);

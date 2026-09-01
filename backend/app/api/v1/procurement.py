@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 from typing import Any, Dict, List, Optional
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, BackgroundTasks, Depends, Query, status
 from sqlalchemy.orm import Session
 from app.core.authorization import require_role
 from app.db.session import get_db
@@ -44,6 +44,14 @@ from app.schemas.procurement_report import (
     BidEvaluationReportResponse,
     TenderReportResponse,
 )
+from app.schemas.bulk_evaluation import (
+    BulkEvaluationJobCreateResponse,
+    BulkEvaluationJobStatusResponse,
+    BulkEvaluationJobItemResponse,
+    BulkEvaluationJobItemsListResponse,
+    BulkEvaluationRetryResponse,
+    BulkEvaluationCancelResponse,
+)
 from app.services.compliance_service import evaluate_bid_compliance, get_bid_compliance
 from app.services.scoring_service import calculate_and_save_bid_score, get_bid_score
 from app.services.risk_service import calculate_and_save_bid_risk, get_bid_risk
@@ -53,6 +61,7 @@ from app.services.procurement.procurement_dashboard_service import ProcurementDa
 from app.services.procurement.bid_comparison_service import BidComparisonService
 from app.services.procurement.human_review_service import HumanReviewService
 from app.services.procurement.bid_decision_service import BidDecisionService
+from app.services.procurement.bulk_evaluation_service import BulkEvaluationService
 from app.services.audit.audit_service import AuditService
 from app.services.reports.procurement_report_service import ProcurementReportService
 from fastapi.responses import Response
@@ -1016,6 +1025,231 @@ def download_bid_evaluation_pdf(
         media_type="application/pdf",
         headers={"Content-Disposition": f"attachment; filename={filename}"},
     )
+
+
+# =========================================================================
+# Part 9: Bulk Verification & Batch Processing Endpoints
+# =========================================================================
+
+@router.post(
+    "/tenders/{tender_id}/bulk-evaluation",
+    response_model=BulkEvaluationJobCreateResponse,
+    status_code=status.HTTP_202_ACCEPTED,
+    summary="Trigger Tender-Level Bulk Bid Verification & Evaluation Batch",
+)
+def trigger_bulk_evaluation(
+    tender_id: uuid.UUID,
+    background_tasks: BackgroundTasks,
+    current_user: User = Depends(require_role("PROCUREMENT_OFFICER")),
+    db: Session = Depends(get_db),
+):
+    """
+    Creates and queues a bulk evaluation job for all eligible submitted bids on a tender.
+    Dispatches asynchronous background execution across document extraction, claims verification,
+    compliance evaluation, scoring, risk calculation, and human review synchronization.
+    """
+    job = BulkEvaluationService.create_bulk_evaluation_job(
+        db=db,
+        user=current_user,
+        tender_id=tender_id,
+    )
+
+    # Queue background execution
+    background_tasks.add_task(
+        BulkEvaluationService.run_bulk_evaluation_pipeline,
+        job_id=job.id,
+        user_id=current_user.id,
+    )
+
+    return BulkEvaluationJobCreateResponse(
+        job_id=job.id,
+        tender_id=job.tender_id,
+        status=job.status,
+        total_bids=job.total_bids,
+        message=f"Bulk evaluation job created and queued for {job.total_bids} submitted bids.",
+        created_at=job.created_at,
+    )
+
+
+@router.get(
+    "/tenders/{tender_id}/bulk-evaluation/active",
+    response_model=Optional[BulkEvaluationJobStatusResponse],
+    summary="Get active or latest bulk evaluation job for a tender",
+)
+def get_active_tender_bulk_evaluation(
+    tender_id: uuid.UUID,
+    current_user: User = Depends(require_role("PROCUREMENT_OFFICER")),
+    db: Session = Depends(get_db),
+):
+    """
+    Retrieves the active (or latest) bulk evaluation job status and telemetry for a specific tender.
+    """
+    return BulkEvaluationService.get_active_job_for_tender(
+        db=db,
+        user=current_user,
+        tender_id=tender_id,
+    )
+
+
+@router.get(
+    "/bulk-evaluations/{job_id}",
+    response_model=BulkEvaluationJobStatusResponse,
+    summary="Get bulk evaluation job status and progress summary",
+)
+def get_bulk_evaluation_status(
+    job_id: uuid.UUID,
+    current_user: User = Depends(require_role("PROCUREMENT_OFFICER")),
+    db: Session = Depends(get_db),
+):
+    """
+    Retrieves real-time execution status, percentage completion, and diagnostic counts for a job.
+    """
+    return BulkEvaluationService.get_job_status(
+        db=db,
+        user=current_user,
+        job_id=job_id,
+    )
+
+
+@router.get(
+    "/bulk-evaluations/{job_id}/items",
+    response_model=BulkEvaluationJobItemsListResponse,
+    summary="Get paginated list of per-bid items in a bulk evaluation job",
+)
+def get_bulk_evaluation_items(
+    job_id: uuid.UUID,
+    item_status: Optional[str] = Query(None, alias="status", description="Filter by item status"),
+    page: int = Query(1, ge=1, description="Page number"),
+    page_size: int = Query(20, ge=1, le=100, description="Items per page"),
+    current_user: User = Depends(require_role("PROCUREMENT_OFFICER")),
+    db: Session = Depends(get_db),
+):
+    """
+    Retrieves paginated per-bid item diagnostics, stage progressions, and error details.
+    """
+    return BulkEvaluationService.get_job_items(
+        db=db,
+        user=current_user,
+        job_id=job_id,
+        status_filter=item_status,
+        page=page,
+        page_size=page_size,
+    )
+
+
+@router.post(
+    "/bulk-evaluations/{job_id}/retry-failed",
+    response_model=BulkEvaluationRetryResponse,
+    summary="Retry all failed items in a bulk evaluation job",
+)
+def retry_failed_bulk_items(
+    job_id: uuid.UUID,
+    background_tasks: BackgroundTasks,
+    current_user: User = Depends(require_role("PROCUREMENT_OFFICER")),
+    db: Session = Depends(get_db),
+):
+    """
+    Re-queues all items in the batch that experienced technical processing failures and restarts background execution.
+    """
+    retried_count = BulkEvaluationService.retry_failed_job_items(
+        db=db,
+        user=current_user,
+        job_id=job_id,
+    )
+
+    if retried_count > 0:
+        background_tasks.add_task(
+            BulkEvaluationService.run_bulk_evaluation_pipeline,
+            job_id=job_id,
+            user_id=current_user.id,
+        )
+
+    return BulkEvaluationRetryResponse(
+        job_id=job_id,
+        retried_count=retried_count,
+        status="QUEUED" if retried_count > 0 else "NO_FAILED_ITEMS",
+        message=f"Re-queued {retried_count} failed items for processing." if retried_count > 0 else "No failed items to retry.",
+    )
+
+
+@router.post(
+    "/bulk-evaluations/{job_id}/items/{item_id}/retry",
+    response_model=BulkEvaluationJobItemResponse,
+    summary="Retry an individual failed item in a bulk evaluation job",
+)
+def retry_single_bulk_item(
+    job_id: uuid.UUID,
+    item_id: uuid.UUID,
+    background_tasks: BackgroundTasks,
+    current_user: User = Depends(require_role("PROCUREMENT_OFFICER")),
+    db: Session = Depends(get_db),
+):
+    """
+    Re-queues a single failed item and triggers background processing.
+    """
+    item = BulkEvaluationService.retry_single_job_item(
+        db=db,
+        user=current_user,
+        job_id=job_id,
+        item_id=item_id,
+    )
+
+    background_tasks.add_task(
+        BulkEvaluationService.run_bulk_evaluation_pipeline,
+        job_id=job_id,
+        user_id=current_user.id,
+    )
+
+    return BulkEvaluationJobItemResponse(
+        id=item.id,
+        job_id=item.job_id,
+        bid_id=item.bid_id,
+        bid_number=item.bid.bid_number if item.bid else None,
+        bidder_name=item.bid.bidder_organization.name if item.bid and item.bid.bidder_organization else None,
+        status=item.status,
+        current_stage=item.current_stage,
+        document_processing_status=item.document_processing_status,
+        verification_status=item.verification_status,
+        compliance_status=item.compliance_status,
+        score_status=item.score_status,
+        risk_status=item.risk_status,
+        final_score=item.final_score,
+        risk_level=item.risk_level,
+        review_required=item.review_required,
+        critical_findings_count=item.critical_findings_count,
+        error_code=item.error_code,
+        error_message=item.error_message,
+        is_retryable=item.is_retryable,
+        started_at=item.started_at,
+        completed_at=item.completed_at,
+        created_at=item.created_at,
+    )
+
+
+@router.post(
+    "/bulk-evaluations/{job_id}/cancel",
+    response_model=BulkEvaluationCancelResponse,
+    summary="Cancel an active or queued bulk evaluation job",
+)
+def cancel_bulk_evaluation(
+    job_id: uuid.UUID,
+    current_user: User = Depends(require_role("PROCUREMENT_OFFICER")),
+    db: Session = Depends(get_db),
+):
+    """
+    Cancels a running or queued bulk evaluation job, safely halting processing of remaining items.
+    """
+    job = BulkEvaluationService.cancel_bulk_evaluation_job(
+        db=db,
+        user=current_user,
+        job_id=job_id,
+    )
+    return BulkEvaluationCancelResponse(
+        job_id=job.id,
+        status=job.status,
+        message=f"Bulk evaluation job '{job.id}' has been cancelled.",
+    )
+
 
 
 

@@ -41,7 +41,9 @@ import {
   X,
   XCircle,
   MinusCircle,
+  Play,
 } from "lucide-react";
+import { BulkEvaluationModal } from "@/components/procurement/BulkEvaluationModal";
 
 export default function TenderEvaluationWorkspacePage() {
   const params = useParams();
@@ -51,6 +53,7 @@ export default function TenderEvaluationWorkspacePage() {
   const [data, setData] = useState<TenderBidEvaluationsListResponse | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [bulkModalOpen, setBulkModalOpen] = useState<boolean>(false);
 
   // Selection states for side-by-side comparison
   const [selectedBidIds, setSelectedBidIds] = useState<string[]>([]);
@@ -370,40 +373,54 @@ export default function TenderEvaluationWorkspacePage() {
               </p>
             </div>
 
-            {/* Evaluation Progress Card */}
-            <div className="w-full lg:w-72 rounded-lg border border-slate-200 bg-slate-50/80 p-4 shrink-0">
-              <div className="flex items-center justify-between text-xs mb-1.5">
-                <span className="font-semibold text-slate-700 flex items-center gap-1.5">
-                  <Activity className="h-3.5 w-3.5 text-purple-900" />
-                  Evaluation Progress
-                </span>
-                <span className="font-mono font-bold text-purple-900">
-                  {progressPercentage}%
-                </span>
-              </div>
-              <div className="h-2.5 w-full rounded-full bg-slate-200 overflow-hidden border border-slate-300">
-                <div
-                  className={`h-full rounded-full transition-all duration-300 ${
-                    progressPercentage === 100
-                      ? "bg-emerald-600"
-                      : progressPercentage > 0
-                      ? "bg-purple-700"
-                      : "bg-slate-300"
-                  }`}
-                  style={{ width: `${progressPercentage}%` }}
-                />
-              </div>
-              <div className="mt-2 flex items-center justify-between text-[11px] text-slate-500">
-                <span>
-                  <strong className="text-slate-800">{data?.evaluated_bids ?? 0}</strong> of{" "}
-                  <strong className="text-slate-800">{data?.total_submitted_bids ?? 0}</strong> complete
-                </span>
-                <Link
-                  href={`/procurement/tenders/${tenderId}`}
-                  className="text-purple-900 font-semibold hover:underline"
-                >
-                  Tender Info →
-                </Link>
+            {/* Header Right Actions */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0">
+              {/* Process Submitted Bids Button */}
+              <button
+                type="button"
+                onClick={() => setBulkModalOpen(true)}
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-purple-900 px-4 py-3 text-xs font-bold text-white shadow-md shadow-purple-950/20 hover:bg-purple-800 transition-all hover:scale-[1.02] active:scale-[0.98] border border-purple-800"
+              >
+                <Layers className="h-4 w-4 text-purple-200" />
+                <span>Process Submitted Bids</span>
+              </button>
+
+              {/* Evaluation Progress Card */}
+              <div
+                onClick={() => setBulkModalOpen(true)}
+                className="w-full sm:w-64 rounded-xl border border-slate-200 bg-slate-50/90 p-3.5 cursor-pointer hover:bg-purple-50/50 hover:border-purple-200 transition-all group"
+                title="Click to view bulk verification workspace"
+              >
+                <div className="flex items-center justify-between text-xs mb-1.5">
+                  <span className="font-semibold text-slate-700 flex items-center gap-1.5 group-hover:text-purple-900 transition-colors">
+                    <Activity className="h-3.5 w-3.5 text-purple-900" />
+                    Evaluation Progress
+                  </span>
+                  <span className="font-mono font-bold text-purple-900">
+                    {progressPercentage}%
+                  </span>
+                </div>
+                <div className="h-2.5 w-full rounded-full bg-slate-200 overflow-hidden border border-slate-300">
+                  <div
+                    className={`h-full rounded-full transition-all duration-300 ${
+                      progressPercentage === 100
+                        ? "bg-emerald-600"
+                        : progressPercentage > 0
+                        ? "bg-purple-700"
+                        : "bg-slate-300"
+                    }`}
+                    style={{ width: `${progressPercentage}%` }}
+                  />
+                </div>
+                <div className="mt-1.5 flex items-center justify-between text-[11px] text-slate-500">
+                  <span>
+                    <strong className="text-slate-800">{data?.evaluated_bids ?? 0}</strong> of{" "}
+                    <strong className="text-slate-800">{data?.total_submitted_bids ?? 0}</strong> complete
+                  </span>
+                  <span className="text-purple-900 font-semibold group-hover:underline flex items-center gap-0.5">
+                    Batch →
+                  </span>
+                </div>
               </div>
             </div>
           </div>
@@ -969,6 +986,16 @@ export default function TenderEvaluationWorkspacePage() {
             </div>
           </div>
         </div>
+
+        {/* Part 9: Bulk Verification & Batch Evaluation Modal */}
+        <BulkEvaluationModal
+          tenderId={tenderId}
+          tenderNumber={data?.tender_number}
+          tenderTitle={data?.tender_title}
+          isOpen={bulkModalOpen}
+          onClose={() => setBulkModalOpen(false)}
+          onJobCompleted={() => loadEvaluations(currentPage)}
+        />
       </div>
     </DashboardLayout>
   );

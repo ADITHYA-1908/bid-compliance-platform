@@ -39,6 +39,13 @@ from app.db.models.audit_event import (
     AuditEntityType,
     AuditActorSource,
 )
+from app.db.models.bulk_evaluation_job import (
+    BulkEvaluationJob,
+    BulkEvaluationJobItem,
+    BulkJobStatus,
+    BulkItemStatus,
+    BulkStage,
+)
 
 __all__ = [
     "Base",
@@ -77,6 +84,11 @@ __all__ = [
     "AuditEventType",
     "AuditEntityType",
     "AuditActorSource",
+    "BulkEvaluationJob",
+    "BulkEvaluationJobItem",
+    "BulkJobStatus",
+    "BulkItemStatus",
+    "BulkStage",
 ]
 
 
