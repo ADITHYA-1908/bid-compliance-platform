@@ -46,6 +46,11 @@ from app.db.models.bulk_evaluation_job import (
     BulkItemStatus,
     BulkStage,
 )
+from app.db.models.document_duplicate_match import (
+    DocumentDuplicateMatch,
+    DuplicateMatchType,
+    DuplicateMatchStatus,
+)
 
 __all__ = [
     "Base",
@@ -89,6 +94,9 @@ __all__ = [
     "BulkJobStatus",
     "BulkItemStatus",
     "BulkStage",
+    "DocumentDuplicateMatch",
+    "DuplicateMatchType",
+    "DuplicateMatchStatus",
 ]
 
 

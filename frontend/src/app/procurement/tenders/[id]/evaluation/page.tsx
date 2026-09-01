@@ -375,6 +375,15 @@ export default function TenderEvaluationWorkspacePage() {
 
             {/* Header Right Actions */}
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0">
+              {/* Duplicate Detection Alerts Button */}
+              <Link
+                href={`/procurement/tenders/${tenderId}/duplicates`}
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-amber-500/10 px-4 py-3 text-xs font-bold text-amber-700 hover:bg-amber-500/20 transition-all hover:scale-[1.02] active:scale-[0.98] border border-amber-300 shadow-xs"
+              >
+                <AlertTriangle className="h-4 w-4 text-amber-600" />
+                <span>Duplicate / Reuse Alerts</span>
+              </Link>
+
               {/* Process Submitted Bids Button */}
               <button
                 type="button"

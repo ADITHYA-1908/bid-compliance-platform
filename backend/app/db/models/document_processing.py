@@ -151,6 +151,11 @@ class DocumentProcessing(Base, TimestampMixin):
         Text,
         nullable=True,
     )
+    normalized_content_hash: Mapped[Optional[str]] = mapped_column(
+        String(64),
+        nullable=True,
+        index=True,
+    )
     page_count: Mapped[Optional[int]] = mapped_column(
         Integer,
         nullable=True,

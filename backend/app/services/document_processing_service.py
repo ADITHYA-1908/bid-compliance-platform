@@ -6,6 +6,7 @@ OCR text extraction, hybrid document processing, deterministic document classifi
 structured entity/field extraction, and quality telemetry for bid compliance documents.
 """
 
+import hashlib
 import uuid
 import logging
 from datetime import datetime, timezone
@@ -198,6 +199,9 @@ def execute_document_processing_pipeline(
     # 4. Download document binary from private storage
     try:
         file_bytes = storage_service.download_file(doc.storage_path)
+        if not doc.file_hash:
+            doc.file_hash = hashlib.sha256(file_bytes).hexdigest()
+            db.commit()
     except Exception as e:
         logger.error("Failed to download file bytes for document %s: %s", doc.id, e)
         proc.processing_status = ProcessingStatus.FAILED
@@ -220,6 +224,12 @@ def execute_document_processing_pipeline(
         proc.raw_text = ocr_result.raw_text
         proc.normalized_text = ocr_result.normalized_text
         proc.extraction_method = ocr_result.extraction_method
+
+        # Compute and persist normalized content hash
+        text_for_hash = ocr_result.normalized_text or ocr_result.raw_text or ""
+        if text_for_hash.strip():
+            clean_norm = " ".join(text_for_hash.lower().split())
+            proc.normalized_content_hash = hashlib.sha256(clean_norm.encode("utf-8")).hexdigest()
 
         # 6. Advance to CLASSIFICATION Stage (Part 4D)
         proc.processing_stage = ProcessingStage.CLASSIFICATION

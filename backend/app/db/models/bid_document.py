@@ -92,6 +92,11 @@ class BidDocument(Base, TimestampMixin):
         server_default="UPLOADED",
         nullable=False,
     )
+    file_hash: Mapped[Optional[str]] = mapped_column(
+        String(64),
+        nullable=True,
+        index=True,
+    )
     version: Mapped[int] = mapped_column(
         Integer,
         default=1,

@@ -4,6 +4,7 @@ Handles secure file validation, private storage persistence, requirement mapping
 document replacement/removal, and ownership enforcement.
 """
 
+import hashlib
 import os
 import uuid
 from datetime import datetime, timezone
@@ -310,6 +311,7 @@ def upload_bid_document(
         )
 
     # 6. Create database record
+    file_sha256 = hashlib.sha256(content).hexdigest()
     new_doc = BidDocument(
         id=doc_id,
         bid_id=bid.id,
@@ -321,6 +323,7 @@ def upload_bid_document(
         storage_path=storage_path,
         mime_type=mime_type,
         file_size=len(content),
+        file_hash=file_sha256,
         status="UPLOADED",
         version=next_version,
         notes=notes,
@@ -503,6 +506,7 @@ def replace_bid_document(
         content_type=mime_type,
     )
 
+    file_sha256 = hashlib.sha256(content).hexdigest()
     new_doc = BidDocument(
         id=new_id,
         bid_id=bid.id,
@@ -514,6 +518,7 @@ def replace_bid_document(
         storage_path=storage_path,
         mime_type=mime_type,
         file_size=len(content),
+        file_hash=file_sha256,
         status="UPLOADED",
         version=old_doc.version + 1,
         notes=notes or old_doc.notes,

@@ -52,6 +52,13 @@ from app.schemas.bulk_evaluation import (
     BulkEvaluationRetryResponse,
     BulkEvaluationCancelResponse,
 )
+from app.schemas.duplicate_detection import (
+    DuplicateScanResponse,
+    DuplicateMatchListResponse,
+    DuplicateMatchDetailResponse,
+    DuplicateReviewRequest,
+    DuplicateReviewResponse,
+)
 from app.services.compliance_service import evaluate_bid_compliance, get_bid_compliance
 from app.services.scoring_service import calculate_and_save_bid_score, get_bid_score
 from app.services.risk_service import calculate_and_save_bid_risk, get_bid_risk
@@ -62,6 +69,7 @@ from app.services.procurement.bid_comparison_service import BidComparisonService
 from app.services.procurement.human_review_service import HumanReviewService
 from app.services.procurement.bid_decision_service import BidDecisionService
 from app.services.procurement.bulk_evaluation_service import BulkEvaluationService
+from app.services.procurement.duplicate_detection_service import DuplicateDetectionService
 from app.services.audit.audit_service import AuditService
 from app.services.reports.procurement_report_service import ProcurementReportService
 from fastapi.responses import Response
@@ -1249,6 +1257,104 @@ def cancel_bulk_evaluation(
         status=job.status,
         message=f"Bulk evaluation job '{job.id}' has been cancelled.",
     )
+
+
+# ==============================================================================
+# Part 10: Duplicate / Reuse Document Detection Endpoints
+# ==============================================================================
+
+
+@router.post(
+    "/tenders/{tender_id}/duplicate-scan",
+    response_model=DuplicateScanResponse,
+    summary="Execute duplicate and document reuse scan across submitted bids",
+)
+def scan_tender_duplicates(
+    tender_id: uuid.UUID,
+    current_user: User = Depends(require_role("PROCUREMENT_OFFICER")),
+    db: Session = Depends(get_db),
+):
+    """
+    Scans all active submitted bids for a tender using multi-signal analysis (file hashes,
+    normalized text hashes, structured extracted fields, and semantic similarity) to detect
+    cross-bidder document reuse anomalies. Legitimate same-bidder version replacements are excluded.
+    """
+    return DuplicateDetectionService.scan_tender_for_duplicates(
+        db=db,
+        user=current_user,
+        tender_id=tender_id,
+    )
+
+
+@router.get(
+    "/tenders/{tender_id}/duplicate-matches",
+    response_model=DuplicateMatchListResponse,
+    summary="List duplicate/reuse match alerts for a tender",
+)
+def list_tender_duplicate_matches(
+    tender_id: uuid.UUID,
+    status: Optional[str] = Query(None, description="Filter by status (DETECTED, REVIEW_REQUIRED, CONFIRMED_BENIGN, CONFIRMED_REUSE, DISMISSED)"),
+    match_type: Optional[str] = Query(None, description="Filter by match type (EXACT_FILE_DUPLICATE, CONTENT_DUPLICATE, STRUCTURED_DATA_MATCH, HIGH_SIMILARITY, POSSIBLE_REUSE)"),
+    current_user: User = Depends(require_role("PROCUREMENT_OFFICER")),
+    db: Session = Depends(get_db),
+):
+    """
+    Retrieves list of detected duplicate document matches for a tender with breakdown summary counts.
+    """
+    return DuplicateDetectionService.get_tender_duplicate_matches(
+        db=db,
+        user=current_user,
+        tender_id=tender_id,
+        status_filter=status,
+        match_type_filter=match_type,
+    )
+
+
+@router.get(
+    "/duplicate-matches/{match_id}",
+    response_model=DuplicateMatchDetailResponse,
+    summary="Get side-by-side duplicate match comparison details",
+)
+def get_duplicate_match_details(
+    match_id: uuid.UUID,
+    current_user: User = Depends(require_role("PROCUREMENT_OFFICER")),
+    db: Session = Depends(get_db),
+):
+    """
+    Retrieves full side-by-side inspection details for a duplicate match including document metadata,
+    matching structured fields, text snippets, and reviewer notes.
+    """
+    return DuplicateDetectionService.get_duplicate_match_detail(
+        db=db,
+        user=current_user,
+        match_id=match_id,
+    )
+
+
+@router.post(
+    "/duplicate-matches/{match_id}/review",
+    response_model=DuplicateReviewResponse,
+    summary="Submit Procurement Officer review decision on a duplicate document alert",
+)
+def review_duplicate_match_endpoint(
+    match_id: uuid.UUID,
+    payload: DuplicateReviewRequest,
+    current_user: User = Depends(require_role("PROCUREMENT_OFFICER")),
+    db: Session = Depends(get_db),
+):
+    """
+    Records human Procurement Officer evaluation on a duplicate document alert:
+    - CONFIRMED_BENIGN: Legitimate co-submission, authorized multi-dealer certificate, or common public template.
+    - CONFIRMED_REUSE: Confirmed unauthorized cross-bidder document reuse.
+    - DISMISSED: Coincidence / false alarm.
+    """
+    return DuplicateDetectionService.review_duplicate_match(
+        db=db,
+        user=current_user,
+        match_id=match_id,
+        review_dto=payload,
+    )
+
 
 
 

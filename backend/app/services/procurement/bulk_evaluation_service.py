@@ -419,6 +419,13 @@ class BulkEvaluationService:
 
                 db.commit()
 
+                # Trigger Cross-Bidder Duplicate & Reuse Scan
+                try:
+                    from app.services.procurement.duplicate_detection_service import DuplicateDetectionService
+                    DuplicateDetectionService.scan_tender_for_duplicates(db=db, user=user, tender_id=job.tender_id)
+                except Exception as dup_err:
+                    logger.info("Bulk duplicate scan notice on job %s: %s", job.id, dup_err)
+
                 # Audit event for completion
                 try:
                     profile = user.profile
