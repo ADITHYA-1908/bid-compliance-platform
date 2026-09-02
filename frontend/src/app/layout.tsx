@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
 
-const inter = Inter({
+const plusJakartaSans = Plus_Jakarta_Sans({
   subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800"],
 });
 
 export const metadata: Metadata = {
@@ -19,7 +20,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="h-full dark">
-      <body className={`${inter.className} min-h-full flex flex-col bg-[#0b0f19] text-slate-100 antialiased selection:bg-purple-600 selection:text-white`}>
+      <body className={`${plusJakartaSans.className} min-h-full flex flex-col bg-[#050508] text-slate-100 antialiased selection:bg-purple-600 selection:text-white`}>
         <AuthProvider>
           {children}
         </AuthProvider>

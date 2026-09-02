@@ -60,7 +60,7 @@ export function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
           {/* Header & Close button */}
           <div className="flex h-16 shrink-0 items-center justify-between border-b border-slate-800 px-6">
             <div className="flex items-center gap-2.5">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-tr from-purple-700 to-indigo-600 text-white shadow-md">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-tr from-purple-700 to-indigo-600 text-white shadow-md glow-purple">
                 <ShieldCheck className="h-5 w-5" />
               </div>
               <span className="text-base font-extrabold tracking-tight text-white">
@@ -80,7 +80,7 @@ export function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
 
           {/* Role badge */}
           <div className="px-6 py-2.5 border-b border-slate-800/60 bg-slate-900/40">
-            <span className="inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-bold bg-purple-950/70 border border-purple-500/30 text-purple-300">
+            <span className="inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-bold bg-purple-950/70 border border-purple-500/30 text-purple-300 shadow-sm">
               {roleConfig.portalName}
             </span>
           </div>
@@ -102,11 +102,11 @@ export function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
                     onClick={onClose}
                     className={`flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-xs font-semibold transition-all ${
                       isActive
-                        ? "bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md shadow-purple-600/20"
+                        ? "nav-item-active text-white shadow-md shadow-purple-600/20"
                         : "text-slate-300 hover:bg-slate-800 hover:text-white"
                     }`}
                   >
-                    <Icon className="h-4 w-4 shrink-0" />
+                    <Icon className={`h-4 w-4 shrink-0 ${isActive ? "text-purple-300" : "text-slate-400"}`} />
                     <span>{item.label}</span>
                   </Link>
                 );
@@ -116,7 +116,7 @@ export function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
 
           {/* Bottom user card & logout */}
           <div className="border-t border-slate-800 p-4">
-            <div className="mb-3 rounded-xl bg-slate-900 p-3 border border-slate-800">
+            <div className="mb-3 rounded-xl glass-card p-3 border border-slate-800">
               <p className="text-xs font-semibold text-white truncate">
                 {user?.full_name || "User"}
               </p>
