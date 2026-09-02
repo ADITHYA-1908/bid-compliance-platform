@@ -30,8 +30,10 @@ class RoleChecker:
         return current_user
 
 
-def require_role(role: str):
-    """Dependency helper to require a single specific role."""
+def require_role(role: Union[str, List[str]]):
+    """Dependency helper to require one or more specific roles."""
+    if isinstance(role, list):
+        return RoleChecker(role)
     return RoleChecker([role])
 
 

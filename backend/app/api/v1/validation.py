@@ -152,7 +152,7 @@ def get_validation_case_results(
 )
 def export_validation_run(
     run_id: uuid.UUID,
-    format: str = Query("csv", regex="^(csv|json)$", description="Export format (csv or json)"),
+    format: str = Query("csv", pattern="^(csv|json)$", description="Export format (csv or json)"),
     db: Session = Depends(get_db),
     current_user: User = Depends(require_role(["ADMIN", "PROCUREMENT_OFFICER"])),
 ):
