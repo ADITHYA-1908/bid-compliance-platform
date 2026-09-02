@@ -17,6 +17,8 @@ import {
   Settings,
   Network,
   History,
+  TrendingUp,
+  Award,
   LucideIcon,
 } from "lucide-react";
 
@@ -100,6 +102,13 @@ export const NAVIGATION_BY_ROLE: Record<string, RoleNavigationConfig> = {
         description: "Tender updates, deadline reminders, and audit notices",
         phase: "Part 7",
       },
+      {
+        label: "Certificates & Validity",
+        href: "/bidder/certificates",
+        icon: Award,
+        description: "Track certificate expiration, renewal countdown, and validity",
+        phase: "Part 14",
+      },
     ],
   },
   PROCUREMENT_OFFICER: {
@@ -175,6 +184,20 @@ export const NAVIGATION_BY_ROLE: Record<string, RoleNavigationConfig> = {
         phase: "Part 8E",
       },
       {
+        label: "Analytics & Impact",
+        href: "/procurement/analytics",
+        icon: TrendingUp,
+        description: "Procurement intelligence, compliance distribution, and time savings",
+        phase: "Part 13",
+      },
+      {
+        label: "Certificates & Validity",
+        href: "/procurement/certificates",
+        icon: Award,
+        description: "Monitor statutory certificate expiration and validity countdown",
+        phase: "Part 14",
+      },
+      {
         label: "Validation & Benchmark",
         href: "/procurement/validation",
         icon: BarChart3,
@@ -212,6 +235,20 @@ export const NAVIGATION_BY_ROLE: Record<string, RoleNavigationConfig> = {
         icon: Shield,
         description: "RBAC security policies and access matrix definitions",
         phase: "Part 2",
+      },
+      {
+        label: "Certificates & Validity",
+        href: "/admin/certificates",
+        icon: Award,
+        description: "Platform-wide certificate validity surveillance and batch scan",
+        phase: "Part 14",
+      },
+      {
+        label: "Analytics & Impact",
+        href: "/admin/analytics",
+        icon: TrendingUp,
+        description: "Platform-wide analytics, risk radar, and impact metrics",
+        phase: "Part 13",
       },
       {
         label: "Validation & Benchmark",

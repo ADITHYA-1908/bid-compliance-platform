@@ -67,6 +67,11 @@ from app.db.models.validation_run import (
     ValidationStatus,
     ValidationErrorType,
 )
+from app.db.models.document_validity import (
+    DocumentValidityRecord,
+    ValidityStatus,
+    ValidityDateSource,
+)
 
 __all__ = [
     "Base",
@@ -123,6 +128,10 @@ __all__ = [
     "ValidationCaseResult",
     "ValidationStatus",
     "ValidationErrorType",
+    "DocumentValidityRecord",
+    "ValidityStatus",
+    "ValidityDateSource",
 ]
+
 
 

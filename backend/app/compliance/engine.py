@@ -78,6 +78,24 @@ def build_compliance_context(db: Session, bid_id: uuid.UUID) -> ComplianceContex
         if v.claim_source:
             v_by_claim[v.claim_source] = v
 
+    # Active validity records for this bid's documents
+    from app.db.models.document_validity import DocumentValidityRecord
+    doc_ids = [d.id for d in active_docs]
+    validity_records = []
+    if doc_ids:
+        validity_records = list(db.scalars(
+            select(DocumentValidityRecord).where(
+                DocumentValidityRecord.document_id.in_(doc_ids),
+                DocumentValidityRecord.is_current == True,
+                DocumentValidityRecord.is_active == True,
+            )
+        ).all())
+
+    validity_by_doc_id = {v.document_id: v for v in validity_records}
+    validity_by_type = {}
+    for v in validity_records:
+        validity_by_type.setdefault(v.document_type, []).append(v)
+
     return ComplianceContext(
         bid=bid,
         tender=tender,
@@ -86,6 +104,11 @@ def build_compliance_context(db: Session, bid_id: uuid.UUID) -> ComplianceContex
         verifications=list(active_verifications),
         verifications_by_type=v_by_type,
         verifications_by_claim=v_by_claim,
+        metadata={
+            "validity_records": validity_records,
+            "validity_by_doc_id": validity_by_doc_id,
+            "validity_by_type": validity_by_type,
+        },
     )
 
 
