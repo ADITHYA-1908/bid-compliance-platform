@@ -459,6 +459,13 @@ class BulkEvaluationService:
                 except Exception as audit_err:
                     logger.warning("Failed to record completion audit event for bulk job %s: %s", job.id, audit_err)
 
+                # Part 12: Notification Center completion trigger
+                try:
+                    from app.services.notification_service import NotificationService
+                    NotificationService.notify_bulk_evaluation_completed(db=db, job=job)
+                except Exception as notif_err:
+                    logger.info("Failed to emit bulk evaluation notification: %s", notif_err)
+
         except Exception as top_err:
             logger.critical("Fatal error in bulk evaluation worker for job %s: %s", job_id, top_err, exc_info=True)
             db.rollback()

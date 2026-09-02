@@ -24,6 +24,7 @@ from app.db.base import Base, TimestampMixin
 if TYPE_CHECKING:
     from app.db.models.bid_document import BidDocument
     from app.db.models.verification_record import VerificationRecord
+    from app.db.models.document_quality import DocumentQualityResult
 
 
 class ProcessingStatus:
@@ -228,6 +229,11 @@ class DocumentProcessing(Base, TimestampMixin):
     bid_document: Mapped["BidDocument"] = relationship(
         "BidDocument",
         back_populates="processing",
+    )
+    quality_result: Mapped[Optional["DocumentQualityResult"]] = relationship(
+        "DocumentQualityResult",
+        back_populates="processing",
+        uselist=False,
     )
     verifications: Mapped[List["VerificationRecord"]] = relationship(
         "VerificationRecord",

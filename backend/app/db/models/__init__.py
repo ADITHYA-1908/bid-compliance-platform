@@ -51,6 +51,16 @@ from app.db.models.document_duplicate_match import (
     DuplicateMatchType,
     DuplicateMatchStatus,
 )
+from app.db.models.document_quality import (
+    DocumentQualityResult,
+    DocumentPageQuality,
+    QualityLevel,
+)
+from app.db.models.notification import (
+    Notification,
+    NotificationType,
+    NotificationSeverity,
+)
 
 __all__ = [
     "Base",
@@ -97,6 +107,12 @@ __all__ = [
     "DocumentDuplicateMatch",
     "DuplicateMatchType",
     "DuplicateMatchStatus",
+    "DocumentQualityResult",
+    "DocumentPageQuality",
+    "QualityLevel",
+    "Notification",
+    "NotificationType",
+    "NotificationSeverity",
 ]
 
 

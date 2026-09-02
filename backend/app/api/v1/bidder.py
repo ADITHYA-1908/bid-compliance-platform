@@ -40,6 +40,10 @@ from app.schemas.document_processing import (
     DocumentClassificationResponse,
     DocumentExtractedDataResponse,
 )
+from app.schemas.document_quality import (
+    DocumentQualityResponse,
+    QualityCheckTriggerResponse,
+)
 from app.schemas.verification import (
     BidVerificationListResponse,
     DocumentVerificationListResponse,
@@ -86,6 +90,7 @@ from app.services.document_processing_service import (
     get_document_classification,
     get_document_extracted_data,
 )
+from app.services.document_quality_service import DocumentQualityService
 from app.services.verification_service import (
     get_bid_consistency_report,
     get_bid_verifications,
@@ -771,6 +776,57 @@ def read_document_extracted_data(
     Strict tenant isolation enforced.
     """
     return get_document_extracted_data(
+        db=db,
+        current_user=current_user,
+        bid_id=bid_id,
+        document_id=document_id,
+    )
+
+
+# =============================================================================
+# Part 11: Document Quality Diagnostics Endpoints
+# =============================================================================
+
+@router.get(
+    "/bids/{bid_id}/documents/{document_id}/quality",
+    response_model=DocumentQualityResponse,
+    summary="Get document quality check result and page-level diagnostics",
+)
+def read_document_quality(
+    bid_id: uuid.UUID,
+    document_id: uuid.UUID,
+    current_user: User = Depends(require_role("BIDDER")),
+    db: Session = Depends(get_db),
+):
+    """
+    Protected endpoint for authenticated BIDDER to inspect image & document quality diagnostics:
+    deterministic quality score (0-100), quality level (GOOD/ACCEPTABLE/POOR/UNUSABLE),
+    blur sharpness, blank page detection, low resolution, skew angles, and actionable bidder feedback.
+    Strict tenant isolation enforced.
+    """
+    return DocumentQualityService.get_document_quality_for_bidder(
+        db=db,
+        current_user=current_user,
+        bid_id=bid_id,
+        document_id=document_id,
+    )
+
+
+@router.post(
+    "/bids/{bid_id}/documents/{document_id}/quality-check",
+    response_model=DocumentQualityResponse,
+    summary="Trigger on-demand document quality check evaluation",
+)
+def trigger_document_quality_check(
+    bid_id: uuid.UUID,
+    document_id: uuid.UUID,
+    current_user: User = Depends(require_role("BIDDER")),
+    db: Session = Depends(get_db),
+):
+    """
+    Triggers explicit pre-flight document quality evaluation before OCR/classification.
+    """
+    return DocumentQualityService.get_document_quality_for_bidder(
         db=db,
         current_user=current_user,
         bid_id=bid_id,

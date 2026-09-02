@@ -25,6 +25,10 @@ import {
 } from "@/lib/formatters";
 import { getBidCompliance, evaluateBidCompliance } from "@/lib/api/compliance";
 import { BidComplianceSummaryResponse, ComplianceResultItem } from "@/types/compliance";
+import { DocumentQualityBadge } from "@/components/common/DocumentQualityBadge";
+import { DocumentQualityModal } from "@/components/procurement/DocumentQualityModal";
+import { documentQualityApi } from "@/lib/api/document_quality";
+import { DocumentQualityResult } from "@/types/document_quality";
 import {
   ArrowLeft,
   Building2,
@@ -144,6 +148,11 @@ export default function BidWorkspacePage() {
   const [extractedTextData, setExtractedTextData] = useState<DocumentExtractedTextResponse | null>(null);
   const [loadingExtractedText, setLoadingExtractedText] = useState<boolean>(false);
   const [copiedText, setCopiedText] = useState<boolean>(false);
+
+  // Part 11: Document Quality Diagnostic States
+  const [qualityModalDoc, setQualityModalDoc] = useState<BidDocument | null>(null);
+  const [qualityResultData, setQualityResultData] = useState<DocumentQualityResult | null>(null);
+  const [loadingQuality, setLoadingQuality] = useState<boolean>(false);
 
   // Part 5A: Verification Engine State
   const [verifyingDocId, setVerifyingDocId] = useState<string | null>(null);
@@ -557,6 +566,33 @@ export default function BidWorkspacePage() {
       setViewingExtractedTextDoc(null);
     } finally {
       setLoadingExtractedText(false);
+    }
+  };
+
+  // Part 11: Open Document Quality Diagnostics Modal
+  const handleOpenQualityModal = async (doc: BidDocument) => {
+    if (!bidId) return;
+    setQualityModalDoc(doc);
+    setLoadingQuality(true);
+    setQualityResultData(null);
+    try {
+      const data = await documentQualityApi.getBidderDocumentQuality(bidId, doc.id);
+      setQualityResultData(data);
+    } catch (err: any) {
+      alert(err instanceof ApiError ? err.message : "Failed to load document quality diagnostics.");
+      setQualityModalDoc(null);
+    } finally {
+      setLoadingQuality(false);
+    }
+  };
+
+  const handleTriggerQualityCheck = async (docId: string) => {
+    if (!bidId) return;
+    try {
+      await documentQualityApi.triggerQualityCheck(bidId, docId);
+      await fetchDocuments();
+    } catch (err: any) {
+      alert(err instanceof ApiError ? err.message : "Failed to run quality check.");
     }
   };
 
@@ -1115,6 +1151,23 @@ export default function BidWorkspacePage() {
                                                 Review Required
                                               </span>
                                             )}
+
+                                            {/* Part 11: Document Quality Badge */}
+                                            {(() => {
+                                              const qr = uploadedDoc.quality_result || uploadedDoc.processing?.quality_result;
+                                              return (
+                                                <DocumentQualityBadge
+                                                  score={qr?.quality_score}
+                                                  level={qr?.quality_level || (uploadedDoc.processing?.processing_status === "NEEDS_REVIEW" ? "POOR" : "GOOD")}
+                                                  isBlurry={qr?.is_blurry}
+                                                  hasBlankPages={qr?.has_blank_pages}
+                                                  hasUnreadablePages={qr?.has_unreadable_pages}
+                                                  isCorrupted={qr?.is_corrupted}
+                                                  isPasswordProtected={qr?.is_password_protected}
+                                                  onClick={() => handleOpenQualityModal(uploadedDoc)}
+                                                />
+                                              );
+                                            })()}
                                           </div>
                                         )}
                                       </div>
@@ -2856,6 +2909,18 @@ export default function BidWorkspacePage() {
           </div>
         </div>
       )}
+
+      {/* Part 11: Document Quality Diagnostics Modal */}
+      <DocumentQualityModal
+        isOpen={!!qualityModalDoc}
+        onClose={() => {
+          setQualityModalDoc(null);
+          setQualityResultData(null);
+        }}
+        quality={qualityResultData}
+        documentName={qualityModalDoc?.original_filename}
+        documentType={qualityModalDoc?.document_type}
+      />
     </DashboardLayout>
   );
 }

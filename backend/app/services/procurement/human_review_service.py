@@ -18,6 +18,7 @@ from app.db.models.bid import Bid
 from app.db.models.bid_document import BidDocument
 from app.db.models.compliance_result import ComplianceResult, ComplianceStatus
 from app.db.models.document_processing import DocumentProcessing
+from app.db.models.document_quality import DocumentQualityResult, QualityLevel
 from app.db.models.human_review import (
     HumanReviewItem,
     HumanReviewNote,
@@ -341,6 +342,78 @@ class HumanReviewService:
                     db.add(new_item)
                     synced_items.append(new_item)
 
+        # Process Document Quality Results with Poor or Unusable Quality
+        for doc in docs:
+            qr = db.scalars(
+                select(DocumentQualityResult).where(DocumentQualityResult.document_id == doc.id)
+            ).first()
+            if not qr:
+                continue
+
+            needs_quality_review = (
+                qr.review_required
+                or qr.quality_level in (QualityLevel.POOR, QualityLevel.UNUSABLE)
+                or qr.is_corrupted
+                or qr.is_password_protected
+            )
+
+            if needs_quality_review:
+                source_id = str(qr.id)
+                source_key = ("DOCUMENT_QUALITY_RESULT", source_id)
+                active_source_keys.add(source_key)
+                existing = existing_map.get(source_key)
+
+                sev = ReviewSeverity.CRITICAL if qr.quality_level == QualityLevel.UNUSABLE else ReviewSeverity.HIGH
+                title = f"Poor Document Quality: {doc.original_filename} ({qr.quality_level})"
+                reason = (
+                    qr.review_reasons[0]
+                    if qr.review_reasons
+                    else f"Document quality score ({qr.quality_score}/100) requires manual verification."
+                )
+
+                system_finding = {
+                    "document_id": str(doc.id),
+                    "filename": doc.original_filename,
+                    "document_type": doc.document_type,
+                    "quality_score": qr.quality_score,
+                    "quality_level": qr.quality_level,
+                    "is_blurry": qr.is_blurry,
+                    "has_blank_pages": qr.has_blank_pages,
+                    "has_unreadable_pages": qr.has_unreadable_pages,
+                    "is_corrupted": qr.is_corrupted,
+                    "is_password_protected": qr.is_password_protected,
+                    "review_reasons": qr.review_reasons,
+                    "bidder_feedback": qr.bidder_feedback,
+                }
+
+                if existing:
+                    if existing.status in (ReviewStatus.OPEN, ReviewStatus.IN_REVIEW):
+                        existing.title = title
+                        existing.reason = reason
+                        existing.system_finding = system_finding
+                        existing.severity = sev
+                        existing.review_type = ReviewType.POOR_DOCUMENT_QUALITY
+                        existing.is_active = True
+                    synced_items.append(existing)
+                else:
+                    new_item = HumanReviewItem(
+                        organization_id=org_id,
+                        tender_id=tender_id,
+                        bid_id=bid_id,
+                        bid_document_id=doc.id,
+                        review_type=ReviewType.POOR_DOCUMENT_QUALITY,
+                        severity=sev,
+                        status=ReviewStatus.OPEN,
+                        source_type="DOCUMENT_QUALITY_RESULT",
+                        source_id=source_id,
+                        title=title,
+                        reason=reason,
+                        system_finding=system_finding,
+                        is_active=True,
+                    )
+                    db.add(new_item)
+                    synced_items.append(new_item)
+
         # Mark obsolete items as SUPERSEDED if source condition resolved upstream
         for existing in existing_items:
             key = (existing.source_type, existing.source_id)
@@ -349,6 +422,16 @@ class HumanReviewService:
                 existing.is_active = False
 
         db.flush()
+
+        # Part 12: Notification Center trigger for newly created open review items
+        try:
+            from app.services.notification_service import NotificationService
+            for item in synced_items:
+                if item.status == ReviewStatus.OPEN:
+                    NotificationService.notify_human_review_required(db=db, review_item=item)
+        except Exception as notif_err:
+            logger.debug("Human review notification notice: %s", notif_err)
+
         return synced_items
 
     @classmethod

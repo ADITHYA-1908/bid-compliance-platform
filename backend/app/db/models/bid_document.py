@@ -26,6 +26,7 @@ if TYPE_CHECKING:
     from app.db.models.tender_requirement import TenderRequirement
     from app.db.models.document_processing import DocumentProcessing
     from app.db.models.verification_record import VerificationRecord
+    from app.db.models.document_quality import DocumentQualityResult
 
 
 class BidDocument(Base, TimestampMixin):
@@ -130,6 +131,12 @@ class BidDocument(Base, TimestampMixin):
     )
     processing: Mapped[Optional["DocumentProcessing"]] = relationship(
         "DocumentProcessing",
+        back_populates="bid_document",
+        uselist=False,
+        cascade="all, delete-orphan",
+    )
+    quality_result: Mapped[Optional["DocumentQualityResult"]] = relationship(
+        "DocumentQualityResult",
         back_populates="bid_document",
         uselist=False,
         cascade="all, delete-orphan",

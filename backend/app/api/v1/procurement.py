@@ -59,6 +59,7 @@ from app.schemas.duplicate_detection import (
     DuplicateReviewRequest,
     DuplicateReviewResponse,
 )
+from app.schemas.document_quality import DocumentQualityResponse
 from app.services.compliance_service import evaluate_bid_compliance, get_bid_compliance
 from app.services.scoring_service import calculate_and_save_bid_score, get_bid_score
 from app.services.risk_service import calculate_and_save_bid_risk, get_bid_risk
@@ -70,6 +71,7 @@ from app.services.procurement.human_review_service import HumanReviewService
 from app.services.procurement.bid_decision_service import BidDecisionService
 from app.services.procurement.bulk_evaluation_service import BulkEvaluationService
 from app.services.procurement.duplicate_detection_service import DuplicateDetectionService
+from app.services.document_quality_service import DocumentQualityService
 from app.services.audit.audit_service import AuditService
 from app.services.reports.procurement_report_service import ProcurementReportService
 from fastapi.responses import Response
@@ -1353,6 +1355,37 @@ def review_duplicate_match_endpoint(
         user=current_user,
         match_id=match_id,
         review_dto=payload,
+    )
+
+
+# =============================================================================
+# Part 11: Document Quality Diagnostics Inspection Endpoint
+# =============================================================================
+
+@router.get(
+    "/tenders/{tender_id}/bids/{bid_id}/documents/{document_id}/quality",
+    response_model=DocumentQualityResponse,
+    summary="Get detailed document quality diagnostics & page breakdown for Procurement Officer",
+)
+def read_procurement_document_quality(
+    tender_id: uuid.UUID,
+    bid_id: uuid.UUID,
+    document_id: uuid.UUID,
+    current_user: User = Depends(require_role("PROCUREMENT_OFFICER")),
+    db: Session = Depends(get_db),
+):
+    """
+    Protected endpoint for Procurement Officers to inspect complete document quality diagnostics:
+    deterministic quality score (0-100), quality level (GOOD/ACCEPTABLE/POOR/UNUSABLE),
+    blur sharpness, blank page markers, OCR confidence, skew metrics, and page issues.
+    Strict multi-tenant organization boundary enforced.
+    """
+    return DocumentQualityService.get_document_quality_for_procurement(
+        db=db,
+        current_user=current_user,
+        tender_id=tender_id,
+        bid_id=bid_id,
+        document_id=document_id,
     )
 
 

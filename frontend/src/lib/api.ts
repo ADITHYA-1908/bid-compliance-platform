@@ -4,6 +4,8 @@
  * and unified backend integration.
  */
 
+import { DocumentQualityResult } from "@/types/document_quality";
+
 export interface User {
   id: string;
   email: string;
@@ -647,6 +649,7 @@ export interface DocumentProcessing {
   processing_completed_at?: string | null;
   error_code?: string | null;
   error_message?: string | null;
+  quality_result?: DocumentQualityResult | null;
   created_at: string;
   updated_at: string;
 }
@@ -734,6 +737,7 @@ export interface BidDocument {
   requirement_name?: string | null;
   is_mandatory?: boolean | null;
   processing?: DocumentProcessing | null;
+  quality_result?: DocumentQualityResult | null;
 }
 
 export interface BidDocumentsSummary {

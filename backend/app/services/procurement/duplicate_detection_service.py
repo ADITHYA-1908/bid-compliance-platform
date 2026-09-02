@@ -463,6 +463,19 @@ class DuplicateDetectionService:
 
                     # 3. Synchronize HumanReviewItem for Procurement Officer inspection
                     cls._sync_human_review_item_for_match(db, tender, b_first, b_second, match_record)
+
+                    # Part 12: Notification Center duplicate alert
+                    try:
+                        from app.services.notification_service import NotificationService
+                        NotificationService.notify_duplicate_document_alert(
+                            db=db,
+                            match=match_record,
+                            doc_a=doc_a,
+                            doc_b=doc_b,
+                            tender_id=tender.id,
+                        )
+                    except Exception as notif_err:
+                        logger.debug("Duplicate alert notification notice: %s", notif_err)
                 else:
                     # Update telemetry on existing unreviewed match
                     if existing_match.status in [DuplicateMatchStatus.DETECTED, DuplicateMatchStatus.REVIEW_REQUIRED]:

@@ -25,6 +25,7 @@ from app.db.models.document_processing import (
     ProcessingStage,
     ProcessingStatus,
 )
+from app.db.models.document_quality import QualityLevel
 from app.db.models.profile import Profile
 from app.db.models.user import User
 from app.schemas.document_processing import (
@@ -34,6 +35,7 @@ from app.schemas.document_processing import (
     ExtractedFieldItem,
 )
 from app.services.bid_document_service import _get_bid_for_bidder
+from app.services.document_quality_service import DocumentQualityService
 from app.services.pdf_extraction_service import (
     PDFExtractionError,
     extract_text_from_pdf_bytes,
@@ -212,7 +214,40 @@ def execute_document_processing_pipeline(
         db.refresh(proc)
         return proc
 
-    # 5. Execute OCR & Document Extraction Pipeline
+    # 5. Pre-Extraction Quality Check (Part 11)
+    quality_result = DocumentQualityService.evaluate_document_quality(
+        db=db,
+        doc=doc,
+        file_bytes=file_bytes,
+        proc=proc,
+        user=current_user,
+    )
+
+    # Early halting on UNUSABLE documents (corrupted, password-protected, or severely degraded)
+    if quality_result.quality_level == QualityLevel.UNUSABLE:
+        logger.warning(
+            "Document %s failed quality check with UNUSABLE status (score: %.1f). Halting pipeline early.",
+            doc.id,
+            quality_result.quality_score,
+        )
+        proc.processing_status = ProcessingStatus.NEEDS_REVIEW if not quality_result.is_corrupted else ProcessingStatus.FAILED
+        proc.processing_stage = ProcessingStage.TEXT_EXTRACTION
+        proc.error_code = (
+            "DOCUMENT_CORRUPTED"
+            if quality_result.is_corrupted
+            else ("DOCUMENT_PASSWORD_PROTECTED" if quality_result.is_password_protected else "DOCUMENT_UNUSABLE")
+        )
+        proc.error_message = (
+            quality_result.bidder_feedback[0]
+            if quality_result.bidder_feedback
+            else "Document quality is unusable for automated verification."
+        )
+        proc.processing_completed_at = datetime.now(timezone.utc)
+        db.commit()
+        db.refresh(proc)
+        return proc
+
+    # 6. Execute OCR & Document Extraction Pipeline
     try:
         ocr_result = process_document_with_ocr(
             file_bytes=file_bytes,
@@ -225,40 +260,59 @@ def execute_document_processing_pipeline(
         proc.normalized_text = ocr_result.normalized_text
         proc.extraction_method = ocr_result.extraction_method
 
+        # Update DocumentQualityResult with actual OCR telemetry
+        page_confidences = {p.page_number: p.confidence for p in ocr_result.pages if p.confidence is not None}
+        min_conf = min(page_confidences.values()) if page_confidences else None
+        DocumentQualityService.update_ocr_confidence_metrics(
+            db=db,
+            quality_result_id=quality_result.id,
+            avg_confidence=ocr_result.average_ocr_confidence,
+            min_page_confidence=min_conf,
+            page_confidences=page_confidences,
+        )
+
         # Compute and persist normalized content hash
         text_for_hash = ocr_result.normalized_text or ocr_result.raw_text or ""
         if text_for_hash.strip():
             clean_norm = " ".join(text_for_hash.lower().split())
             proc.normalized_content_hash = hashlib.sha256(clean_norm.encode("utf-8")).hexdigest()
 
-        # 6. Advance to CLASSIFICATION Stage (Part 4D)
+        # 7. Advance to CLASSIFICATION Stage (Part 4D)
         proc.processing_stage = ProcessingStage.CLASSIFICATION
         db.commit()
 
-        # 7. Execute Deterministic Document Classification
+        # 8. Execute Deterministic Document Classification
         proc = execute_document_classification(
             db=db,
             document_processing=proc,
             bid_document=doc,
         )
 
-        # 8. Advance to STRUCTURED_EXTRACTION Stage (Part 4E)
+        # 9. Advance to STRUCTURED_EXTRACTION Stage (Part 4E)
         proc.processing_stage = ProcessingStage.STRUCTURED_EXTRACTION
         db.commit()
 
-        # 9. Execute Deterministic Structured Entity Extraction
+        # 10. Execute Deterministic Structured Entity Extraction
         proc = execute_structured_extraction(
             db=db,
             document_processing=proc,
             bid_document=doc,
         )
 
-        # 10. Finalize Processing Stage and Status
+        # 11. Finalize Processing Stage and Status
         proc.processing_stage = ProcessingStage.COMPLETED
         proc.processing_completed_at = datetime.now(timezone.utc)
 
-        # Check review triggers across OCR, Classification, and Structured Extraction
-        if ocr_result.is_low_quality:
+        # Check review triggers across Quality, OCR, Classification, and Structured Extraction
+        if quality_result.quality_level == QualityLevel.POOR or quality_result.review_required:
+            proc.processing_status = ProcessingStatus.NEEDS_REVIEW
+            proc.error_code = "DOCUMENT_QUALITY_POOR"
+            proc.error_message = (
+                quality_result.bidder_feedback[0]
+                if quality_result.bidder_feedback
+                else "Document scan quality is poor. Manual review required."
+            )
+        elif ocr_result.is_low_quality:
             logger.warning(
                 "Document %s processed with low OCR quality (%s). Marked as NEEDS_REVIEW.",
                 doc.id,

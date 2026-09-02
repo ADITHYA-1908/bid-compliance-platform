@@ -6,12 +6,9 @@ import { useRouter } from "next/navigation";
 import { Menu, LogOut, User as UserIcon, Shield, ChevronDown } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { getRoleDisplayName } from "@/lib/roles";
+import { NotificationBell } from "@/components/layout/NotificationBell";
 
-interface TopNavbarProps {
-  onOpenMobileMenu: () => void;
-}
-
-export function TopNavbar({ onOpenMobileMenu }: TopNavbarProps) {
+export function TopNavbar({ onOpenMobileMenu }: { onOpenMobileMenu: () => void }) {
   const router = useRouter();
   const { user, logout } = useAuth();
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -62,8 +59,11 @@ export function TopNavbar({ onOpenMobileMenu }: TopNavbarProps) {
         </div>
       </div>
 
-      {/* User Profile & Menu */}
-      <div className="relative" ref={dropdownRef}>
+      {/* Right Controls: Notifications & User Profile */}
+      <div className="flex items-center gap-2 sm:gap-4">
+        <NotificationBell />
+
+        <div className="relative" ref={dropdownRef}>
         <button
           type="button"
           onClick={() => setDropdownOpen(!dropdownOpen)}
@@ -128,6 +128,7 @@ export function TopNavbar({ onOpenMobileMenu }: TopNavbarProps) {
             </div>
           </div>
         )}
+      </div>
       </div>
     </header>
   );

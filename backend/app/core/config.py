@@ -47,6 +47,20 @@ class Settings(BaseSettings):
     OPENAI_API_KEY: Optional[str] = None
     GEMINI_API_KEY: Optional[str] = None
 
+    # Document Quality Check Configuration (Part 11)
+    BLUR_THRESHOLD: float = 100.0
+    MIN_OCR_CONFIDENCE: float = 0.50
+    MIN_QUALITY_SCORE: float = 40.0
+    MIN_IMAGE_WIDTH: int = 600
+    MIN_IMAGE_HEIGHT: int = 800
+    MIN_IMAGE_DPI: int = 150
+    BLANK_PAGE_PIXEL_VAR_THRESHOLD: float = 10.0
+    BLANK_PAGE_WHITE_RATIO_THRESHOLD: float = 0.99
+    SKEW_ANGLE_THRESHOLD: float = 5.0
+    QUALITY_SCORE_GOOD_THRESHOLD: float = 90.0
+    QUALITY_SCORE_ACCEPTABLE_THRESHOLD: float = 70.0
+    QUALITY_SCORE_POOR_THRESHOLD: float = 40.0
+
 
     @property
     def cors_origins_list(self) -> List[str]:

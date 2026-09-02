@@ -240,6 +240,12 @@ def submit_bid(
     try:
         db.commit()
         db.refresh(bid)
+        # Emit Part 12 notifications for Bidder and Procurement Officer
+        try:
+            from app.services.notification_service import NotificationService
+            NotificationService.notify_bid_submitted(db=db, bid=bid)
+        except Exception as notif_err:
+            pass
     except Exception as e:
         db.rollback()
         raise HTTPException(
