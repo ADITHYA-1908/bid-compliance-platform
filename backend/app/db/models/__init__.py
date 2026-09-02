@@ -72,6 +72,14 @@ from app.db.models.document_validity import (
     ValidityStatus,
     ValidityDateSource,
 )
+from app.db.models.tender_requirement_version import TenderRequirementVersion
+from app.db.models.clarification import (
+    ClarificationRequest,
+    ClarificationResponse,
+    ClarificationType,
+    ClarificationPriority,
+    ClarificationStatus,
+)
 
 __all__ = [
     "Base",
@@ -82,6 +90,7 @@ __all__ = [
     "User",
     "Tender",
     "TenderRequirement",
+    "TenderRequirementVersion",
     "Bid",
     "BidDocument",
     "DocumentProcessing",
@@ -131,6 +140,11 @@ __all__ = [
     "DocumentValidityRecord",
     "ValidityStatus",
     "ValidityDateSource",
+    "ClarificationRequest",
+    "ClarificationResponse",
+    "ClarificationType",
+    "ClarificationPriority",
+    "ClarificationStatus",
 ]
 
 

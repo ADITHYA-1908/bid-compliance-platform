@@ -90,12 +90,29 @@ def create_requirement(
             requirement_type=data.requirement_type.strip().upper(),
             operator=data.operator.strip().upper(),
             expected_value=data.expected_value,
+            unit=getattr(data, "unit", None),
             is_mandatory=data.is_mandatory,
             weight=data.weight,
             display_order=data.display_order,
+            source_clause=getattr(data, "source_clause", None),
+            source_page=getattr(data, "source_page", None),
+            corrigendum_number=getattr(data, "corrigendum_number", None),
             is_active=True,
+            current_version_number=1,
+            last_changed_by_profile_id=current_user.profile_id if current_user else None,
         )
         db.add(requirement)
+        db.flush()
+
+        # Seed initial Version 1 snapshot for complete provenance
+        from app.services.rule_version_service import RuleVersionService
+        RuleVersionService.create_initial_version(
+            db=db,
+            requirement=requirement,
+            current_user=current_user,
+            change_reason="Initial baseline requirement version",
+        )
+
         db.commit()
         db.refresh(requirement)
         return requirement
@@ -107,7 +124,7 @@ def create_requirement(
         db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to create tender requirement rule.",
+            detail=f"Failed to create tender requirement rule: {e}",
         )
 
 
@@ -141,69 +158,31 @@ def update_requirement(
     db: Session,
     tender_id: uuid.UUID,
     requirement_id: uuid.UUID,
-    data: TenderRequirementUpdate,
+    data: Union[TenderRequirementUpdate, Any],
     current_user: User,
 ) -> TenderRequirement:
     """
-    Partially updates an existing tender requirement.
-    Restricted to active DRAFT tenders.
+    Updates an existing tender requirement with full immutable versioning.
+    Tracks changed fields, calculates next version number, and preserves audit trail.
     """
-    tender = tender_service.get_tender_by_id(db=db, tender_id=tender_id, current_user=current_user)
+    from app.services.rule_version_service import RuleVersionService
+    from app.schemas.rule_version import TenderRequirementUpdateWithVersionRequest
 
-    if tender.status != "DRAFT" or not tender.is_active:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Requirements can only be modified for active tenders in DRAFT status (current status: {tender.status}).",
-        )
+    if isinstance(data, dict):
+        version_payload = TenderRequirementUpdateWithVersionRequest(**data)
+    elif isinstance(data, TenderRequirementUpdateWithVersionRequest):
+        version_payload = data
+    else:
+        version_payload = TenderRequirementUpdateWithVersionRequest(**data.model_dump(exclude_unset=True))
 
-    req = get_requirement(db=db, tender_id=tender_id, requirement_id=requirement_id, current_user=current_user)
-
-    update_dict = data.model_dump(exclude_unset=True)
-
-    if "code" in update_dict and update_dict["code"]:
-        normalized_code = update_dict["code"].strip().upper()
-        if normalized_code != req.code:
-            existing = db.scalars(
-                select(TenderRequirement).where(
-                    TenderRequirement.tender_id == tender_id,
-                    TenderRequirement.code == normalized_code,
-                    TenderRequirement.id != requirement_id,
-                    TenderRequirement.is_active == True,  # noqa: E712
-                )
-            ).first()
-            if existing:
-                raise HTTPException(
-                    status_code=status.HTTP_409_CONFLICT,
-                    detail=f"Requirement with code '{normalized_code}' already exists for this tender.",
-                )
-            update_dict["code"] = normalized_code
-
-    if "category" in update_dict and update_dict["category"]:
-        update_dict["category"] = update_dict["category"].strip().upper()
-
-    if "requirement_type" in update_dict and update_dict["requirement_type"]:
-        update_dict["requirement_type"] = update_dict["requirement_type"].strip().upper()
-
-    if "operator" in update_dict and update_dict["operator"]:
-        update_dict["operator"] = update_dict["operator"].strip().upper()
-
-    try:
-        for field, value in update_dict.items():
-            setattr(req, field, value)
-
-        db.commit()
-        db.refresh(req)
-        return req
-
-    except HTTPException:
-        db.rollback()
-        raise
-    except Exception as e:
-        db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to update tender requirement.",
-        )
+    req, _, _ = RuleVersionService.update_requirement_with_version(
+        db=db,
+        tender_id=tender_id,
+        requirement_id=requirement_id,
+        data=version_payload,
+        current_user=current_user,
+    )
+    return req
 
 
 def deactivate_requirement(
@@ -214,27 +193,20 @@ def deactivate_requirement(
 ) -> TenderRequirement:
     """
     Soft-deletes / deactivates a tender requirement (sets is_active=False).
-    Preserves historical criteria records for auditability.
+    Creates an immutable version snapshot recording the deactivation event.
     """
-    tender = tender_service.get_tender_by_id(db=db, tender_id=tender_id, current_user=current_user)
+    from app.services.rule_version_service import RuleVersionService
+    from app.schemas.rule_version import TenderRequirementUpdateWithVersionRequest
 
-    if tender.status != "DRAFT" or not tender.is_active:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Requirements can only be deactivated for active tenders in DRAFT status (current status: {tender.status}).",
-        )
-
-    req = get_requirement(db=db, tender_id=tender_id, requirement_id=requirement_id, current_user=current_user)
-
-    try:
-        req.is_active = False
-        db.commit()
-        db.refresh(req)
-        return req
-
-    except Exception as e:
-        db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to deactivate tender requirement.",
-        )
+    payload = TenderRequirementUpdateWithVersionRequest(
+        is_active=False,
+        change_reason="Requirement deactivated/archived",
+    )
+    req, _, _ = RuleVersionService.update_requirement_with_version(
+        db=db,
+        tender_id=tender_id,
+        requirement_id=requirement_id,
+        data=payload,
+        current_user=current_user,
+    )
+    return req

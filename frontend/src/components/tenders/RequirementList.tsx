@@ -7,6 +7,8 @@ import {
   TenderRequirementUpdatePayload,
 } from "@/lib/api";
 import { RequirementModal } from "./RequirementModal";
+import { RuleVersionHistoryModal } from "./RuleVersionHistoryModal";
+import { RuleReevaluationModal } from "./RuleReevaluationModal";
 import { REQUIREMENT_TEMPLATES } from "@/config/requirementTemplates";
 import { formatCurrency } from "@/lib/formatters";
 import {
@@ -20,6 +22,9 @@ import {
   CheckCircle,
   HelpCircle,
   Lock,
+  History,
+  GitCompare,
+  RefreshCw,
 } from "lucide-react";
 
 interface RequirementListProps {
@@ -46,6 +51,11 @@ export function RequirementList({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [modalError, setModalError] = useState<string | null>(null);
 
+  // Version history & re-evaluation state
+  const [historyReq, setHistoryReq] = useState<TenderRequirement | null>(null);
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [isReevaluateAllOpen, setIsReevaluateAllOpen] = useState(false);
+
   // Disable confirmation state
   const [deactivatingReq, setDeactivatingReq] = useState<TenderRequirement | null>(null);
   const [isDeactivating, setIsDeactivating] = useState(false);
@@ -67,6 +77,11 @@ export function RequirementList({
     setEditingReq(req);
     setModalError(null);
     setIsModalOpen(true);
+  };
+
+  const handleOpenHistory = (req: TenderRequirement) => {
+    setHistoryReq(req);
+    setIsHistoryOpen(true);
   };
 
   const handleQuickAddTemplate = async (templateId: string) => {
@@ -214,21 +229,35 @@ export function RequirementList({
           </p>
         </div>
 
-        {isDraft ? (
-          <button
-            type="button"
-            onClick={handleOpenAdd}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-purple-900 px-3.5 py-2 text-xs font-semibold text-white shadow-xs hover:bg-purple-800 transition-colors cursor-pointer shrink-0"
-          >
-            <PlusCircle className="h-4 w-4" />
-            Add Custom Rule
-          </button>
-        ) : (
-          <div className="inline-flex items-center gap-1.5 rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 border border-slate-200 shrink-0">
-            <Lock className="h-3.5 w-3.5 text-slate-500" />
-            Requirements Locked
-          </div>
-        )}
+        <div className="flex items-center gap-2">
+          {requirements.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setIsReevaluateAllOpen(true)}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-purple-200 bg-purple-50 px-3 py-1.5 text-xs font-semibold text-purple-900 hover:bg-purple-100 transition-colors cursor-pointer shrink-0"
+              title="Re-evaluate all submitted bids against active rule versions"
+            >
+              <RefreshCw className="h-3.5 w-3.5 text-purple-700" />
+              Re-evaluate All Rules
+            </button>
+          )}
+
+          {isDraft ? (
+            <button
+              type="button"
+              onClick={handleOpenAdd}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-purple-900 px-3.5 py-2 text-xs font-semibold text-white shadow-xs hover:bg-purple-800 transition-colors cursor-pointer shrink-0"
+            >
+              <PlusCircle className="h-4 w-4" />
+              Add Custom Rule
+            </button>
+          ) : (
+            <div className="inline-flex items-center gap-1.5 rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 border border-slate-200 shrink-0">
+              <Lock className="h-3.5 w-3.5 text-slate-500" />
+              Requirements Locked
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Locked Status Notice */}
@@ -327,11 +356,9 @@ export function RequirementList({
                 <th scope="col" className="px-4 py-3 text-right">
                   Weight
                 </th>
-                {isDraft && (
-                  <th scope="col" className="px-4 py-3 text-right">
-                    Actions
-                  </th>
-                )}
+                <th scope="col" className="px-4 py-3 text-right">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 bg-white text-slate-700">
@@ -345,6 +372,9 @@ export function RequirementList({
                     <div className="flex items-center gap-2">
                       <span className="font-mono text-[11px] font-bold text-slate-800 bg-slate-100 px-1.5 py-0.5 rounded">
                         {req.code}
+                      </span>
+                      <span className="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-200">
+                        v{req.current_version_number || 1}
                       </span>
                     </div>
                     <div className="font-semibold text-slate-900 mt-1">{req.name}</div>
@@ -379,29 +409,41 @@ export function RequirementList({
                     {Number(req.weight || 0)} Pts
                   </td>
 
-                  {isDraft && (
-                    <td className="px-4 py-3.5 whitespace-nowrap text-right">
-                      <div className="inline-flex items-center gap-1 justify-end">
-                        <button
-                          type="button"
-                          onClick={() => handleOpenEdit(req)}
-                          className="rounded p-1 text-slate-500 hover:bg-purple-50 hover:text-purple-900 transition-colors cursor-pointer"
-                          title="Edit Requirement Rule"
-                        >
-                          <Edit2 className="h-3.5 w-3.5" />
-                        </button>
+                  <td className="px-4 py-3.5 whitespace-nowrap text-right">
+                    <div className="inline-flex items-center gap-1.5 justify-end">
+                      <button
+                        type="button"
+                        onClick={() => handleOpenHistory(req)}
+                        className="inline-flex items-center gap-1 rounded px-2 py-1 text-[11px] font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 transition-colors cursor-pointer"
+                        title="View Rule Version History"
+                      >
+                        <History className="h-3 w-3" />
+                        History
+                      </button>
 
-                        <button
-                          type="button"
-                          onClick={() => setDeactivatingReq(req)}
-                          className="rounded p-1 text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition-colors cursor-pointer"
-                          title="Disable Requirement"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
-                      </div>
-                    </td>
-                  )}
+                      {isDraft && (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => handleOpenEdit(req)}
+                            className="rounded p-1 text-slate-500 hover:bg-purple-50 hover:text-purple-900 transition-colors cursor-pointer"
+                            title="Edit Requirement Rule"
+                          >
+                            <Edit2 className="h-3.5 w-3.5" />
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => setDeactivatingReq(req)}
+                            className="rounded p-1 text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition-colors cursor-pointer"
+                            title="Disable Requirement"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -467,6 +509,30 @@ export function RequirementList({
           </div>
         </div>
       )}
+
+      {/* Version History Modal */}
+      {historyReq && (
+        <RuleVersionHistoryModal
+          isOpen={isHistoryOpen}
+          onClose={() => {
+            setIsHistoryOpen(false);
+            setHistoryReq(null);
+          }}
+          tenderId={tenderId}
+          tenderNumber={tenderId.slice(0, 8).toUpperCase()}
+          requirementId={historyReq.id}
+          requirementCode={historyReq.code}
+          requirementName={historyReq.name}
+        />
+      )}
+
+      {/* Tender-wide Re-evaluation Modal */}
+      <RuleReevaluationModal
+        isOpen={isReevaluateAllOpen}
+        onClose={() => setIsReevaluateAllOpen(false)}
+        tenderId={tenderId}
+        tenderNumber={tenderId.slice(0, 8).toUpperCase()}
+      />
     </div>
   );
 }

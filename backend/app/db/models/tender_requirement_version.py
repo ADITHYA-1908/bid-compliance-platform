@@ -1,18 +1,18 @@
 """
-Tender Requirement Model
-Represents configurable eligibility, technical, statutory, and compliance conditions
-attached to a specific Tender. Stored dynamically as data rather than hard-coded logic.
+Tender Requirement Version Model for Part 15: Compliance Rule Version History
+Persists immutable snapshots of tender eligibility criteria and compliance rules
+to ensure complete auditability, provenance tracking, and evaluation reproducibility.
 """
 
 import uuid
 from datetime import datetime
 from decimal import Decimal
-from typing import TYPE_CHECKING, Any, List, Optional
+from typing import TYPE_CHECKING, Any, Optional
 from sqlalchemy import (
     Boolean,
-    CheckConstraint,
     DateTime,
     ForeignKey,
+    Index,
     Integer,
     JSON,
     Numeric,
@@ -25,22 +25,21 @@ from app.db.base import Base, TimestampMixin
 
 if TYPE_CHECKING:
     from app.db.models.tender import Tender
-    from app.db.models.bid_document import BidDocument
-    from app.db.models.tender_requirement_version import TenderRequirementVersion
+    from app.db.models.tender_requirement import TenderRequirement
     from app.db.models.profile import Profile
 
 
-
-class TenderRequirement(Base, TimestampMixin):
+class TenderRequirementVersion(Base, TimestampMixin):
     """
-    Configurable eligibility / compliance criteria for a tender.
-    Supports dynamic operators (EQUALS, GREATER_THAN_OR_EQUAL, EXISTS, etc.)
-    and structured expected values (JSON) for future rule evaluation.
+    Immutable historical snapshot of a TenderRequirement version.
+    Records the exact criteria parameters, change reason, actor, and effective period.
     """
-    __tablename__ = "tender_requirements"
+    __tablename__ = "tender_requirement_versions"
     __table_args__ = (
-        CheckConstraint("weight >= 0", name="ck_tender_requirements_weight_positive"),
-        CheckConstraint("display_order >= 0", name="ck_tender_requirements_display_order_positive"),
+        Index("ix_tender_req_ver_req_id", "tender_requirement_id"),
+        Index("ix_tender_req_ver_tender_id", "tender_id"),
+        Index("ix_tender_req_ver_num", "tender_requirement_id", "version_number", unique=True),
+        Index("ix_tender_req_ver_active", "is_active"),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(
@@ -48,16 +47,28 @@ class TenderRequirement(Base, TimestampMixin):
         primary_key=True,
         default=uuid.uuid4,
     )
+    tender_requirement_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("tender_requirements.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
     tender_id: Mapped[uuid.UUID] = mapped_column(
         Uuid(as_uuid=True),
         ForeignKey("tenders.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
     )
+    version_number: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+        default=1,
+    )
+
+    # Core Requirement Definition
     code: Mapped[str] = mapped_column(
         String(100),
         nullable=False,
-        index=True,
     )
     name: Mapped[str] = mapped_column(
         String(255),
@@ -69,21 +80,18 @@ class TenderRequirement(Base, TimestampMixin):
     )
     category: Mapped[str] = mapped_column(
         String(50),
-        default="STATUTORY",
-        server_default="STATUTORY",
         nullable=False,
+        default="STATUTORY",
     )
     requirement_type: Mapped[str] = mapped_column(
         String(50),
-        default="BOOLEAN",
-        server_default="BOOLEAN",
         nullable=False,
+        default="BOOLEAN",
     )
     operator: Mapped[str] = mapped_column(
         String(50),
-        default="EQUALS",
-        server_default="EQUALS",
         nullable=False,
+        default="EQUALS",
     )
     expected_value: Mapped[Optional[Any]] = mapped_column(
         JSON,
@@ -95,36 +103,26 @@ class TenderRequirement(Base, TimestampMixin):
     )
     is_mandatory: Mapped[bool] = mapped_column(
         Boolean,
-        default=True,
-        server_default="true",
         nullable=False,
+        default=True,
     )
     is_critical: Mapped[bool] = mapped_column(
         Boolean,
-        default=False,
-        server_default="false",
         nullable=False,
+        default=False,
     )
     weight: Mapped[Optional[Decimal]] = mapped_column(
         Numeric(precision=5, scale=2),
-        default=10.0,
-        server_default="10.0",
         nullable=True,
+        default=Decimal("10.0"),
     )
     display_order: Mapped[int] = mapped_column(
         Integer,
-        default=0,
-        server_default="0",
         nullable=False,
+        default=0,
     )
 
-    # Version Tracking (Part 15)
-    current_version_number: Mapped[int] = mapped_column(
-        Integer,
-        default=1,
-        server_default="1",
-        nullable=False,
-    )
+    # Clause / Corrigendum Source
     source_clause: Mapped[Optional[str]] = mapped_column(
         String(255),
         nullable=True,
@@ -137,6 +135,8 @@ class TenderRequirement(Base, TimestampMixin):
         String(100),
         nullable=True,
     )
+
+    # Effective Dates
     effective_from: Mapped[Optional[datetime]] = mapped_column(
         DateTime(timezone=True),
         nullable=True,
@@ -145,41 +145,44 @@ class TenderRequirement(Base, TimestampMixin):
         DateTime(timezone=True),
         nullable=True,
     )
+
+    # Audit & Provenance
     change_reason: Mapped[Optional[str]] = mapped_column(
         Text,
         nullable=True,
     )
-    last_changed_by_profile_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+    changed_by_profile_id: Mapped[Optional[uuid.UUID]] = mapped_column(
         Uuid(as_uuid=True),
         ForeignKey("profiles.id", ondelete="SET NULL"),
         nullable=True,
     )
+    change_metadata: Mapped[Optional[dict]] = mapped_column(
+        JSON,
+        nullable=True,
+        default=dict,
+    )
 
+    # Status
     is_active: Mapped[bool] = mapped_column(
         Boolean,
-        default=True,
-        server_default="true",
         nullable=False,
+        default=True,
     )
 
     # Relationships
+    tender_requirement: Mapped["TenderRequirement"] = relationship(
+        "TenderRequirement",
+        back_populates="versions",
+    )
     tender: Mapped["Tender"] = relationship(
         "Tender",
-        back_populates="requirements",
     )
-    bid_documents: Mapped[List["BidDocument"]] = relationship(
-        "BidDocument",
-        back_populates="tender_requirement",
-    )
-    versions: Mapped[List["TenderRequirementVersion"]] = relationship(
-        "TenderRequirementVersion",
-        back_populates="tender_requirement",
-        cascade="all, delete-orphan",
-        order_by="TenderRequirementVersion.version_number.desc()",
-    )
-    last_changed_by_profile: Mapped[Optional["Profile"]] = relationship(
+    changed_by_profile: Mapped[Optional["Profile"]] = relationship(
         "Profile",
     )
 
     def __repr__(self) -> str:
-        return f"<TenderRequirement(id={self.id}, code='{self.code}', name='{self.name}', v={self.current_version_number})>"
+        return (
+            f"<TenderRequirementVersion(id={self.id}, req_id={self.tender_requirement_id}, "
+            f"version={self.version_number}, code='{self.code}')>"
+        )

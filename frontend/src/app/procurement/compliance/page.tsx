@@ -1385,7 +1385,14 @@ export default function ProcurementCompliancePage() {
                           className="hover:bg-purple-50/30 transition-colors cursor-pointer"
                         >
                           <td className="py-3.5 px-4">
-                            <div className="font-mono font-bold text-slate-900">{item.requirement_code}</div>
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-mono font-bold text-slate-900">{item.requirement_code}</span>
+                              {item.rule_version_number ? (
+                                <span className="font-mono text-[9px] font-bold px-1 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-200">
+                                  v{item.rule_version_number}
+                                </span>
+                              ) : null}
+                            </div>
                             <div className="text-slate-600 text-[11px] line-clamp-1">{item.requirement_name}</div>
                           </td>
 
@@ -1470,7 +1477,14 @@ export default function ProcurementCompliancePage() {
                     <FileText className="w-4 h-4 text-purple-800" />
                     Clause Audit Detail & Evidence Provenance
                   </h3>
-                  <p className="text-xs font-mono text-slate-500 mt-0.5">{selectedRule.requirement_code}</p>
+                  <p className="text-xs font-mono text-slate-500 mt-0.5 flex items-center gap-2">
+                    <span>{selectedRule.requirement_code}</span>
+                    {selectedRule.rule_version_number && (
+                      <span className="px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 font-bold border border-indigo-200 text-[10px]">
+                        Evaluated Rule Version: v{selectedRule.rule_version_number}
+                      </span>
+                    )}
+                  </p>
                 </div>
                 <button
                   onClick={() => setSelectedRule(null)}

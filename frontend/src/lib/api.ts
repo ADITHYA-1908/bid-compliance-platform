@@ -65,9 +65,19 @@ export interface TenderRequirement {
   requirement_type: string;
   operator: string;
   expected_value?: any;
+  unit?: string | null;
   is_mandatory: boolean;
+  is_critical?: boolean;
   weight?: number | null;
   display_order: number;
+  current_version_number?: number;
+  source_clause?: string | null;
+  source_page?: number | null;
+  corrigendum_number?: string | null;
+  effective_from?: string | null;
+  effective_to?: string | null;
+  change_reason?: string | null;
+  last_changed_by_profile_id?: string | null;
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -156,9 +166,16 @@ export interface TenderRequirementCreatePayload {
   requirement_type?: string;
   operator?: string;
   expected_value?: any;
+  unit?: string | null;
   is_mandatory?: boolean;
+  is_critical?: boolean;
   weight?: number;
   display_order?: number;
+  source_clause?: string | null;
+  source_page?: number | null;
+  corrigendum_number?: string | null;
+  effective_from?: string | null;
+  effective_to?: string | null;
 }
 
 export interface TenderRequirementUpdatePayload {
@@ -169,9 +186,17 @@ export interface TenderRequirementUpdatePayload {
   requirement_type?: string;
   operator?: string;
   expected_value?: any;
+  unit?: string | null;
   is_mandatory?: boolean;
+  is_critical?: boolean;
   weight?: number;
   display_order?: number;
+  source_clause?: string | null;
+  source_page?: number | null;
+  corrigendum_number?: string | null;
+  effective_from?: string | null;
+  effective_to?: string | null;
+  change_reason?: string | null;
   is_active?: boolean;
 }
 

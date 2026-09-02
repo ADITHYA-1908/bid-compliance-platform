@@ -43,8 +43,13 @@ export function RequirementModal({
   const [operator, setOperator] = useState("EQUALS");
   const [expectedValue, setExpectedValue] = useState<any>("");
   const [isMandatory, setIsMandatory] = useState(true);
+  const [isCritical, setIsCritical] = useState(false);
   const [weight, setWeight] = useState("10");
   const [displayOrder, setDisplayOrder] = useState("0");
+  const [changeReason, setChangeReason] = useState("");
+  const [corrigendumNumber, setCorrigendumNumber] = useState("");
+  const [sourceClause, setSourceClause] = useState("");
+  const [sourcePage, setSourcePage] = useState("");
 
   const [validationError, setValidationError] = useState<string | null>(null);
 
@@ -62,8 +67,13 @@ export function RequirementModal({
           : ""
       );
       setIsMandatory(editingRequirement.is_mandatory ?? true);
+      setIsCritical(editingRequirement.is_critical ?? false);
       setWeight(String(editingRequirement.weight ?? "10"));
       setDisplayOrder(String(editingRequirement.display_order ?? "0"));
+      setChangeReason("");
+      setCorrigendumNumber(editingRequirement.corrigendum_number || "");
+      setSourceClause(editingRequirement.source_clause || "");
+      setSourcePage(editingRequirement.source_page ? String(editingRequirement.source_page) : "");
     } else {
       // Default reset
       setCode("");
@@ -74,8 +84,13 @@ export function RequirementModal({
       setOperator("EQUALS");
       setExpectedValue("");
       setIsMandatory(true);
+      setIsCritical(false);
       setWeight("10");
       setDisplayOrder("0");
+      setChangeReason("");
+      setCorrigendumNumber("");
+      setSourceClause("");
+      setSourcePage("");
     }
     setValidationError(null);
   }, [editingRequirement, isOpen]);
@@ -163,8 +178,13 @@ export function RequirementModal({
       operator,
       expected_value: parsedExpectedValue,
       is_mandatory: isMandatory,
+      is_critical: isCritical,
       weight: numericWeight,
       display_order: numericOrder,
+      source_clause: sourceClause.trim() || undefined,
+      source_page: sourcePage ? parseInt(sourcePage, 10) : undefined,
+      corrigendum_number: corrigendumNumber.trim() || undefined,
+      change_reason: changeReason.trim() || undefined,
     };
 
     await onSave(payload);
@@ -454,21 +474,98 @@ export function RequirementModal({
               />
             </div>
 
-            {/* Mandatory Checkbox */}
-            <div className="sm:col-span-2 pt-2">
-              <label className="flex items-center gap-2 text-xs font-semibold text-slate-800 cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  checked={isMandatory}
-                  onChange={(e) => setIsMandatory(e.target.checked)}
-                  className="rounded border-slate-300 text-purple-900 focus:ring-purple-600 h-4 w-4"
-                />
-                <span>Mandatory Requirement (Disqualifies bid if failed)</span>
-              </label>
-              <p className="mt-0.5 pl-6 text-[11px] text-slate-500">
-                If checked, non-compliance will flag this bidder as technically non-responsive.
-              </p>
+            {/* Mandatory & Critical Checkboxes */}
+            <div className="sm:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+              <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg">
+                <label className="flex items-center gap-2 text-xs font-semibold text-slate-800 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={isMandatory}
+                    onChange={(e) => setIsMandatory(e.target.checked)}
+                    className="rounded border-slate-300 text-purple-900 focus:ring-purple-600 h-4 w-4"
+                  />
+                  <span>Mandatory Requirement</span>
+                </label>
+                <p className="mt-1 pl-6 text-[10px] text-slate-500">
+                  Flags non-compliant bids as technically non-responsive.
+                </p>
+              </div>
+
+              <div className="p-3 bg-rose-50/50 border border-rose-200 rounded-lg">
+                <label className="flex items-center gap-2 text-xs font-semibold text-rose-950 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={isCritical}
+                    onChange={(e) => setIsCritical(e.target.checked)}
+                    className="rounded border-rose-300 text-rose-700 focus:ring-rose-600 h-4 w-4"
+                  />
+                  <span>Critical Disqualification Override</span>
+                </label>
+                <p className="mt-1 pl-6 text-[10px] text-rose-700">
+                  Triggers immediate disqualification override regardless of aggregate score.
+                </p>
+              </div>
             </div>
+
+            {/* RFP Source References */}
+            <div>
+              <label htmlFor="reqClause" className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                Source Clause Ref
+              </label>
+              <input
+                id="reqClause"
+                type="text"
+                value={sourceClause}
+                onChange={(e) => setSourceClause(e.target.value)}
+                placeholder="e.g. Section 4.2(a)"
+                className="mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 focus:border-purple-600 focus:outline-none focus:ring-1 focus:ring-purple-600"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="reqPage" className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                Source Page / Corrigendum
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                <input
+                  id="reqPage"
+                  type="number"
+                  min="1"
+                  value={sourcePage}
+                  onChange={(e) => setSourcePage(e.target.value)}
+                  placeholder="Page #"
+                  className="mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 focus:border-purple-600 focus:outline-none focus:ring-1 focus:ring-purple-600"
+                />
+                <input
+                  id="reqCorr"
+                  type="text"
+                  value={corrigendumNumber}
+                  onChange={(e) => setCorrigendumNumber(e.target.value)}
+                  placeholder="Corr # (e.g. CORR-01)"
+                  className="mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 focus:border-purple-600 focus:outline-none focus:ring-1 focus:ring-purple-600"
+                />
+              </div>
+            </div>
+
+            {/* Change Reason (Required when editing) */}
+            {isEditMode && (
+              <div className="sm:col-span-2 p-3 bg-amber-50/60 border border-amber-200 rounded-lg space-y-1.5">
+                <label htmlFor="reqReason" className="block text-xs font-bold text-amber-950 uppercase tracking-wider">
+                  Reason for Modification (Immutable Audit Log)
+                </label>
+                <input
+                  id="reqReason"
+                  type="text"
+                  value={changeReason}
+                  onChange={(e) => setChangeReason(e.target.value)}
+                  placeholder="e.g. Corrigendum #1: Relaxed turnover criterion based on pre-bid query"
+                  className="block w-full rounded-lg border border-amber-300 bg-white px-3 py-2 text-xs text-slate-900 focus:border-amber-600 focus:outline-none focus:ring-1 focus:ring-amber-600"
+                />
+                <p className="text-[10px] text-amber-800">
+                  This change reason will be permanently recorded in the immutable rule version history timeline.
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Modal Footer */}

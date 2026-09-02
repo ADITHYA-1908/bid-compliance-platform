@@ -50,6 +50,8 @@ class ComplianceResultItemResponse(BaseModel):
     is_critical: bool = False
     critical_failure: bool = False
     weight: Optional[Decimal] = None
+    rule_version_id: Optional[uuid.UUID] = None
+    rule_version_number: Optional[int] = 1
     evaluation_version: int = 1
     is_current: bool = True
     evaluated_at: Optional[datetime] = None

@@ -10,6 +10,8 @@ from app.api.v1.validation import router as validation_router
 from app.api.v1.analytics import router as analytics_router
 from app.api.v1.bidder.certificates import router as bidder_certificates_router
 from app.api.v1.procurement.certificates import router as procurement_certificates_router
+from app.api.v1.bidder.clarifications import router as bidder_clarifications_router
+from app.api.v1.procurement.clarifications import router as procurement_clarifications_router
 
 api_v1_router = APIRouter()
 
@@ -24,3 +26,6 @@ api_v1_router.include_router(validation_router, prefix="/admin/validation", tags
 api_v1_router.include_router(analytics_router, prefix="/procurement/analytics", tags=["Procurement Analytics & Impact"])
 api_v1_router.include_router(bidder_certificates_router, prefix="/bidder/certificates", tags=["Bidder Certificate Validity"])
 api_v1_router.include_router(procurement_certificates_router, prefix="/procurement/certificates", tags=["Procurement Certificate Validity"])
+api_v1_router.include_router(bidder_clarifications_router, prefix="/bidder/clarifications", tags=["Bidder Clarifications"])
+api_v1_router.include_router(procurement_clarifications_router, prefix="/procurement/clarifications", tags=["Procurement Clarifications"])
+

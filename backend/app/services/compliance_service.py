@@ -165,6 +165,8 @@ def evaluate_bid_compliance(
         prev.is_current = False
 
     # 5. Evaluate each requirement and persist new results
+    from app.db.models.tender_requirement_version import TenderRequirementVersion
+
     created_results: List[ComplianceResult] = []
     for req in requirements:
         rule_res = evaluate_requirement(req, context)
@@ -175,11 +177,23 @@ def evaluate_bid_compliance(
         if rule_res.review_type and "review_type" not in ev_data:
             ev_data["review_type"] = rule_res.review_type
 
+        # Resolve active rule version
+        rule_ver = db.scalars(
+            select(TenderRequirementVersion).where(
+                TenderRequirementVersion.tender_requirement_id == req.id
+            ).order_by(TenderRequirementVersion.version_number.desc())
+        ).first()
+
+        rule_ver_id = rule_ver.id if rule_ver else None
+        rule_ver_num = rule_ver.version_number if rule_ver else getattr(req, "current_version_number", 1)
+
         comp_rec = ComplianceResult(
             id=uuid.uuid4(),
             bid_id=bid.id,
             tender_id=tender.id,
             tender_requirement_id=req.id,
+            rule_version_id=rule_ver_id,
+            rule_version_number=rule_ver_num,
             compliance_status=rule_res.compliance_status,
             actual_value=rule_res.actual_value,
             expected_value=rule_res.expected_value,
@@ -216,17 +230,17 @@ def get_bid_compliance(
 
     current_results = db.scalars(
         select(ComplianceResult)
+        .options(selectinload(ComplianceResult.tender_requirement))
         .where(
             and_(
                 ComplianceResult.bid_id == bid.id,
                 ComplianceResult.is_current == True,
             )
         )
-        .order_by(ComplianceResult.created_at.asc())
     ).all()
 
-    last_eval = current_results[0].evaluated_at if current_results else None
-    return _build_compliance_summary_response(bid, tender, list(current_results), last_eval)
+    evaluated_at = current_results[0].evaluated_at if current_results else None
+    return _build_compliance_summary_response(bid, tender, list(current_results), evaluated_at)
 
 
 def _build_compliance_summary_response(
@@ -235,7 +249,9 @@ def _build_compliance_summary_response(
     results: List[ComplianceResult],
     evaluated_at: Optional[datetime],
 ) -> BidComplianceSummaryResponse:
-    """Helper to transform model list into standard summary response."""
+    """
+    Synthesizes evaluated compliance rows into a unified response summary.
+    """
     counts = ComplianceSummaryCounts(total=len(results))
     item_responses: List[ComplianceResultItemResponse] = []
     review_items = []
@@ -289,6 +305,8 @@ def _build_compliance_summary_response(
                 is_critical=is_crit,
                 critical_failure=is_crit_fail,
                 weight=r.weight,
+                rule_version_id=getattr(r, "rule_version_id", None),
+                rule_version_number=getattr(r, "rule_version_number", 1),
                 evaluation_version=r.evaluation_version,
                 is_current=r.is_current,
                 evaluated_at=r.evaluated_at,

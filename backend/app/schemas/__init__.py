@@ -165,6 +165,27 @@ from app.schemas.procurement_report import (
     TenderSummaryBidItem,
     TenderReportResponse,
 )
+from app.schemas.rule_version import (
+    TenderRequirementVersionResponse,
+    TenderRequirementVersionListResponse,
+    TenderRequirementFieldDiff,
+    TenderRequirementVersionCompareResponse,
+    TenderRequirementUpdateWithVersionRequest,
+    ReevaluationBidResult,
+    ReevaluationResultResponse,
+)
+from app.schemas.clarification import (
+    ClarificationResponseCreate,
+    ClarificationResponseDTO,
+    ClarificationRequestCreate,
+    ClarificationRequestUpdate,
+    ClarificationResolveRequest,
+    ClarificationRequestListItemResponse,
+    ClarificationRequestDetailResponse,
+    ClarificationRequestListResponse,
+    ClarificationSummaryResponse,
+    ClarificationAnalyticsResponse,
+)
 
 __all__ = [
     "RoleBase",
@@ -296,7 +317,21 @@ __all__ = [
     "ReportFinalDecisionSection",
     "ReportDecisionHistoryItem",
     "ReportAuditEventSummaryItem",
-    "BidEvaluationReportResponse",
-    "TenderSummaryBidItem",
-    "TenderReportResponse",
+    "TenderRequirementVersionResponse",
+    "TenderRequirementVersionListResponse",
+    "TenderRequirementFieldDiff",
+    "TenderRequirementVersionCompareResponse",
+    "TenderRequirementUpdateWithVersionRequest",
+    "ReevaluationBidResult",
+    "ReevaluationResultResponse",
+    "ClarificationResponseCreate",
+    "ClarificationResponseDTO",
+    "ClarificationRequestCreate",
+    "ClarificationRequestUpdate",
+    "ClarificationResolveRequest",
+    "ClarificationRequestListItemResponse",
+    "ClarificationRequestDetailResponse",
+    "ClarificationRequestListResponse",
+    "ClarificationSummaryResponse",
+    "ClarificationAnalyticsResponse",
 ]

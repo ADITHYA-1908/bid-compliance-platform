@@ -24,7 +24,15 @@ from app.schemas.tender import (
     TenderRequirementUpdate,
     TenderRequirementResponse,
 )
+from app.schemas.rule_version import (
+    TenderRequirementVersionResponse,
+    TenderRequirementVersionListResponse,
+    TenderRequirementVersionCompareResponse,
+    TenderRequirementUpdateWithVersionRequest,
+    ReevaluationResultResponse,
+)
 from app.services import tender_service, tender_requirement_service, tender_lifecycle_service
+from app.services.rule_version_service import RuleVersionService
 
 router = APIRouter()
 
@@ -257,6 +265,31 @@ def get_requirement(
     )
 
 
+@router.put(
+    "/{tender_id}/requirements/{requirement_id}",
+    response_model=TenderRequirementResponse,
+    summary="Update a tender requirement with explicit version tracking",
+)
+def update_requirement_with_version(
+    tender_id: uuid.UUID,
+    requirement_id: uuid.UUID,
+    data: TenderRequirementUpdateWithVersionRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_role("PROCUREMENT_OFFICER")),
+):
+    """
+    Updates requirement criteria and creates a new immutable version record.
+    Requires change_reason for published tenders or when bids already exist.
+    """
+    return tender_requirement_service.update_requirement(
+        db=db,
+        tender_id=tender_id,
+        requirement_id=requirement_id,
+        data=data,
+        current_user=current_user,
+    )
+
+
 @router.patch(
     "/{tender_id}/requirements/{requirement_id}",
     response_model=TenderRequirementResponse,
@@ -265,13 +298,13 @@ def get_requirement(
 def update_requirement(
     tender_id: uuid.UUID,
     requirement_id: uuid.UUID,
-    data: TenderRequirementUpdate,
+    data: TenderRequirementUpdateWithVersionRequest,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_role("PROCUREMENT_OFFICER")),
 ):
     """
     Updates criteria, expected value, weight, or ordering of a tender requirement.
-    Restricted to active DRAFT tenders.
+    Creates a new immutable version if criteria changed.
     """
     return tender_requirement_service.update_requirement(
         db=db,
@@ -295,11 +328,144 @@ def deactivate_requirement(
 ):
     """
     Soft-deletes a requirement by setting is_active=false, preserving audit history.
-    Restricted to active DRAFT tenders.
     """
     return tender_requirement_service.deactivate_requirement(
         db=db,
         tender_id=tender_id,
         requirement_id=requirement_id,
+        current_user=current_user,
+    )
+
+
+# ==========================================
+# Compliance Rule Version History Endpoints (Part 15)
+# ==========================================
+
+@router.get(
+    "/{tender_id}/requirements/{requirement_id}/versions",
+    response_model=TenderRequirementVersionListResponse,
+    summary="List historical versions of a tender requirement",
+)
+def list_requirement_versions(
+    tender_id: uuid.UUID,
+    requirement_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Retrieves complete chronological version history for a tender requirement,
+    including version numbers, author provenance, change reasons, and criteria diffs.
+    """
+    return RuleVersionService.list_requirement_versions(
+        db=db,
+        tender_id=tender_id,
+        requirement_id=requirement_id,
+        current_user=current_user,
+    )
+
+
+@router.get(
+    "/{tender_id}/requirements/{requirement_id}/versions/compare",
+    response_model=TenderRequirementVersionCompareResponse,
+    summary="Compare two historical versions of a requirement",
+)
+def compare_requirement_versions(
+    tender_id: uuid.UUID,
+    requirement_id: uuid.UUID,
+    v1: int = Query(..., ge=1, description="Base version number"),
+    v2: int = Query(..., ge=1, description="Target version number to compare against"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Performs field-by-field diff comparison between two requirement versions.
+    """
+    return RuleVersionService.compare_versions(
+        db=db,
+        tender_id=tender_id,
+        requirement_id=requirement_id,
+        v1_num=v1,
+        v2_num=v2,
+        current_user=current_user,
+    )
+
+
+@router.get(
+    "/{tender_id}/requirements/{requirement_id}/versions/{version_identifier}",
+    response_model=TenderRequirementVersionResponse,
+    summary="Get details of a specific requirement version",
+)
+def get_requirement_version(
+    tender_id: uuid.UUID,
+    requirement_id: uuid.UUID,
+    version_identifier: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Retrieves a single historical version snapshot by version number or UUID.
+    """
+    parsed_ident: Union[uuid.UUID, int]
+    try:
+        parsed_ident = uuid.UUID(version_identifier)
+    except ValueError:
+        try:
+            parsed_ident = int(version_identifier)
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Version identifier must be a valid UUID or integer version number.",
+            )
+
+    return RuleVersionService.get_requirement_version(
+        db=db,
+        tender_id=tender_id,
+        requirement_id=requirement_id,
+        version_identifier=parsed_ident,
+        current_user=current_user,
+    )
+
+
+@router.post(
+    "/{tender_id}/requirements/{requirement_id}/reevaluate",
+    response_model=ReevaluationResultResponse,
+    summary="Re-evaluate all tender bids against latest rule version",
+)
+def reevaluate_requirement_bids(
+    tender_id: uuid.UUID,
+    requirement_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_role("PROCUREMENT_OFFICER")),
+):
+    """
+    Explicitly re-runs compliance, scoring, and risk evaluations for all bids
+    of the tender against the updated rule version, while preserving human decisions.
+    """
+    return RuleVersionService.reevaluate_tender_bids(
+        db=db,
+        tender_id=tender_id,
+        requirement_id=requirement_id,
+        current_user=current_user,
+    )
+
+
+@router.post(
+    "/{tender_id}/reevaluate-all-rules",
+    response_model=ReevaluationResultResponse,
+    summary="Re-evaluate all bids against all current tender rules",
+)
+def reevaluate_all_tender_rules(
+    tender_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_role("PROCUREMENT_OFFICER")),
+):
+    """
+    Explicitly re-runs compliance, scoring, and risk evaluations for all tender bids
+    across all active tender requirements.
+    """
+    return RuleVersionService.reevaluate_tender_bids(
+        db=db,
+        tender_id=tender_id,
+        requirement_id=None,
         current_user=current_user,
     )

@@ -27,6 +27,7 @@ if TYPE_CHECKING:
     from app.db.models.bid import Bid
     from app.db.models.tender import Tender
     from app.db.models.tender_requirement import TenderRequirement
+    from app.db.models.tender_requirement_version import TenderRequirementVersion
 
 
 class ComplianceStatus:
@@ -75,6 +76,19 @@ class ComplianceResult(Base, TimestampMixin):
         ForeignKey("tender_requirements.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
+    )
+
+    # Rule Version Provenance (Part 15)
+    rule_version_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("tender_requirement_versions.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    rule_version_number: Mapped[Optional[int]] = mapped_column(
+        Integer,
+        nullable=True,
+        default=1,
     )
 
     # Compliance Determination
@@ -160,10 +174,11 @@ class ComplianceResult(Base, TimestampMixin):
     bid: Mapped["Bid"] = relationship("Bid")
     tender: Mapped["Tender"] = relationship("Tender")
     tender_requirement: Mapped["TenderRequirement"] = relationship("TenderRequirement")
+    rule_version: Mapped[Optional["TenderRequirementVersion"]] = relationship("TenderRequirementVersion")
 
     def __repr__(self) -> str:
         return (
             f"<ComplianceResult(id={self.id}, bid_id={self.bid_id}, "
-            f"requirement_id={self.tender_requirement_id}, status='{self.compliance_status}', "
-            f"is_current={self.is_current})>"
+            f"requirement_id={self.tender_requirement_id}, rule_v={self.rule_version_number}, "
+            f"status='{self.compliance_status}', is_current={self.is_current})>"
         )

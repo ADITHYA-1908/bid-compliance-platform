@@ -48,6 +48,12 @@ export interface ComplianceResultItem {
   weight?: number;
   evaluation_version: number;
   is_current: boolean;
+  rule_version_id?: string | null;
+  rule_version_number?: number | null;
+  rule_version_code?: string | null;
+  rule_version_name?: string | null;
+  rule_version_operator?: string | null;
+  rule_version_expected_value?: any;
   evaluated_at?: string;
   created_at: string;
   updated_at: string;
