@@ -56,15 +56,15 @@ export function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
       />
 
       <div className="fixed inset-0 flex">
-        <div className="relative mr-16 flex w-full max-w-xs flex-1 flex-col bg-slate-950/95 backdrop-blur-xl border-r border-slate-800">
+        <div className="relative mr-16 flex w-full max-w-xs flex-1 flex-col bg-[#060a17]/95 backdrop-blur-2xl border-r border-cyan-500/20">
           {/* Header & Close button */}
-          <div className="flex h-16 shrink-0 items-center justify-between border-b border-slate-800 px-6">
+          <div className="flex h-16 shrink-0 items-center justify-between border-b border-cyan-500/15 px-6">
             <div className="flex items-center gap-2.5">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-tr from-purple-700 to-indigo-600 text-white shadow-md glow-purple">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-tr from-cyan-600 to-emerald-500 text-white shadow-md glow-cyan">
                 <ShieldCheck className="h-5 w-5" />
               </div>
               <span className="text-base font-extrabold tracking-tight text-white">
-                BidVerify <span className="text-purple-400">AI</span>
+                BidVerify <span className="gradient-text-cyan-emerald font-extrabold">AI</span>
               </span>
             </div>
 
@@ -79,8 +79,8 @@ export function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
           </div>
 
           {/* Role badge */}
-          <div className="px-6 py-2.5 border-b border-slate-800/60 bg-slate-900/40">
-            <span className="inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-bold bg-purple-950/70 border border-purple-500/30 text-purple-300 shadow-sm">
+          <div className="px-6 py-2.5 border-b border-cyan-500/10 bg-slate-950/60">
+            <span className="inline-flex items-center rounded-lg px-2.5 py-0.5 text-[10px] font-bold bg-cyan-950/80 border border-cyan-500/40 text-cyan-300 shadow-sm">
               {roleConfig.portalName}
             </span>
           </div>
@@ -100,13 +100,13 @@ export function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
                     key={item.href}
                     href={item.href}
                     onClick={onClose}
-                    className={`flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-xs font-semibold transition-all ${
+                    className={`flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-xs font-bold transition-all ${
                       isActive
-                        ? "nav-item-active text-white shadow-md shadow-purple-600/20"
-                        : "text-slate-300 hover:bg-slate-800 hover:text-white"
+                        ? "nav-item-active text-white shadow-md shadow-cyan-500/10"
+                        : "text-slate-300 hover:bg-slate-900 hover:text-white"
                     }`}
                   >
-                    <Icon className={`h-4 w-4 shrink-0 ${isActive ? "text-purple-300" : "text-slate-400"}`} />
+                    <Icon className={`h-4 w-4 shrink-0 ${isActive ? "text-cyan-300" : "text-slate-400"}`} />
                     <span>{item.label}</span>
                   </Link>
                 );
@@ -115,13 +115,13 @@ export function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
           </div>
 
           {/* Bottom user card & logout */}
-          <div className="border-t border-slate-800 p-4">
-            <div className="mb-3 rounded-xl glass-card p-3 border border-slate-800">
-              <p className="text-xs font-semibold text-white truncate">
+          <div className="border-t border-cyan-500/15 p-4">
+            <div className="mb-3 rounded-xl glass-card p-3 border border-cyan-500/20 bg-slate-950/80">
+              <p className="text-xs font-bold text-white truncate">
                 {user?.full_name || "User"}
               </p>
-              <p className="text-[11px] text-slate-400 truncate">{user?.email}</p>
-              <p className="text-[10px] text-purple-400 font-bold mt-0.5">
+              <p className="text-[11px] text-slate-300 truncate">{user?.email}</p>
+              <p className="text-[10px] text-cyan-400 font-extrabold mt-0.5">
                 {getRoleDisplayName(user?.role)}
               </p>
             </div>
@@ -129,7 +129,7 @@ export function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
             <button
               type="button"
               onClick={handleLogout}
-              className="flex w-full items-center justify-center gap-2 rounded-lg border border-slate-800 bg-slate-900/60 px-3 py-2 text-xs font-semibold text-slate-300 hover:bg-red-950/40 hover:text-red-300 hover:border-red-800/50 transition-colors cursor-pointer"
+              className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-800 bg-slate-950/80 px-3 py-2 text-xs font-semibold text-slate-300 hover:bg-red-950/50 hover:text-red-300 hover:border-red-800/60 transition-colors cursor-pointer"
             >
               <LogOut className="h-3.5 w-3.5" />
               Sign Out

@@ -43,22 +43,22 @@ export function TopNavbar({ onOpenMobileMenu }: TopNavbarProps) {
   };
 
   return (
-    <header className="navbar-gradient-border sticky top-0 z-20 flex h-16 shrink-0 items-center justify-between border-b border-slate-800/80 bg-slate-950/80 backdrop-blur-md px-4 sm:px-6 lg:px-8">
+    <header className="navbar-gradient-border sticky top-0 z-20 flex h-16 shrink-0 items-center justify-between border-b border-cyan-500/15 bg-[#040711]/85 backdrop-blur-xl px-4 sm:px-6 lg:px-8">
       <div className="flex items-center gap-3">
         {/* Mobile Hamburger Toggle */}
         <button
           type="button"
           onClick={onOpenMobileMenu}
-          className="rounded-md p-1.5 text-slate-400 hover:bg-slate-800 hover:text-white lg:hidden cursor-pointer transition-colors"
+          className="rounded-md p-1.5 text-slate-300 hover:bg-slate-800 hover:text-white lg:hidden cursor-pointer transition-colors"
           aria-label="Open mobile navigation menu"
         >
           <Menu className="h-6 w-6" />
         </button>
 
-        <div className="hidden sm:flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-slate-400">
+        <div className="hidden sm:flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-400">
           <span>GeM Procurement Portal</span>
           <span>•</span>
-          <span className="text-purple-400 font-bold tracking-normal">Bid Compliance Platform</span>
+          <span className="gradient-text-cyan font-bold tracking-normal">Bid Compliance Platform</span>
         </div>
       </div>
 
@@ -67,19 +67,19 @@ export function TopNavbar({ onOpenMobileMenu }: TopNavbarProps) {
         <button
           type="button"
           onClick={() => setDropdownOpen(!dropdownOpen)}
-          className="avatar-ring flex items-center gap-3 rounded-full p-1.5 text-left text-sm hover:bg-slate-800/60 transition-all cursor-pointer border border-transparent hover:border-slate-700/60"
+          className="avatar-ring flex items-center gap-3 rounded-full p-1.5 text-left text-sm hover:bg-slate-900/80 transition-all cursor-pointer border border-transparent hover:border-cyan-500/30"
           aria-expanded={dropdownOpen}
           aria-haspopup="true"
         >
-          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-tr from-purple-700 to-indigo-600 text-xs font-bold text-white shadow-md ring-2 ring-purple-500/20 glow-purple">
+          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-tr from-cyan-600 to-emerald-500 text-xs font-bold text-white shadow-md glow-cyan">
             {getInitials(user?.full_name)}
           </div>
 
           <div className="hidden md:flex flex-col text-left">
-            <span className="text-xs font-semibold text-slate-100 line-clamp-1">
+            <span className="text-xs font-bold text-slate-100 line-clamp-1">
               {user?.full_name || "User"}
             </span>
-            <span className="text-[10px] font-medium text-purple-400 uppercase tracking-wider">
+            <span className="text-[10px] font-bold text-cyan-400 uppercase tracking-wider">
               {user?.role || "BIDDER"}
             </span>
           </div>
@@ -90,14 +90,14 @@ export function TopNavbar({ onOpenMobileMenu }: TopNavbarProps) {
         {/* Dropdown Menu */}
         {dropdownOpen && (
           <div
-            className="dropdown-animate absolute right-0 mt-2 w-56 rounded-xl border border-slate-800/90 bg-slate-950/95 backdrop-blur-xl py-2 shadow-2xl ring-1 ring-white/10 focus:outline-none z-30"
+            className="dropdown-animate absolute right-0 mt-2 w-56 rounded-2xl border border-cyan-500/20 bg-[#060a17]/95 backdrop-blur-2xl py-2 shadow-2xl ring-1 ring-white/10 focus:outline-none z-30"
             role="menu"
           >
-            <div className="border-b border-slate-800/80 px-4 py-2.5">
-              <p className="text-xs font-semibold text-white">{user?.full_name}</p>
-              <p className="text-[11px] text-slate-400 truncate">{user?.email}</p>
+            <div className="border-b border-cyan-500/15 px-4 py-2.5">
+              <p className="text-xs font-bold text-white">{user?.full_name}</p>
+              <p className="text-[11px] text-slate-300 truncate">{user?.email}</p>
               <div className="mt-1.5">
-                <span className="inline-flex items-center rounded-md bg-purple-950/70 border border-purple-500/30 px-2 py-0.5 text-[10px] font-bold text-purple-300 shadow-sm">
+                <span className="inline-flex items-center rounded-lg bg-cyan-950/80 border border-cyan-500/30 px-2 py-0.5 text-[10px] font-bold text-cyan-300 shadow-sm">
                   {getRoleDisplayName(user?.role)}
                 </span>
               </div>
