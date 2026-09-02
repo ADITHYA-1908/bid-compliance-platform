@@ -61,6 +61,12 @@ from app.db.models.notification import (
     NotificationType,
     NotificationSeverity,
 )
+from app.db.models.validation_run import (
+    ValidationRun,
+    ValidationCaseResult,
+    ValidationStatus,
+    ValidationErrorType,
+)
 
 __all__ = [
     "Base",
@@ -113,6 +119,10 @@ __all__ = [
     "Notification",
     "NotificationType",
     "NotificationSeverity",
+    "ValidationRun",
+    "ValidationCaseResult",
+    "ValidationStatus",
+    "ValidationErrorType",
 ]
 
 

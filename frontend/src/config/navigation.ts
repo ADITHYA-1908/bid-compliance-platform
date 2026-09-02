@@ -174,6 +174,13 @@ export const NAVIGATION_BY_ROLE: Record<string, RoleNavigationConfig> = {
         description: "Immutable chronological event log and decision version history",
         phase: "Part 8E",
       },
+      {
+        label: "Validation & Benchmark",
+        href: "/procurement/validation",
+        icon: BarChart3,
+        description: "Empirical performance benchmark, OCR & extraction metrics",
+        phase: "Validation",
+      },
     ],
   },
   ADMIN: {
@@ -205,6 +212,13 @@ export const NAVIGATION_BY_ROLE: Record<string, RoleNavigationConfig> = {
         icon: Shield,
         description: "RBAC security policies and access matrix definitions",
         phase: "Part 2",
+      },
+      {
+        label: "Validation & Benchmark",
+        href: "/admin/validation",
+        icon: BarChart3,
+        description: "Empirical benchmark suite, accuracy metrics, and speedup",
+        phase: "Validation",
       },
       {
         label: "System Settings",
