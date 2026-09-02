@@ -32,7 +32,7 @@ from app.schemas.clarification import (
 )
 from app.services.bid_document_service import validate_file_safety
 from app.services.clarification_service import ClarificationService
-from app.services.document_processing_service import DocumentProcessingService
+from app.services.document_processing_service import execute_document_processing_pipeline
 from app.services.document_quality_service import DocumentQualityService
 from app.services.storage_service import sanitize_filename, storage_service
 
@@ -270,8 +270,8 @@ def upload_clarification_document(
 
     # Trigger async/sync document processing and quality assessment
     try:
-        DocumentProcessingService.process_document(db=db, document_id=doc_id)
-        DocumentQualityService.assess_document_quality(db=db, document_id=doc_id)
+        execute_document_processing_pipeline(db=db, current_user=current_user, bid_id=req.bid_id, document_id=doc_id)
+        DocumentQualityService.evaluate_document_quality(db=db, doc=new_doc, file_bytes=file_bytes, proc=initial_processing, user=current_user)
     except Exception as exc:
         logger.warning(f"Error processing clarification uploaded document {doc_id}: {exc}")
 
