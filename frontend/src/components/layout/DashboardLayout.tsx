@@ -28,7 +28,7 @@ export function DashboardLayout({
 
   return (
     <RequireRole allowedRoles={allowedRoles}>
-      <div className="min-h-screen bg-slate-50 text-slate-900 flex">
+      <div className="min-h-screen bg-[#0b0f19] text-slate-100 flex">
         {/* Desktop Fixed Sidebar */}
         <Sidebar />
 
