@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
@@ -15,6 +15,7 @@ import {
   AlertCircle,
   KeyRound,
   Check,
+  Landmark,
 } from "lucide-react";
 
 export type RoleType = "BIDDER" | "PROCUREMENT_OFFICER" | "ADMIN";
@@ -92,6 +93,7 @@ export function RoleLoginForm({ forcedRole, showRoleTabs = true }: RoleLoginForm
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, login } = useAuth();
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   const getInitialRole = (): RoleType => {
     if (forcedRole) return forcedRole;
@@ -180,44 +182,34 @@ export function RoleLoginForm({ forcedRole, showRoleTabs = true }: RoleLoginForm
   };
 
   return (
-    <div className="flex min-h-screen flex-col justify-center px-4 py-12 sm:px-6 lg:px-8 bg-[#040711] text-slate-100 relative overflow-hidden selection:bg-cyan-500 selection:text-white">
-      {/* 3D Verification Particle Canvas */}
-      <canvas
-        ref={canvasRef}
-        className="absolute inset-0 w-full h-full pointer-events-none z-0 opacity-70"
-      />
+    <div className="flex min-h-screen flex-col justify-center px-4 py-12 sm:px-6 lg:px-8 bg-[#F5F8F7] text-slate-900 relative overflow-hidden font-body selection:bg-emerald-500 selection:text-white">
+      {/* Background Ambient Blobs */}
+      <div className="blob-emerald top-[-100px] left-[20%] opacity-60" />
+      <div className="blob-teal bottom-[-100px] right-[20%] opacity-50" />
 
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center relative z-10">
-        {/* Platform Brand */}
-        <Link href="/" className="inline-flex items-center gap-2.5 mb-4 group cursor-pointer">
-          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-tr from-cyan-600 to-emerald-500 shadow-lg glow-cyan group-hover:scale-105 transition-transform">
-            <ShieldCheck className="h-6 w-6 text-white" />
+        {/* Government Emblem Brand Header */}
+        <Link href="/" className="inline-flex items-center gap-3 mb-4 group cursor-pointer">
+          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-900 text-amber-400 shadow-md border border-slate-700 group-hover:scale-105 transition-transform">
+            <Landmark className="h-6 w-6 text-amber-300" />
           </div>
-          <span className="font-extrabold text-2xl tracking-tight text-white">
-            BidVerify <span className="gradient-text-cyan-emerald font-extrabold">AI</span>
+          <span className="font-heading font-bold text-2xl tracking-tight text-slate-900">
+            BidVerify <span className="text-emerald-600 font-extrabold">AI</span>
           </span>
         </Link>
 
         {/* Role Badge & Title */}
         <div className="flex justify-center">
-          <span
-            className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1 text-xs font-bold uppercase tracking-wider border shadow-md ${
-              activeRole === "BIDDER"
-                ? "bg-cyan-950/90 border-cyan-500/40 text-cyan-300"
-                : activeRole === "PROCUREMENT_OFFICER"
-                ? "bg-emerald-950/90 border-emerald-500/40 text-emerald-300"
-                : "bg-cyan-950/90 border-cyan-400/40 text-cyan-300"
-            }`}
-          >
-            <IconComponent className="h-3.5 w-3.5" />
+          <span className="inline-flex items-center gap-1.5 rounded-full px-3.5 py-1 text-xs font-bold uppercase tracking-wider bg-emerald-50 text-emerald-800 border border-emerald-200 shadow-xs">
+            <IconComponent className="h-3.5 w-3.5 text-emerald-600" />
             {config.badge}
           </span>
         </div>
 
-        <h2 className="mt-4 text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
+        <h2 className="mt-4 font-heading text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
           {config.tagline}
         </h2>
-        <p className="mt-2 text-xs sm:text-sm text-slate-300 max-w-sm mx-auto leading-relaxed">
+        <p className="mt-2 text-xs sm:text-sm text-slate-500 max-w-sm mx-auto leading-relaxed">
           {config.subtitle}
         </p>
       </div>
@@ -225,14 +217,14 @@ export function RoleLoginForm({ forcedRole, showRoleTabs = true }: RoleLoginForm
       <div className="mt-6 sm:mx-auto sm:w-full sm:max-w-md relative z-10">
         {/* Role Selector Tabs */}
         {showRoleTabs && !forcedRole && (
-          <div className="mb-5 grid grid-cols-3 gap-1.5 rounded-xl bg-slate-950/90 border border-cyan-500/20 p-1.5 text-xs font-semibold backdrop-blur-md shadow-xl">
+          <div className="mb-5 grid grid-cols-3 gap-1.5 rounded-2xl bg-white border border-slate-200 p-1.5 text-xs font-semibold shadow-xs">
             <button
               type="button"
               onClick={() => handleRoleChange("BIDDER")}
-              className={`flex items-center justify-center gap-1.5 rounded-lg py-2.5 transition-all cursor-pointer ${
+              className={`flex items-center justify-center gap-1.5 rounded-xl py-2.5 transition-all cursor-pointer ${
                 activeRole === "BIDDER"
-                  ? "bg-cyan-600 font-bold text-white shadow-md glow-cyan"
-                  : "text-slate-400 hover:text-white hover:bg-slate-900/60"
+                  ? "btn-emerald-fintech font-bold text-white shadow-xs"
+                  : "text-slate-500 hover:text-slate-900 hover:bg-slate-50"
               }`}
             >
               <Building2 className="h-3.5 w-3.5" />
@@ -242,10 +234,10 @@ export function RoleLoginForm({ forcedRole, showRoleTabs = true }: RoleLoginForm
             <button
               type="button"
               onClick={() => handleRoleChange("PROCUREMENT_OFFICER")}
-              className={`flex items-center justify-center gap-1.5 rounded-lg py-2.5 transition-all cursor-pointer ${
+              className={`flex items-center justify-center gap-1.5 rounded-xl py-2.5 transition-all cursor-pointer ${
                 activeRole === "PROCUREMENT_OFFICER"
-                  ? "bg-emerald-600 font-bold text-white shadow-md glow-emerald"
-                  : "text-slate-400 hover:text-white hover:bg-slate-900/60"
+                  ? "btn-emerald-fintech font-bold text-white shadow-xs"
+                  : "text-slate-500 hover:text-slate-900 hover:bg-slate-50"
               }`}
             >
               <FileCheck2 className="h-3.5 w-3.5" />
@@ -255,10 +247,10 @@ export function RoleLoginForm({ forcedRole, showRoleTabs = true }: RoleLoginForm
             <button
               type="button"
               onClick={() => handleRoleChange("ADMIN")}
-              className={`flex items-center justify-center gap-1.5 rounded-lg py-2.5 transition-all cursor-pointer ${
+              className={`flex items-center justify-center gap-1.5 rounded-xl py-2.5 transition-all cursor-pointer ${
                 activeRole === "ADMIN"
-                  ? "btn-cyan-emerald font-bold text-slate-950 shadow-md"
-                  : "text-slate-400 hover:text-white hover:bg-slate-900/60"
+                  ? "btn-emerald-fintech font-bold text-white shadow-xs"
+                  : "text-slate-500 hover:text-slate-900 hover:bg-slate-50"
               }`}
             >
               <Lock className="h-3.5 w-3.5" />
@@ -267,30 +259,30 @@ export function RoleLoginForm({ forcedRole, showRoleTabs = true }: RoleLoginForm
           </div>
         )}
 
-        {/* Login Card */}
-        <div className="glass-card bg-[#0b1329]/85 backdrop-blur-2xl px-6 py-8 shadow-2xl rounded-2xl sm:px-10 border border-cyan-500/20">
+        {/* Floating White Card */}
+        <div className="bg-white rounded-3xl px-6 py-8 shadow-xl sm:px-10 border border-slate-200/90">
           {/* Quick-Fill Demo Account Pill */}
-          <div className="mb-5 flex items-center justify-between rounded-xl border border-cyan-500/20 bg-slate-950/80 px-3.5 py-2.5 text-xs">
-            <div className="flex items-center gap-1.5 text-slate-300">
-              <KeyRound className="h-3.5 w-3.5 text-cyan-400" />
-              <span className="text-[11px] text-slate-400 font-medium">Demo:</span>
-              <code className="rounded bg-slate-900/90 px-1.5 py-0.5 font-mono text-[11px] text-cyan-300 border border-cyan-500/20">
+          <div className="mb-5 flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50/80 px-3.5 py-2.5 text-xs">
+            <div className="flex items-center gap-1.5 text-slate-700">
+              <KeyRound className="h-3.5 w-3.5 text-emerald-600" />
+              <span className="text-[11px] text-slate-500 font-medium">Demo:</span>
+              <code className="rounded bg-white px-2 py-0.5 font-mono-score text-[11px] text-slate-900 border border-slate-200 shadow-2xs">
                 {config.demoEmail}
               </code>
             </div>
             <button
               type="button"
               onClick={handleQuickFill}
-              className="inline-flex items-center gap-1 rounded-lg bg-cyan-950/90 border border-cyan-500/40 px-2.5 py-1 font-bold text-cyan-300 hover:bg-cyan-900/90 transition-all cursor-pointer shadow-sm"
+              className="inline-flex items-center gap-1 rounded-xl bg-emerald-50 border border-emerald-200 px-2.5 py-1 font-bold text-emerald-700 hover:bg-emerald-100 transition-all cursor-pointer shadow-2xs"
             >
               {filledFeedback ? (
                 <>
-                  <Check className="h-3 w-3 text-emerald-400" />
-                  <span className="text-emerald-400 text-[11px]">Filled!</span>
+                  <Check className="h-3 w-3 text-emerald-600" />
+                  <span className="text-emerald-700 text-[11px]">Filled!</span>
                 </>
               ) : (
                 <>
-                  <Sparkles className="h-3 w-3 text-cyan-400" />
+                  <Sparkles className="h-3 w-3 text-emerald-600" />
                   <span className="text-[11px]">Auto-Fill</span>
                 </>
               )}
@@ -299,11 +291,11 @@ export function RoleLoginForm({ forcedRole, showRoleTabs = true }: RoleLoginForm
 
           {/* Error Alert */}
           {error && (
-            <div className="mb-5 rounded-xl bg-red-950/70 p-3.5 border border-red-800/70 text-xs" role="alert">
+            <div className="mb-5 rounded-2xl bg-red-50 p-3.5 border border-red-200 text-xs" role="alert">
               <div className="flex items-start">
-                <AlertCircle className="h-4 w-4 text-red-400 mt-0.5 shrink-0" />
+                <AlertCircle className="h-4 w-4 text-red-600 mt-0.5 shrink-0" />
                 <div className="ml-2.5">
-                  <p className="font-semibold text-red-200 leading-relaxed">{error}</p>
+                  <p className="font-semibold text-red-800 leading-relaxed">{error}</p>
                 </div>
               </div>
             </div>
@@ -312,13 +304,13 @@ export function RoleLoginForm({ forcedRole, showRoleTabs = true }: RoleLoginForm
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label htmlFor="email" className="block text-xs font-semibold text-slate-200">
+              <label htmlFor="email" className="block text-xs font-semibold text-slate-700">
                 {activeRole === "BIDDER"
                   ? "Vendor / Work Email"
                   : activeRole === "PROCUREMENT_OFFICER"
                   ? "Official Government / Buyer Email"
                   : "Administrator Email"}{" "}
-                <span className="text-cyan-400">*</span>
+                <span className="text-emerald-600">*</span>
               </label>
               <div className="mt-1.5">
                 <input
@@ -330,14 +322,14 @@ export function RoleLoginForm({ forcedRole, showRoleTabs = true }: RoleLoginForm
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder={config.demoEmail}
-                  className="input-glow block w-full rounded-xl border border-slate-800 bg-[#040711] px-3.5 py-2.5 text-sm text-white placeholder:text-slate-500 transition-all"
+                  className="input-light-focus block w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 transition-all"
                 />
               </div>
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-xs font-semibold text-slate-200">
-                Password <span className="text-cyan-400">*</span>
+              <label htmlFor="password" className="block text-xs font-semibold text-slate-700">
+                Password <span className="text-emerald-600">*</span>
               </label>
               <div className="mt-1.5">
                 <input
@@ -349,7 +341,7 @@ export function RoleLoginForm({ forcedRole, showRoleTabs = true }: RoleLoginForm
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="input-glow block w-full rounded-xl border border-slate-800 bg-[#040711] px-3.5 py-2.5 text-sm text-white placeholder:text-slate-500 transition-all"
+                  className="input-light-focus block w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 transition-all"
                 />
               </div>
             </div>
@@ -358,7 +350,7 @@ export function RoleLoginForm({ forcedRole, showRoleTabs = true }: RoleLoginForm
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="btn-cyan-emerald flex w-full justify-center rounded-xl px-4 py-3 text-sm font-bold text-slate-950 shadow-xl disabled:opacity-50 transition-all cursor-pointer"
+                className="btn-emerald-fintech flex w-full justify-center rounded-xl px-4 py-3 text-sm font-bold text-white shadow-md disabled:opacity-50 transition-all cursor-pointer"
               >
                 {isSubmitting ? "Signing in..." : `Sign in to ${config.badge}`}
               </button>
@@ -366,12 +358,12 @@ export function RoleLoginForm({ forcedRole, showRoleTabs = true }: RoleLoginForm
           </form>
 
           {/* Role-Specific Registration Link */}
-          <div className="mt-6 border-t border-slate-800/80 pt-4 text-center">
-            <p className="text-xs text-slate-400">
+          <div className="mt-6 border-t border-slate-100 pt-4 text-center">
+            <p className="text-xs text-slate-500">
               Need an account?{" "}
               <Link
                 href={config.signupUrl}
-                className="font-bold text-cyan-400 hover:text-cyan-300 hover:underline transition-colors"
+                className="font-bold text-emerald-600 hover:text-emerald-700 hover:underline transition-colors"
               >
                 {config.signupText}
               </Link>
@@ -383,7 +375,7 @@ export function RoleLoginForm({ forcedRole, showRoleTabs = true }: RoleLoginForm
         <div className="mt-6 text-center">
           <Link
             href="/"
-            className="text-xs text-slate-400 hover:text-white transition-colors inline-flex items-center gap-1 font-medium"
+            className="text-xs text-slate-500 hover:text-slate-900 transition-colors inline-flex items-center gap-1 font-semibold"
           >
             ← Back to GeM Compliance Home
           </Link>
@@ -392,3 +384,4 @@ export function RoleLoginForm({ forcedRole, showRoleTabs = true }: RoleLoginForm
     </div>
   );
 }
+

@@ -13,9 +13,10 @@ import {
   CheckCircle2,
   Sparkles,
   Scale,
-  Shield,
+  ShieldAlert,
   Activity,
-  Award,
+  CheckCircle,
+  Landmark,
 } from "lucide-react";
 
 export default function HomePage() {
@@ -23,7 +24,7 @@ export default function HomePage() {
   const portalRoute = user ? getDashboardRoute(user.role) : "/login";
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
-  // 3D Compliance Verification Particles Animation Canvas
+  // 3D Particles Animation Canvas for Light Theme (#F5F8F7)
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -41,8 +42,8 @@ export default function HomePage() {
     };
     window.addEventListener("resize", handleResize);
 
-    // Create 3D Nodes
-    const numParticles = Math.min(Math.floor(width / 22), 65);
+    // Create 3D Nodes for Light Canvas
+    const numParticles = Math.min(Math.floor(width / 24), 55);
     interface Particle {
       x: number;
       y: number;
@@ -56,17 +57,17 @@ export default function HomePage() {
     }
 
     const particles: Particle[] = [];
-    const colors = ["#06b6d4", "#22d3ee", "#10b981", "#34d399", "#ffffff", "#8fe3cf"];
+    const colors = ["#059669", "#10b981", "#0d9488", "#0284c7", "#34d399"];
 
     for (let i = 0; i < numParticles; i++) {
       particles.push({
-        x: (Math.random() - 0.5) * width * 1.4,
-        y: (Math.random() - 0.5) * height * 1.4,
+        x: (Math.random() - 0.5) * width * 1.3,
+        y: (Math.random() - 0.5) * height * 1.3,
         z: Math.random() * 800 + 100,
-        vx: (Math.random() - 0.5) * 0.45,
-        vy: (Math.random() - 0.5) * 0.45,
-        vz: (Math.random() - 0.5) * 0.6,
-        size: Math.random() * 2.5 + 1.2,
+        vx: (Math.random() - 0.5) * 0.4,
+        vy: (Math.random() - 0.5) * 0.4,
+        vz: (Math.random() - 0.5) * 0.5,
+        size: Math.random() * 2.2 + 1.2,
         color: colors[Math.floor(Math.random() * colors.length)],
         pulse: Math.random() * Math.PI * 2,
       });
@@ -85,11 +86,10 @@ export default function HomePage() {
         p.x += p.vx;
         p.y += p.vy;
         p.z += p.vz;
-        p.pulse += 0.03;
+        p.pulse += 0.025;
 
-        // Boundary bounce inside 3D volume
-        if (Math.abs(p.x) > width * 0.75) p.vx *= -1;
-        if (Math.abs(p.y) > height * 0.75) p.vy *= -1;
+        if (Math.abs(p.x) > width * 0.7) p.vx *= -1;
+        if (Math.abs(p.y) > height * 0.7) p.vy *= -1;
         if (p.z < 50 || p.z > 900) p.vz *= -1;
 
         const scale = focalLength / p.z;
@@ -100,7 +100,7 @@ export default function HomePage() {
         return { particle: p, x: x2d, y: y2d, r: r2d, scale };
       });
 
-      // Render 3D verification network lines
+      // Render 3D verification network lines in subtle mint/slate
       for (let i = 0; i < projected.length; i++) {
         for (let j = i + 1; j < projected.length; j++) {
           const p1 = projected[i];
@@ -110,48 +110,35 @@ export default function HomePage() {
           const dy = p1.y - p2.y;
           const dist = Math.sqrt(dx * dx + dy * dy);
 
-          if (dist < 135) {
-            const alpha = (1 - dist / 135) * 0.22 * Math.min(p1.scale, p2.scale);
+          if (dist < 125) {
+            const alpha = (1 - dist / 125) * 0.18 * Math.min(p1.scale, 1);
             ctx.beginPath();
             ctx.moveTo(p1.x, p1.y);
             ctx.lineTo(p2.x, p2.y);
-            ctx.strokeStyle =
-              p1.particle.color === "#10b981" || p2.particle.color === "#34d399"
-                ? `rgba(52, 211, 153, ${alpha})`
-                : `rgba(34, 211, 238, ${alpha})`;
-            ctx.lineWidth = 0.8 * Math.min(p1.scale, 1.2);
+            ctx.strokeStyle = `rgba(16, 185, 129, ${alpha})`;
+            ctx.lineWidth = 0.7 * Math.min(p1.scale, 1.2);
             ctx.stroke();
           }
         }
       }
 
-      // Render Glowing Nodes
+      // Render Nodes
       projected.forEach((p) => {
-        const pulseFactor = Math.sin(p.particle.pulse) * 0.25 + 1;
+        const pulseFactor = Math.sin(p.particle.pulse) * 0.2 + 1;
         const finalRadius = p.r * pulseFactor;
 
-        // Radial glow
-        const gradient = ctx.createRadialGradient(
-          p.x,
-          p.y,
-          0,
-          p.x,
-          p.y,
-          finalRadius * 3.5
-        );
-        gradient.addColorStop(0, p.particle.color);
-        gradient.addColorStop(1, "transparent");
-
-        ctx.fillStyle = gradient;
+        ctx.fillStyle = p.particle.color;
+        ctx.globalAlpha = Math.min(p.scale * 0.6, 0.5);
         ctx.beginPath();
-        ctx.arc(p.x, p.y, finalRadius * 3.5, 0, Math.PI * 2);
+        ctx.arc(p.x, p.y, finalRadius * 2.2, 0, Math.PI * 2);
         ctx.fill();
 
-        // Solid core
-        ctx.fillStyle = "#ffffff";
+        ctx.globalAlpha = Math.min(p.scale, 0.9);
+        ctx.fillStyle = p.particle.color;
         ctx.beginPath();
-        ctx.arc(p.x, p.y, Math.max(finalRadius * 0.6, 0.6), 0, Math.PI * 2);
+        ctx.arc(p.x, p.y, finalRadius, 0, Math.PI * 2);
         ctx.fill();
+        ctx.globalAlpha = 1.0;
       });
 
       animationFrameId = requestAnimationFrame(render);
@@ -166,46 +153,64 @@ export default function HomePage() {
   }, []);
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#040711] text-slate-100 selection:bg-cyan-500 selection:text-white">
-      {/* Top Navigation Bar — Navy Glass + Cyan/Emerald Glow */}
-      <header className="navbar-gradient-border sticky top-0 z-40 bg-[#040711]/85 backdrop-blur-xl border-b border-cyan-500/15">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+    <div className="min-h-screen flex flex-col bg-[#F5F8F7] text-slate-900 selection:bg-emerald-500 selection:text-white font-body relative overflow-x-hidden">
+      {/* Background Ambient Gradient Blobs */}
+      <div className="blob-emerald top-[-100px] left-[10%] opacity-70" />
+      <div className="blob-teal top-[400px] right-[5%] opacity-60" />
+
+      {/* Sticky White Glass Navbar */}
+      <header className="glass-header-light sticky top-0 z-50 transition-all">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-18 flex items-center justify-between">
+          
+          {/* Logo & Indian Government Emblem Branding */}
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-tr from-cyan-600 to-emerald-500 text-white shadow-lg glow-cyan">
-              <ShieldCheck className="h-5 w-5" />
+            {/* Indian Govt Emblem / Official Badge */}
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-tr from-slate-900 to-slate-800 text-amber-400 shadow-md border border-slate-700">
+              <Landmark className="h-6 w-6 text-amber-300" />
             </div>
-            <div>
-              <span className="font-extrabold text-lg tracking-tight text-white flex items-center gap-1.5">
-                BidVerify <span className="gradient-text-cyan-emerald font-extrabold">AI</span>
-              </span>
-              <span className="hidden sm:block text-[10px] text-cyan-300/80 font-medium tracking-wide uppercase">
-                GeM Procurement Compliance
+            
+            <div className="flex flex-col">
+              <div className="flex items-center gap-2">
+                <span className="font-heading font-bold text-xl tracking-tight text-slate-900">
+                  BidVerify <span className="text-emerald-600 font-extrabold">AI</span>
+                </span>
+                
+                {/* Small Green/Teal Pulsing Status Indicator */}
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 border border-emerald-200">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 status-indicator-pulse" />
+                  <span className="text-[10px] font-semibold text-emerald-700 uppercase tracking-wider">GeM Live AI</span>
+                </div>
+              </div>
+
+              <span className="text-[10px] font-semibold text-slate-500 tracking-wider uppercase">
+                Govt. of India • Procurement Verification Portal
               </span>
             </div>
           </div>
 
-          <nav className="flex items-center gap-2 sm:gap-3">
+          {/* Rounded Navigation Buttons */}
+          <nav className="flex items-center gap-2 sm:gap-4">
             {loading ? (
-              <span className="text-xs text-slate-400">Loading...</span>
+              <span className="text-xs text-slate-400 font-medium">Loading...</span>
             ) : user ? (
               <Link
                 href={portalRoute}
-                className="inline-flex items-center gap-1.5 rounded-xl btn-cyan-emerald px-4 py-2 text-xs font-bold text-slate-950 shadow-lg transition-all"
+                className="inline-flex items-center gap-2 rounded-full btn-emerald-fintech px-5 py-2.5 text-xs font-bold shadow-md transition-all"
               >
                 Go to {user.role === "PROCUREMENT_OFFICER" ? "Procurement" : user.role === "BIDDER" ? "Bidder" : "Admin"} Portal
-                <ArrowRight className="h-3.5 w-3.5" />
+                <ArrowRight className="h-4 w-4" />
               </Link>
             ) : (
               <>
                 <Link
                   href="/login"
-                  className="rounded-xl px-4 py-2 text-xs font-semibold text-slate-200 hover:text-white hover:bg-slate-800/60 border border-slate-800 transition-all"
+                  className="rounded-full btn-navy-outline px-5 py-2.5 text-xs font-semibold shadow-xs"
                 >
                   Sign In
                 </Link>
                 <Link
                   href="/signup"
-                  className="inline-flex items-center justify-center rounded-xl btn-cyan-emerald px-4 py-2 text-xs font-bold text-slate-950 shadow-md transition-all"
+                  className="inline-flex items-center justify-center rounded-full btn-emerald-fintech px-5 py-2.5 text-xs font-bold shadow-md"
                 >
                   Get Started
                 </Link>
@@ -215,138 +220,140 @@ export default function HomePage() {
         </div>
       </header>
 
-      {/* Hero Section with Interactive 3D Particles */}
-      <main className="flex-1">
-        <section className="relative overflow-hidden pt-12 pb-16 sm:pt-20 sm:pb-24">
-          {/* 3D Verification Particle Canvas */}
+      {/* Hero Section — Light, Spacious, Floating Cards */}
+      <main className="flex-1 relative z-10">
+        <section className="relative pt-12 pb-16 sm:pt-20 sm:pb-24">
+          {/* Light 3D Verification Particle Canvas */}
           <canvas
             ref={canvasRef}
-            className="absolute inset-0 w-full h-full pointer-events-none z-0 opacity-80"
+            className="absolute inset-0 w-full h-full pointer-events-none z-0 opacity-90"
           />
 
           <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10 space-y-6">
-            {/* Tag pill */}
-            <div className="inline-flex items-center gap-2 rounded-full border border-cyan-400/30 bg-cyan-950/40 px-4 py-1.5 text-xs font-semibold text-cyan-300 shadow-lg backdrop-blur-md">
-              <Sparkles className="h-3.5 w-3.5 text-emerald-400 animate-subtle-pulse" />
-              <span>Government e-Marketplace (GeM) AI Compliance Suite</span>
+            
+            {/* Government Badge Pill */}
+            <div className="inline-flex items-center gap-2 rounded-full bg-white border border-emerald-200/80 px-4 py-1.5 text-xs font-semibold text-emerald-800 shadow-sm">
+              <ShieldCheck className="h-4 w-4 text-emerald-600" />
+              <span>Official Government e-Marketplace (GeM) AI Compliance Suite</span>
             </div>
 
             <div className="space-y-4 max-w-4xl mx-auto">
-              <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-tight">
+              <h1 className="font-heading text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-slate-900 leading-tight">
                 AI-Powered Integrated <br className="hidden sm:inline" />
-                <span className="gradient-text-cyan-emerald">Bid Compliance Verification</span>
+                <span className="gradient-text-emerald">Bid Compliance Verification</span>
               </h1>
-              <p className="text-sm sm:text-base text-slate-300 max-w-2xl mx-auto leading-relaxed">
-                Streamline procurement eligibility, automate statutory audits, and accelerate tender evaluations with instant intelligent rule verification.
+              <p className="text-base sm:text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed">
+                Streamline procurement eligibility, automate statutory compliance audits, and evaluate tender bids with instant, intelligent rule verification.
               </p>
             </div>
 
-            {/* Role Portals Selection Cards — Nexora Navy & Cyan/Emerald Styling */}
-            <div className="pt-8">
-              <div className="text-xs uppercase font-bold text-cyan-300/80 tracking-widest mb-6">
+            {/* Dedicated Role Portals Selection Cards — Spacious Floating White Cards */}
+            <div className="pt-10">
+              <div className="text-xs uppercase font-bold text-slate-400 tracking-widest mb-6 font-heading">
                 Select Your Dedicated Role Portal
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-left max-w-5xl mx-auto">
-                {/* 1. Bidder Portal Card (Cyan Theme) */}
-                <div className="group role-card-3d glass-card rounded-2xl border border-cyan-500/25 p-7 flex flex-col justify-between shadow-2xl hover:border-cyan-400/60 transition-all duration-300">
+                
+                {/* 1. Bidder Portal Card */}
+                <div className="group floating-card rounded-3xl p-8 flex flex-col justify-between transition-all duration-300">
                   <div>
-                    <div className="flex items-center justify-between mb-5">
-                      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-tr from-cyan-600 to-cyan-400 text-white shadow-lg glow-cyan group-hover:scale-110 transition-transform duration-300">
+                    <div className="flex items-center justify-between mb-6">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 border border-emerald-200/80 shadow-xs group-hover:scale-110 transition-transform">
                         <Building2 className="h-6 w-6" />
                       </div>
-                      <span className="inline-flex items-center rounded-lg bg-cyan-950/90 px-3 py-1 text-[11px] font-bold text-cyan-300 border border-cyan-500/40 tracking-wider uppercase shadow-sm">
+                      <span className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-[11px] font-bold text-slate-700 tracking-wide uppercase">
                         Vendor Entity
                       </span>
                     </div>
-                    <h3 className="text-lg font-bold text-white group-hover:text-cyan-300 transition-colors">
+                    <h3 className="font-heading text-xl font-bold text-slate-900 group-hover:text-emerald-600 transition-colors">
                       Bidder Portal
                     </h3>
-                    <p className="mt-2.5 text-xs text-slate-300 leading-relaxed">
-                      Discover active tenders, upload GST/PAN/MSME proof, run compliance pre-checks, and submit bids with instant feedback.
+                    <p className="mt-3 text-xs text-slate-500 leading-relaxed">
+                      Discover active tenders, upload GST/PAN/MSME proof, run compliance pre-checks, and submit bids with real-time audit feedback.
                     </p>
                   </div>
 
-                  <div className="mt-8 pt-5 border-t border-slate-800/80 flex items-center gap-2">
+                  <div className="mt-8 pt-6 border-t border-slate-100 flex items-center gap-3">
                     <Link
                       href="/login/bidder"
-                      className="flex-1 text-center rounded-xl btn-cyan px-4 py-2.5 text-xs font-bold text-white shadow-md transition-all"
+                      className="flex-1 text-center rounded-full btn-emerald-fintech px-4 py-2.5 text-xs font-bold shadow-sm"
                     >
                       Bidder Login
                     </Link>
                     <Link
                       href="/signup/bidder"
-                      className="rounded-xl border border-slate-700 px-3.5 py-2.5 text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800/80 transition-all"
+                      className="rounded-full btn-navy-outline px-4 py-2.5 text-xs font-semibold"
                     >
                       Register
                     </Link>
                   </div>
                 </div>
 
-                {/* 2. Procurement Officer Portal Card (Emerald Theme) */}
-                <div className="group role-card-3d glass-card rounded-2xl border border-emerald-500/25 p-7 flex flex-col justify-between shadow-2xl hover:border-emerald-400/60 transition-all duration-300">
+                {/* 2. Procurement Officer Portal Card */}
+                <div className="group floating-card rounded-3xl p-8 flex flex-col justify-between transition-all duration-300">
                   <div>
-                    <div className="flex items-center justify-between mb-5">
-                      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-400 text-white shadow-lg glow-emerald group-hover:scale-110 transition-transform duration-300">
+                    <div className="flex items-center justify-between mb-6">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-teal-50 text-teal-600 border border-teal-200/80 shadow-xs group-hover:scale-110 transition-transform">
                         <FileCheck2 className="h-6 w-6" />
                       </div>
-                      <span className="inline-flex items-center rounded-lg bg-emerald-950/90 px-3 py-1 text-[11px] font-bold text-emerald-300 border border-emerald-500/40 tracking-wider uppercase shadow-sm">
+                      <span className="inline-flex items-center rounded-full bg-emerald-50 px-3 py-1 text-[11px] font-bold text-emerald-700 border border-emerald-200 tracking-wide uppercase">
                         Buyer / Evaluator
                       </span>
                     </div>
-                    <h3 className="text-lg font-bold text-white group-hover:text-emerald-300 transition-colors">
+                    <h3 className="font-heading text-xl font-bold text-slate-900 group-hover:text-emerald-600 transition-colors">
                       Procurement Officer
                     </h3>
-                    <p className="mt-2.5 text-xs text-slate-300 leading-relaxed">
+                    <p className="mt-3 text-xs text-slate-500 leading-relaxed">
                       Publish tenders, evaluate vendor bids with automated scoring, review AI risk insights, and record official contract awards.
                     </p>
                   </div>
 
-                  <div className="mt-8 pt-5 border-t border-slate-800/80 flex items-center gap-2">
+                  <div className="mt-8 pt-6 border-t border-slate-100 flex items-center gap-3">
                     <Link
                       href="/login/procurement"
-                      className="flex-1 text-center rounded-xl btn-emerald px-4 py-2.5 text-xs font-bold text-white shadow-md transition-all"
+                      className="flex-1 text-center rounded-full btn-emerald-fintech px-4 py-2.5 text-xs font-bold shadow-sm"
                     >
                       Officer Login
                     </Link>
                     <Link
                       href="/signup/procurement"
-                      className="rounded-xl border border-slate-700 px-3.5 py-2.5 text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800/80 transition-all"
+                      className="rounded-full btn-navy-outline px-4 py-2.5 text-xs font-semibold"
                     >
                       Register
                     </Link>
                   </div>
                 </div>
 
-                {/* 3. Administrator Portal Card (Cyan-Emerald Shimmer) */}
-                <div className="group role-card-3d glass-card rounded-2xl border border-cyan-400/30 p-7 flex flex-col justify-between shadow-2xl hover:border-cyan-300/60 transition-all duration-300">
+                {/* 3. Administrator Portal Card */}
+                <div className="group floating-card rounded-3xl p-8 flex flex-col justify-between transition-all duration-300">
                   <div>
-                    <div className="flex items-center justify-between mb-5">
-                      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-tr from-cyan-600 to-emerald-500 text-white shadow-lg glow-cyan-emerald group-hover:scale-110 transition-transform duration-300">
+                    <div className="flex items-center justify-between mb-6">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-800 border border-slate-200 shadow-xs group-hover:scale-110 transition-transform">
                         <Lock className="h-6 w-6" />
                       </div>
-                      <span className="inline-flex items-center rounded-lg bg-cyan-950/90 px-3 py-1 text-[11px] font-bold text-cyan-300 border border-cyan-400/40 tracking-wider uppercase shadow-sm">
+                      <span className="inline-flex items-center rounded-full bg-slate-900 px-3 py-1 text-[11px] font-bold text-white tracking-wide uppercase">
                         System Oversight
                       </span>
                     </div>
-                    <h3 className="text-lg font-bold text-white group-hover:text-cyan-300 transition-colors">
+                    <h3 className="font-heading text-xl font-bold text-slate-900 group-hover:text-emerald-600 transition-colors">
                       Administrator Portal
                     </h3>
-                    <p className="mt-2.5 text-xs text-slate-300 leading-relaxed">
+                    <p className="mt-3 text-xs text-slate-500 leading-relaxed">
                       Platform governance, tamper-proof audit log inspection, organization management, and security user provisioning.
                     </p>
                   </div>
 
-                  <div className="mt-8 pt-5 border-t border-slate-800/80 flex items-center gap-2">
+                  <div className="mt-8 pt-6 border-t border-slate-100 flex items-center gap-3">
                     <Link
                       href="/login/admin"
-                      className="flex-1 text-center rounded-xl btn-cyan-emerald px-4 py-2.5 text-xs font-bold text-slate-950 shadow-md transition-all"
+                      className="flex-1 text-center rounded-full btn-emerald-fintech px-4 py-2.5 text-xs font-bold shadow-sm"
                     >
                       Admin Login
                     </Link>
                     <Link
                       href="/signup/admin"
-                      className="rounded-xl border border-slate-700 px-3.5 py-2.5 text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800/80 transition-all"
+                      className="rounded-full btn-navy-outline px-4 py-2.5 text-xs font-semibold"
                     >
                       Register
                     </Link>
@@ -356,94 +363,95 @@ export default function HomePage() {
             </div>
 
             {/* Platform Feature Badges */}
-            <div className="pt-8 flex flex-wrap items-center justify-center gap-4 sm:gap-6 text-xs text-slate-300">
-              <div className="flex items-center gap-2 bg-slate-900/80 border border-emerald-500/30 rounded-full px-4 py-2 shadow-md backdrop-blur-md">
-                <CheckCircle2 className="h-4 w-4 text-emerald-400" />
-                <span className="text-slate-100 font-medium">Automated Statutory Verification</span>
+            <div className="pt-10 flex flex-wrap items-center justify-center gap-4 text-xs font-medium text-slate-600">
+              <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-full px-4 py-2 shadow-xs">
+                <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                <span>Automated Statutory Verification</span>
               </div>
-              <div className="flex items-center gap-2 bg-slate-900/80 border border-cyan-500/30 rounded-full px-4 py-2 shadow-md backdrop-blur-md">
-                <CheckCircle2 className="h-4 w-4 text-cyan-400" />
-                <span className="text-slate-100 font-medium">Dynamic Eligibility Criteria</span>
+              <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-full px-4 py-2 shadow-xs">
+                <CheckCircle2 className="h-4 w-4 text-teal-600" />
+                <span>Dynamic Eligibility Criteria</span>
               </div>
-              <div className="flex items-center gap-2 bg-slate-900/80 border border-teal-500/30 rounded-full px-4 py-2 shadow-md backdrop-blur-md">
-                <CheckCircle2 className="h-4 w-4 text-teal-300" />
-                <span className="text-slate-100 font-medium">Tamper-Proof Audit Trails</span>
+              <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-full px-4 py-2 shadow-xs">
+                <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                <span>Tamper-Proof Audit Trails</span>
               </div>
             </div>
           </div>
         </section>
 
-        {/* Live Stats Counter Strip — Cyan/Emerald Theme */}
-        <section className="stats-strip py-10">
+        {/* Live Stats Counter Strip — JetBrains Mono Numbers */}
+        <section className="stats-strip-light py-10">
           <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
               <div className="space-y-1">
-                <p className="stat-number text-3xl sm:text-4xl font-extrabold">12,480+</p>
-                <p className="text-xs font-bold text-cyan-300 uppercase tracking-widest">Tenders Verified</p>
+                <p className="font-mono-score text-3xl sm:text-4xl font-extrabold text-slate-900">12,480+</p>
+                <p className="text-xs font-bold text-emerald-700 uppercase tracking-widest font-heading">Tenders Verified</p>
               </div>
               <div className="space-y-1">
-                <p className="stat-number text-3xl sm:text-4xl font-extrabold">94,200+</p>
-                <p className="text-xs font-bold text-emerald-300 uppercase tracking-widest">Compliance Audits</p>
+                <p className="font-mono-score text-3xl sm:text-4xl font-extrabold text-slate-900">94,200+</p>
+                <p className="text-xs font-bold text-teal-700 uppercase tracking-widest font-heading">Compliance Audits</p>
               </div>
               <div className="space-y-1">
-                <p className="stat-number text-3xl sm:text-4xl font-extrabold">3,150+</p>
-                <p className="text-xs font-bold text-cyan-300 uppercase tracking-widest">Active Bidders</p>
+                <p className="font-mono-score text-3xl sm:text-4xl font-extrabold text-slate-900">3,150+</p>
+                <p className="text-xs font-bold text-emerald-700 uppercase tracking-widest font-heading">Active Bidders</p>
               </div>
               <div className="space-y-1">
-                <p className="stat-number text-3xl sm:text-4xl font-extrabold">&lt; 30 sec</p>
-                <p className="text-xs font-bold text-emerald-300 uppercase tracking-widest">Avg. Verification Time</p>
+                <p className="font-mono-score text-3xl sm:text-4xl font-extrabold text-slate-900">&lt; 30 sec</p>
+                <p className="text-xs font-bold text-teal-700 uppercase tracking-widest font-heading">Avg. Verification Time</p>
               </div>
             </div>
           </div>
         </section>
 
-        {/* Feature Cards Grid — Navy & White Cards with Cyan/Emerald Accents */}
-        <section className="border-t border-slate-800/80 bg-[#060a17]/80 py-16 sm:py-24">
+        {/* Feature Capabilities Grid — Spacious Floating Cards */}
+        <section className="py-16 sm:py-24">
           <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-12">
-              <h2 className="text-2xl font-extrabold text-white tracking-tight sm:text-4xl">
-                Platform <span className="gradient-text-cyan-emerald">Capabilities</span>
+              <h2 className="font-heading text-3xl sm:text-4xl font-bold text-slate-900 tracking-tight">
+                Platform <span className="gradient-text-emerald">Capabilities</span>
               </h2>
-              <p className="mt-3 text-sm text-slate-300 max-w-xl mx-auto">
+              <p className="mt-3 text-sm text-slate-500 max-w-xl mx-auto">
                 End-to-end compliance automation powered by modern AI for GeM procurement workflows.
               </p>
             </div>
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {/* Card 1 */}
-              <div className="glass-card rounded-2xl p-7 space-y-4 group border border-cyan-500/20">
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-tr from-cyan-600 to-emerald-500 text-white shadow-lg glow-cyan group-hover:scale-110 transition-transform duration-300">
+              <div className="floating-card rounded-3xl p-8 space-y-4 group">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 border border-emerald-100 shadow-xs group-hover:scale-110 transition-transform">
                   <FileCheck2 className="h-6 w-6" />
                 </div>
-                <h3 className="text-lg font-bold text-white group-hover:text-cyan-300 transition-colors">
+                <h3 className="font-heading text-lg font-bold text-slate-900 group-hover:text-emerald-600 transition-colors">
                   Dynamic Eligibility Rules
                 </h3>
-                <p className="text-xs text-slate-300 leading-relaxed">
+                <p className="text-xs text-slate-500 leading-relaxed">
                   Configurable criteria for turnover, local content, statutory documentation, and technical thresholds stored dynamically for each procurement tender.
                 </p>
               </div>
 
               {/* Card 2 */}
-              <div className="glass-card rounded-2xl p-7 space-y-4 group border border-emerald-500/20">
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-400 text-white shadow-lg glow-emerald group-hover:scale-110 transition-transform duration-300">
+              <div className="floating-card rounded-3xl p-8 space-y-4 group">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-teal-50 text-teal-600 border border-teal-100 shadow-xs group-hover:scale-110 transition-transform">
                   <Scale className="h-6 w-6" />
                 </div>
-                <h3 className="text-lg font-bold text-white group-hover:text-emerald-300 transition-colors">
+                <h3 className="font-heading text-lg font-bold text-slate-900 group-hover:text-emerald-600 transition-colors">
                   Lifecycle Governance
                 </h3>
-                <p className="text-xs text-slate-300 leading-relaxed">
+                <p className="text-xs text-slate-500 leading-relaxed">
                   Strict multi-stage workflow governance from draft and publishing to bidding closure, evaluation, contract award, and archival.
                 </p>
               </div>
 
               {/* Card 3 */}
-              <div className="glass-card rounded-2xl p-7 space-y-4 group border border-cyan-400/20">
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-tr from-cyan-600 to-teal-500 text-white shadow-lg glow-cyan group-hover:scale-110 transition-transform duration-300">
+              <div className="floating-card rounded-3xl p-8 space-y-4 group">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-800 border border-slate-200 shadow-xs group-hover:scale-110 transition-transform">
                   <Lock className="h-6 w-6" />
                 </div>
-                <h3 className="text-lg font-bold text-white group-hover:text-cyan-300 transition-colors">
+                <h3 className="font-heading text-lg font-bold text-slate-900 group-hover:text-emerald-600 transition-colors">
                   Enterprise Privacy & Isolation
                 </h3>
-                <p className="text-xs text-slate-300 leading-relaxed">
+                <p className="text-xs text-slate-500 leading-relaxed">
                   Dedicated authentication portals for Bidders, Procurement Officers, and Platform Administrators ensuring complete data privacy.
                 </p>
               </div>
@@ -452,22 +460,23 @@ export default function HomePage() {
         </section>
       </main>
 
-      {/* Footer */}
-      <footer className="border-t border-slate-800/80 bg-[#040711] py-10 text-center text-xs text-slate-400">
+      {/* Footer — Soft Clean Light Design */}
+      <footer className="border-t border-slate-200 bg-white py-10 text-center text-xs text-slate-500 relative z-10">
         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-tr from-cyan-600 to-emerald-500 text-white">
-              <Building2 className="h-4 w-4" />
+          <div className="flex items-center gap-3">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-900 text-amber-400">
+              <Landmark className="h-4 w-4" />
             </div>
-            <span className="font-bold text-white text-sm">BidVerify AI</span>
+            <span className="font-heading font-bold text-slate-900 text-sm">BidVerify AI</span>
             <span className="text-slate-400">— GeM Procurement Compliance Platform</span>
           </div>
           <div>
-            <span className="text-slate-400 font-medium">Designed for Public Procurement Transparency & Statutory Compliance</span>
+            <span className="text-slate-500 font-medium">Designed for Public Procurement Transparency & Statutory Compliance</span>
           </div>
         </div>
       </footer>
     </div>
   );
 }
+
 
