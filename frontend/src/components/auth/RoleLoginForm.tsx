@@ -25,7 +25,6 @@ interface RoleLoginConfig {
   tagline: string;
   subtitle: string;
   primaryColor: string;
-  buttonClass: string;
   demoEmail: string;
   demoPass: string;
   signupUrl: string;
@@ -40,7 +39,6 @@ const ROLE_CONFIGS: Record<RoleType, RoleLoginConfig> = {
     tagline: "Vendor Access",
     subtitle: "Submit bid proposals, verify compliance certificates, and participate in open government tenders.",
     primaryColor: "blue",
-    buttonClass: "btn-emerald-fintech",
     demoEmail: "bidder@test.local",
     demoPass: "TestPassword123!",
     signupUrl: "/signup/bidder",
@@ -53,7 +51,6 @@ const ROLE_CONFIGS: Record<RoleType, RoleLoginConfig> = {
     tagline: "Procurement Access",
     subtitle: "Publish department tenders, evaluate vendor bids, and perform automated statutory compliance audits.",
     primaryColor: "emerald",
-    buttonClass: "btn-emerald-fintech",
     demoEmail: "procurement@test.local",
     demoPass: "TestPassword123!",
     signupUrl: "/signup/procurement",
@@ -66,7 +63,6 @@ const ROLE_CONFIGS: Record<RoleType, RoleLoginConfig> = {
     tagline: "Platform Admin Access",
     subtitle: "Platform governance, immutable audit trail inspection, user RBAC management, and system monitoring.",
     primaryColor: "purple",
-    buttonClass: "btn-emerald-fintech",
     demoEmail: "admin@test.local",
     demoPass: "TestPassword123!",
     signupUrl: "/signup/admin",
@@ -175,49 +171,45 @@ export function RoleLoginForm({ forcedRole, showRoleTabs = true }: RoleLoginForm
   };
 
   return (
-    <div className="flex min-h-screen flex-col justify-center px-4 py-12 sm:px-6 lg:px-8 bg-[#F5F8F7] text-slate-900 selection:bg-emerald-500 selection:text-white font-body relative overflow-x-hidden">
-      {/* Background Ambient Blobs */}
-      <div className="blob-emerald top-[-100px] left-[20%] opacity-60" />
-      <div className="blob-teal top-[300px] right-[15%] opacity-50" />
-
-      <div className="sm:mx-auto sm:w-full sm:max-w-md text-center relative z-10">
+    <div className="flex min-h-screen flex-col justify-center px-4 py-12 sm:px-6 lg:px-8 bg-[#F8FAFC] text-slate-900 font-body">
+      <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
         {/* Platform Brand */}
-        <Link href="/" className="inline-flex items-center gap-2.5 mb-6 group cursor-pointer">
-          <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-900 text-amber-400 shadow-md border border-slate-700 group-hover:scale-105 transition-transform">
-            <Landmark className="h-5 w-5" />
+        <Link href="/" className="inline-flex items-center gap-2 mb-4 group cursor-pointer">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#0F1E36] text-white shadow-xs">
+            <Landmark className="h-4 w-4 text-amber-400" />
           </div>
-          <span className="font-heading font-bold text-xl tracking-tight text-slate-900">
-            BidVerify <span className="text-emerald-600 font-extrabold">AI</span>
+          <span className="font-heading font-bold text-lg tracking-tight text-[#0F1E36]">
+            BidVerify <span className="text-emerald-700 font-extrabold">AI</span>
           </span>
         </Link>
 
         {/* Role Badge & Title */}
-        <div className="flex justify-center">
-          <span className="inline-flex items-center gap-1.5 rounded-full px-3.5 py-1 text-xs font-bold uppercase tracking-wider bg-emerald-50 text-emerald-800 border border-emerald-200 shadow-xs">
-            <IconComponent className="h-3.5 w-3.5 text-emerald-600" />
+        <div className="flex justify-center mb-2">
+          <span className="inline-flex items-center gap-1.5 rounded-md px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider bg-slate-100 text-slate-700 border border-slate-200">
+            <IconComponent className="h-3.5 w-3.5 text-slate-600" />
             {config.badge}
           </span>
         </div>
 
-        <h2 className="mt-4 font-heading text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+        <h2 className="font-heading text-2xl font-bold tracking-tight text-slate-900">
           {config.tagline}
         </h2>
-        <p className="mt-2 text-xs sm:text-sm text-slate-500 max-w-sm mx-auto leading-relaxed">
+        <p className="mt-1 text-xs text-slate-500 max-w-sm mx-auto leading-relaxed">
           {config.subtitle}
         </p>
       </div>
 
-      <div className="mt-6 sm:mx-auto sm:w-full sm:max-w-md relative z-10">
+      <div className="mt-6 sm:mx-auto sm:w-full sm:max-w-md">
         {/* Role Selector Tabs */}
         {showRoleTabs && !forcedRole && (
-          <div className="mb-5 grid grid-cols-3 gap-1.5 rounded-2xl bg-white border border-slate-200 p-1.5 text-xs font-semibold shadow-xs">
+          <div className="mb-4 grid grid-cols-3 gap-1 rounded-lg bg-white border border-slate-200 p-1 text-xs font-semibold shadow-xs">
             <button
               type="button"
               onClick={() => handleRoleChange("BIDDER")}
-              className={`flex items-center justify-center gap-1.5 rounded-xl py-2.5 transition-all cursor-pointer ${
+              className={`flex items-center justify-center gap-1.5 rounded-md py-2 transition-colors cursor-pointer ${
                 activeRole === "BIDDER"
-                  ? "btn-emerald-fintech font-bold text-white shadow-xs"
-                  : "text-slate-500 hover:text-slate-900 hover:bg-slate-50"
+                  ? "bg-[#0F1E36] font-bold text-white shadow-2xs"
+                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
               }`}
             >
               <Building2 className="h-3.5 w-3.5" />
@@ -227,10 +219,10 @@ export function RoleLoginForm({ forcedRole, showRoleTabs = true }: RoleLoginForm
             <button
               type="button"
               onClick={() => handleRoleChange("PROCUREMENT_OFFICER")}
-              className={`flex items-center justify-center gap-1.5 rounded-xl py-2.5 transition-all cursor-pointer ${
+              className={`flex items-center justify-center gap-1.5 rounded-md py-2 transition-colors cursor-pointer ${
                 activeRole === "PROCUREMENT_OFFICER"
-                  ? "btn-emerald-fintech font-bold text-white shadow-xs"
-                  : "text-slate-500 hover:text-slate-900 hover:bg-slate-50"
+                  ? "bg-[#0F1E36] font-bold text-white shadow-2xs"
+                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
               }`}
             >
               <FileCheck2 className="h-3.5 w-3.5" />
@@ -240,10 +232,10 @@ export function RoleLoginForm({ forcedRole, showRoleTabs = true }: RoleLoginForm
             <button
               type="button"
               onClick={() => handleRoleChange("ADMIN")}
-              className={`flex items-center justify-center gap-1.5 rounded-xl py-2.5 transition-all cursor-pointer ${
+              className={`flex items-center justify-center gap-1.5 rounded-md py-2 transition-colors cursor-pointer ${
                 activeRole === "ADMIN"
-                  ? "btn-emerald-fintech font-bold text-white shadow-xs"
-                  : "text-slate-500 hover:text-slate-900 hover:bg-slate-50"
+                  ? "bg-[#0F1E36] font-bold text-white shadow-2xs"
+                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
               }`}
             >
               <Lock className="h-3.5 w-3.5" />
@@ -252,31 +244,31 @@ export function RoleLoginForm({ forcedRole, showRoleTabs = true }: RoleLoginForm
           </div>
         )}
 
-        {/* Floating White Card */}
-        <div className="bg-white rounded-3xl px-6 py-8 shadow-xl sm:px-10 border border-slate-200/90">
+        {/* Card Form */}
+        <div className="card-formal bg-white rounded-xl p-6 sm:p-8 border border-slate-200">
           {/* Quick-Fill Demo Account Pill */}
-          <div className="mb-5 flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50/80 px-3.5 py-2.5 text-xs">
+          <div className="mb-4 flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 p-2.5 text-xs">
             <div className="flex items-center gap-1.5 text-slate-700">
-              <KeyRound className="h-3.5 w-3.5 text-emerald-600" />
+              <KeyRound className="h-3.5 w-3.5 text-slate-500" />
               <span className="text-[11px] text-slate-500 font-medium">Demo:</span>
-              <code className="rounded bg-white px-2 py-0.5 font-mono-score text-[11px] text-slate-900 border border-slate-200 shadow-2xs">
+              <code className="rounded bg-white px-1.5 py-0.5 font-mono text-[11px] text-slate-900 border border-slate-200">
                 {config.demoEmail}
               </code>
             </div>
             <button
               type="button"
               onClick={handleQuickFill}
-              className="inline-flex items-center gap-1 rounded-xl bg-emerald-50 border border-emerald-200 px-2.5 py-1 font-bold text-emerald-700 hover:bg-emerald-100 transition-all cursor-pointer shadow-2xs"
+              className="inline-flex items-center gap-1 rounded bg-white border border-slate-300 px-2 py-0.5 font-bold text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer text-[11px]"
             >
               {filledFeedback ? (
                 <>
                   <Check className="h-3 w-3 text-emerald-600" />
-                  <span className="text-emerald-700 text-[11px]">Filled!</span>
+                  <span className="text-emerald-700">Filled!</span>
                 </>
               ) : (
                 <>
-                  <Sparkles className="h-3 w-3 text-emerald-600" />
-                  <span className="text-[11px]">Auto-Fill</span>
+                  <Sparkles className="h-3 w-3 text-slate-500" />
+                  <span>Auto-Fill</span>
                 </>
               )}
             </button>
@@ -284,11 +276,11 @@ export function RoleLoginForm({ forcedRole, showRoleTabs = true }: RoleLoginForm
 
           {/* Error Alert */}
           {error && (
-            <div className="mb-5 rounded-2xl bg-red-50 p-3.5 border border-red-200 text-xs" role="alert">
+            <div className="mb-4 rounded-lg bg-red-50 p-3 border border-red-200 text-xs" role="alert">
               <div className="flex items-start">
                 <AlertCircle className="h-4 w-4 text-red-600 mt-0.5 shrink-0" />
-                <div className="ml-2.5">
-                  <p className="font-semibold text-red-800 leading-relaxed">{error}</p>
+                <div className="ml-2">
+                  <p className="font-semibold text-red-800">{error}</p>
                 </div>
               </div>
             </div>
@@ -301,11 +293,11 @@ export function RoleLoginForm({ forcedRole, showRoleTabs = true }: RoleLoginForm
                 {activeRole === "BIDDER"
                   ? "Vendor / Work Email"
                   : activeRole === "PROCUREMENT_OFFICER"
-                  ? "Official Government / Buyer Email"
+                  ? "Official Government Email"
                   : "Administrator Email"}{" "}
-                <span className="text-emerald-600">*</span>
+                <span className="text-red-500">*</span>
               </label>
-              <div className="mt-1.5">
+              <div className="mt-1">
                 <input
                   id="email"
                   name="email"
@@ -315,16 +307,16 @@ export function RoleLoginForm({ forcedRole, showRoleTabs = true }: RoleLoginForm
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder={config.demoEmail}
-                  className="input-light-focus block w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 transition-all"
+                  className="input-light-focus block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400"
                 />
               </div>
             </div>
 
             <div>
               <label htmlFor="password" className="block text-xs font-semibold text-slate-700">
-                Password <span className="text-emerald-600">*</span>
+                Password <span className="text-red-500">*</span>
               </label>
-              <div className="mt-1.5">
+              <div className="mt-1">
                 <input
                   id="password"
                   name="password"
@@ -334,7 +326,7 @@ export function RoleLoginForm({ forcedRole, showRoleTabs = true }: RoleLoginForm
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="input-light-focus block w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 transition-all"
+                  className="input-light-focus block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400"
                 />
               </div>
             </div>
@@ -343,7 +335,7 @@ export function RoleLoginForm({ forcedRole, showRoleTabs = true }: RoleLoginForm
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="btn-emerald-fintech flex w-full justify-center rounded-xl px-4 py-3 text-sm font-bold text-white shadow-md disabled:opacity-50 transition-all cursor-pointer"
+                className="btn-primary-navy flex w-full justify-center rounded-lg px-4 py-2.5 text-xs font-bold shadow-xs disabled:opacity-50 transition-colors cursor-pointer"
               >
                 {isSubmitting ? "Signing in..." : `Sign in to ${config.badge}`}
               </button>
@@ -351,12 +343,12 @@ export function RoleLoginForm({ forcedRole, showRoleTabs = true }: RoleLoginForm
           </form>
 
           {/* Role-Specific Registration Link */}
-          <div className="mt-6 border-t border-slate-100 pt-4 text-center">
+          <div className="mt-5 border-t border-slate-100 pt-3 text-center">
             <p className="text-xs text-slate-500">
               Need an account?{" "}
               <Link
                 href={config.signupUrl}
-                className="font-bold text-emerald-600 hover:text-emerald-700 hover:underline transition-colors"
+                className="font-bold text-[#0F1E36] hover:underline transition-colors"
               >
                 {config.signupText}
               </Link>
@@ -365,7 +357,7 @@ export function RoleLoginForm({ forcedRole, showRoleTabs = true }: RoleLoginForm
         </div>
 
         {/* Back to Home Link */}
-        <div className="mt-6 text-center">
+        <div className="mt-5 text-center">
           <Link
             href="/"
             className="text-xs text-slate-500 hover:text-slate-900 transition-colors inline-flex items-center gap-1 font-semibold"

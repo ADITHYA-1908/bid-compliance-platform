@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef } from "react";
+import React from "react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { getDashboardRoute } from "@/lib/roles";
@@ -11,209 +11,79 @@ import {
   ArrowRight,
   Building2,
   CheckCircle2,
-  Sparkles,
   Scale,
   ShieldAlert,
   Activity,
-  CheckCircle,
   Landmark,
+  FileText,
+  Search,
+  Check,
+  Cpu,
+  History,
 } from "lucide-react";
 
 export default function HomePage() {
   const { user, loading } = useAuth();
   const portalRoute = user ? getDashboardRoute(user.role) : "/login";
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-
-  // 3D Particles Animation Canvas for Light Theme (#F5F8F7)
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    let animationFrameId: number;
-    let width = (canvas.width = canvas.offsetWidth || window.innerWidth);
-    let height = (canvas.height = canvas.offsetHeight || 600);
-
-    const handleResize = () => {
-      if (!canvas) return;
-      width = canvas.width = canvas.offsetWidth || window.innerWidth;
-      height = canvas.height = canvas.offsetHeight || 600;
-    };
-    window.addEventListener("resize", handleResize);
-
-    // Create 3D Nodes for Light Canvas
-    const numParticles = Math.min(Math.floor(width / 24), 55);
-    interface Particle {
-      x: number;
-      y: number;
-      z: number;
-      vx: number;
-      vy: number;
-      vz: number;
-      size: number;
-      color: string;
-      pulse: number;
-    }
-
-    const particles: Particle[] = [];
-    const colors = ["#059669", "#10b981", "#0d9488", "#0284c7", "#34d399"];
-
-    for (let i = 0; i < numParticles; i++) {
-      particles.push({
-        x: (Math.random() - 0.5) * width * 1.3,
-        y: (Math.random() - 0.5) * height * 1.3,
-        z: Math.random() * 800 + 100,
-        vx: (Math.random() - 0.5) * 0.4,
-        vy: (Math.random() - 0.5) * 0.4,
-        vz: (Math.random() - 0.5) * 0.5,
-        size: Math.random() * 2.2 + 1.2,
-        color: colors[Math.floor(Math.random() * colors.length)],
-        pulse: Math.random() * Math.PI * 2,
-      });
-    }
-
-    const focalLength = 400;
-
-    const render = () => {
-      ctx.clearRect(0, 0, width, height);
-
-      const cx = width / 2;
-      const cy = height / 2;
-
-      // Project 3D to 2D
-      const projected = particles.map((p) => {
-        p.x += p.vx;
-        p.y += p.vy;
-        p.z += p.vz;
-        p.pulse += 0.025;
-
-        if (Math.abs(p.x) > width * 0.7) p.vx *= -1;
-        if (Math.abs(p.y) > height * 0.7) p.vy *= -1;
-        if (p.z < 50 || p.z > 900) p.vz *= -1;
-
-        const scale = focalLength / p.z;
-        const x2d = cx + p.x * scale;
-        const y2d = cy + p.y * scale;
-        const r2d = Math.max(p.size * scale, 0.8);
-
-        return { particle: p, x: x2d, y: y2d, r: r2d, scale };
-      });
-
-      // Render 3D verification network lines in subtle mint/slate
-      for (let i = 0; i < projected.length; i++) {
-        for (let j = i + 1; j < projected.length; j++) {
-          const p1 = projected[i];
-          const p2 = projected[j];
-
-          const dx = p1.x - p2.x;
-          const dy = p1.y - p2.y;
-          const dist = Math.sqrt(dx * dx + dy * dy);
-
-          if (dist < 125) {
-            const alpha = (1 - dist / 125) * 0.18 * Math.min(p1.scale, 1);
-            ctx.beginPath();
-            ctx.moveTo(p1.x, p1.y);
-            ctx.lineTo(p2.x, p2.y);
-            ctx.strokeStyle = `rgba(16, 185, 129, ${alpha})`;
-            ctx.lineWidth = 0.7 * Math.min(p1.scale, 1.2);
-            ctx.stroke();
-          }
-        }
-      }
-
-      // Render Nodes
-      projected.forEach((p) => {
-        const pulseFactor = Math.sin(p.particle.pulse) * 0.2 + 1;
-        const finalRadius = p.r * pulseFactor;
-
-        ctx.fillStyle = p.particle.color;
-        ctx.globalAlpha = Math.min(p.scale * 0.6, 0.5);
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, finalRadius * 2.2, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.globalAlpha = Math.min(p.scale, 0.9);
-        ctx.fillStyle = p.particle.color;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, finalRadius, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.globalAlpha = 1.0;
-      });
-
-      animationFrameId = requestAnimationFrame(render);
-    };
-
-    render();
-
-    return () => {
-      window.removeEventListener("resize", handleResize);
-      cancelAnimationFrame(animationFrameId);
-    };
-  }, []);
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#F5F8F7] text-slate-900 selection:bg-emerald-500 selection:text-white font-body relative overflow-x-hidden">
-      {/* Background Ambient Gradient Blobs */}
-      <div className="blob-emerald top-[-100px] left-[10%] opacity-70" />
-      <div className="blob-teal top-[400px] right-[5%] opacity-60" />
+    <div className="min-h-screen bg-[#F8FAFC] text-slate-900 flex flex-col font-body">
+      {/* Top Government Portal Bar */}
+      <div className="border-b border-slate-200 bg-[#0F1E36] text-white py-2 px-4 sm:px-6 lg:px-8 text-xs">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-2 font-medium">
+            <Landmark className="h-3.5 w-3.5 text-amber-400" />
+            <span>Government of India • GeM Public Procurement Compliance Verification System</span>
+          </div>
+          <div className="hidden sm:flex items-center gap-4 text-slate-300">
+            <span>Security Standard: GFR 2017 Compliant</span>
+            <span>•</span>
+            <span className="text-emerald-400 font-semibold">Production Ready Demo</span>
+          </div>
+        </div>
+      </div>
 
-      {/* Sticky White Glass Navbar */}
-      <header className="glass-header-light sticky top-0 z-50 transition-all">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-18 flex items-center justify-between">
-          
-          {/* Logo & Indian Government Emblem Branding */}
+      {/* Main Navigation Header */}
+      <header className="border-b border-slate-200 bg-white sticky top-0 z-30 shadow-xs">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            {/* Indian Govt Emblem / Official Badge */}
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-tr from-slate-900 to-slate-800 text-amber-400 shadow-md border border-slate-700">
-              <Landmark className="h-6 w-6 text-amber-300" />
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#0F1E36] text-white shadow-2xs">
+              <Landmark className="h-5 w-5 text-amber-400" />
             </div>
-            
-            <div className="flex flex-col">
-              <div className="flex items-center gap-2">
-                <span className="font-heading font-bold text-xl tracking-tight text-slate-900">
-                  BidVerify <span className="text-emerald-600 font-extrabold">AI</span>
-                </span>
-                
-                {/* Small Green/Teal Pulsing Status Indicator */}
-                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 border border-emerald-200">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 status-indicator-pulse" />
-                  <span className="text-[10px] font-bold text-emerald-800 tracking-wider uppercase font-heading">
-                    Live Platform
-                  </span>
-                </div>
-              </div>
-              
-              <span className="text-[11px] font-semibold text-slate-500 tracking-wide">
-                Government e-Marketplace (GeM) Bid Compliance Platform
+            <div>
+              <span className="font-heading text-lg font-bold tracking-tight text-[#0F1E36]">
+                BidVerify <span className="text-emerald-700 font-extrabold">AI</span>
               </span>
+              <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider">
+                AI-Powered Bid Compliance Verification
+              </p>
             </div>
           </div>
 
-          {/* Nav Actions */}
           <div className="flex items-center gap-3">
-            {!loading && user ? (
+            {loading ? (
+              <div className="h-9 w-24 bg-slate-100 rounded-lg animate-pulse" />
+            ) : user ? (
               <Link
                 href={portalRoute}
-                className="btn-emerald-fintech inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-xs font-bold shadow-md"
+                className="btn-primary-navy inline-flex items-center gap-2 rounded-lg px-4 py-2 text-xs shadow-xs"
               >
                 <span>Go to Dashboard</span>
-                <ArrowRight className="h-4 w-4" />
+                <ArrowRight className="h-3.5 w-3.5" />
               </Link>
             ) : (
-              <div className="flex items-center gap-2.5">
+              <div className="flex items-center gap-2">
                 <Link
                   href="/login"
-                  className="rounded-full px-4 py-2 text-xs font-bold text-slate-700 hover:text-emerald-700 transition-colors"
+                  className="btn-secondary-outline rounded-lg px-4 py-2 text-xs"
                 >
                   Sign In
                 </Link>
                 <Link
                   href="/signup"
-                  className="btn-emerald-fintech inline-flex items-center gap-1.5 rounded-full px-5 py-2.5 text-xs font-bold shadow-md"
+                  className="btn-primary-navy rounded-lg px-4 py-2 text-xs shadow-xs"
                 >
-                  <span>Get Started</span>
-                  <ArrowRight className="h-3.5 w-3.5" />
+                  Register
                 </Link>
               </div>
             )}
@@ -221,258 +91,255 @@ export default function HomePage() {
         </div>
       </header>
 
-      {/* Hero Section with 3D Particles Canvas */}
-      <main className="flex-1">
-        <section className="relative pt-12 pb-20 sm:pt-20 sm:pb-28 overflow-hidden">
-          {/* Interactive 3D Canvas Background */}
-          <canvas
-            ref={canvasRef}
-            className="absolute inset-0 w-full h-full pointer-events-none z-0 opacity-80"
-          />
-
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
-            
-            {/* Top Official Tag */}
-            <div className="inline-flex items-center gap-2 rounded-full bg-white/90 border border-slate-200 px-4 py-1.5 shadow-xs mb-8">
-              <Sparkles className="h-4 w-4 text-emerald-600" />
-              <span className="text-xs font-semibold text-slate-700">
-                Automated Procurement Compliance & Verification Engine
-              </span>
+      {/* Hero Section */}
+      <section className="border-b border-slate-200 bg-white py-12 sm:py-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="max-w-3xl">
+            <div className="inline-flex items-center gap-2 rounded-md border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-700 mb-4">
+              <ShieldCheck className="h-3.5 w-3.5 text-emerald-700" />
+              <span>Deterministic Compliance & Document AI Architecture</span>
             </div>
 
-            {/* Main Punchy Heading */}
-            <h1 className="font-heading text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight text-slate-900 leading-[1.1] max-w-4xl mx-auto">
-              Verify Tender Bids with{" "}
-              <span className="gradient-text-emerald">Absolute Precision</span>
+            <h1 className="font-heading text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-slate-900 leading-tight">
+              Enterprise Procurement Compliance & Claim Verification
             </h1>
 
-            {/* Clear Subtitle */}
-            <p className="mt-6 text-sm sm:text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed">
-              Real-time multi-clause compliance verification, eligibility audit, and automated scoring for government procurement tenders on GeM.
+            <p className="mt-4 text-sm sm:text-base text-slate-600 leading-relaxed">
+              Automated statutory credential extraction, cross-document entity consistency matrix, deterministic rule evaluation, and human-in-the-loop decision cockpit for public procurement under GeM.
             </p>
 
-            {/* Portal Cards — Floating Light Design with 30px Soft Shadows */}
-            <div className="mt-14 max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
-              
-              {/* Bidder Card */}
-              <div className="floating-card rounded-3xl p-7 flex flex-col justify-between group relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/5 rounded-bl-full pointer-events-none" />
-                <div>
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-blue-700 border border-blue-100 shadow-2xs group-hover:scale-110 transition-transform">
-                      <Building2 className="h-6 w-6" />
-                    </div>
-                    <span className="rounded-full bg-blue-50 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-blue-800 border border-blue-200">
-                      Vendors & OEMs
-                    </span>
-                  </div>
-                  <h3 className="font-heading text-xl font-bold text-slate-900 group-hover:text-blue-700 transition-colors">
-                    Bidder Portal
-                  </h3>
-                  <p className="mt-3 text-xs text-slate-500 leading-relaxed">
-                    Discover procurement tenders, submit technical and commercial proposals, and receive automated eligibility scoring.
-                  </p>
-                </div>
+            <div className="mt-6 flex flex-wrap items-center gap-3">
+              <Link
+                href="/login/procurement"
+                className="btn-primary-navy inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-xs font-bold shadow-xs"
+              >
+                <span>Procurement Officer Portal</span>
+                <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
 
-                <div className="mt-8 pt-6 border-t border-slate-100 flex items-center gap-3">
-                  <Link
-                    href="/login/bidder"
-                    className="flex-1 text-center rounded-full btn-emerald-fintech px-4 py-2.5 text-xs font-bold shadow-sm"
-                  >
-                    Bidder Login
-                  </Link>
-                  <Link
-                    href="/signup/bidder"
-                    className="rounded-full btn-navy-outline px-4 py-2.5 text-xs font-semibold"
-                  >
-                    Register
-                  </Link>
+              <Link
+                href="/login/bidder"
+                className="btn-secondary-outline inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-xs font-bold"
+              >
+                <span>Bidder (Vendor) Portal</span>
+              </Link>
+
+              <Link
+                href="/procurement/validation"
+                className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-700 hover:text-slate-900 hover:underline px-3 py-2"
+              >
+                <Activity className="h-3.5 w-3.5 text-emerald-700" />
+                <span>View Empirical Benchmark Suite</span>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Role Access Portals Section */}
+      <section className="py-12 bg-[#F8FAFC] border-b border-slate-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="mb-8">
+            <h2 className="font-heading text-xl sm:text-2xl font-bold text-slate-900">
+              Select Role Portal
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-500 mt-1">
+              Role-Based Access Control (RBAC) with tailored workspaces and audit logging.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Bidder Card */}
+            <div className="card-formal bg-white p-6 border border-slate-200 flex flex-col justify-between">
+              <div>
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50 text-blue-700 border border-blue-200 mb-4">
+                  <Building2 className="h-5 w-5" />
                 </div>
+                <h3 className="font-heading text-base font-bold text-slate-900">
+                  Bidder Portal (Vendor)
+                </h3>
+                <p className="text-xs text-slate-600 mt-2 leading-relaxed">
+                  Discover published GeM opportunities, upload official PDF statutory documents (PAN, GSTIN, Udyam), review auto-extracted details, and track proposal readiness.
+                </p>
+
+                <ul className="mt-4 space-y-1.5 text-xs text-slate-600">
+                  <li className="flex items-center gap-2">
+                    <Check className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                    <span>PDF-First Statutory Ingestion</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                    <span>Real-time Readiness Score</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                    <span>Buyer Clarification Resolution</span>
+                  </li>
+                </ul>
               </div>
 
-              {/* Procurement Officer Card */}
-              <div className="floating-card rounded-3xl p-7 flex flex-col justify-between group relative overflow-hidden border-emerald-200/80">
-                <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/10 rounded-bl-full pointer-events-none" />
-                <div>
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-700 border border-emerald-200 shadow-2xs group-hover:scale-110 transition-transform">
-                      <FileCheck2 className="h-6 w-6" />
-                    </div>
-                    <span className="rounded-full bg-emerald-50 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-emerald-800 border border-emerald-200">
-                      Buyer Entity
-                    </span>
-                  </div>
-                  <h3 className="font-heading text-xl font-bold text-slate-900 group-hover:text-emerald-700 transition-colors">
-                    Procurement Officer
-                  </h3>
-                  <p className="mt-3 text-xs text-slate-500 leading-relaxed">
-                    Publish procurement opportunities, evaluate candidate proposals, review AI compliance reports, and award contracts.
-                  </p>
-                </div>
-
-                <div className="mt-8 pt-6 border-t border-slate-100 flex items-center gap-3">
-                  <Link
-                    href="/login/procurement"
-                    className="flex-1 text-center rounded-full btn-emerald-fintech px-4 py-2.5 text-xs font-bold shadow-sm"
-                  >
-                    Officer Login
-                  </Link>
-                  <Link
-                    href="/signup/procurement"
-                    className="rounded-full btn-navy-outline px-4 py-2.5 text-xs font-semibold"
-                  >
-                    Register
-                  </Link>
-                </div>
-              </div>
-
-              {/* Admin Card */}
-              <div className="floating-card rounded-3xl p-7 flex flex-col justify-between group relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-24 h-24 bg-purple-500/5 rounded-bl-full pointer-events-none" />
-                <div>
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-purple-50 text-purple-700 border border-purple-100 shadow-2xs group-hover:scale-110 transition-transform">
-                      <Lock className="h-6 w-6" />
-                    </div>
-                    <span className="rounded-full bg-purple-50 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-purple-800 border border-purple-200">
-                      System Oversight
-                    </span>
-                  </div>
-                  <h3 className="font-heading text-xl font-bold text-slate-900 group-hover:text-emerald-600 transition-colors">
-                    Administrator Portal
-                  </h3>
-                  <p className="mt-3 text-xs text-slate-500 leading-relaxed">
-                    Platform governance, tamper-proof audit log inspection, organization management, and security user provisioning.
-                  </p>
-                </div>
-
-                <div className="mt-8 pt-6 border-t border-slate-100 flex items-center gap-3">
-                  <Link
-                    href="/login/admin"
-                    className="flex-1 text-center rounded-full btn-emerald-fintech px-4 py-2.5 text-xs font-bold shadow-sm"
-                  >
-                    Admin Login
-                  </Link>
-                  <Link
-                    href="/signup/admin"
-                    className="rounded-full btn-navy-outline px-4 py-2.5 text-xs font-semibold"
-                  >
-                    Register
-                  </Link>
-                </div>
+              <div className="mt-6 pt-4 border-t border-slate-100">
+                <Link
+                  href="/login/bidder"
+                  className="btn-primary-navy w-full flex items-center justify-center gap-2 rounded-lg py-2 text-xs"
+                >
+                  <span>Sign In as Bidder</span>
+                  <ArrowRight className="h-3 w-3" />
+                </Link>
               </div>
             </div>
 
-            {/* Platform Feature Badges */}
-            <div className="pt-10 flex flex-wrap items-center justify-center gap-4 text-xs font-medium text-slate-600">
-              <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-full px-4 py-2 shadow-xs">
-                <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-                <span>Automated Statutory Verification</span>
+            {/* Procurement Officer Card */}
+            <div className="card-formal bg-white p-6 border border-slate-200 flex flex-col justify-between">
+              <div>
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 mb-4">
+                  <FileCheck2 className="h-5 w-5" />
+                </div>
+                <h3 className="font-heading text-base font-bold text-slate-900">
+                  Procurement Officer Portal
+                </h3>
+                <p className="text-xs text-slate-600 mt-2 leading-relaxed">
+                  Create and publish tenders with dynamic criteria, inspect the Priority Review Queue, examine Explain Why evidence panels, and record formal qualification decisions.
+                </p>
+
+                <ul className="mt-4 space-y-1.5 text-xs text-slate-600">
+                  <li className="flex items-center gap-2">
+                    <Check className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                    <span>Priority Review Queue</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                    <span>Explain Why Evidence Cockpit</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                    <span>Human Final Determination</span>
+                  </li>
+                </ul>
               </div>
-              <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-full px-4 py-2 shadow-xs">
-                <CheckCircle2 className="h-4 w-4 text-teal-600" />
-                <span>Dynamic Eligibility Criteria</span>
+
+              <div className="mt-6 pt-4 border-t border-slate-100">
+                <Link
+                  href="/login/procurement"
+                  className="btn-primary-navy w-full flex items-center justify-center gap-2 rounded-lg py-2 text-xs"
+                >
+                  <span>Sign In as Procurement Officer</span>
+                  <ArrowRight className="h-3 w-3" />
+                </Link>
               </div>
-              <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-full px-4 py-2 shadow-xs">
-                <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-                <span>Tamper-Proof Audit Trails</span>
+            </div>
+
+            {/* Admin Card */}
+            <div className="card-formal bg-white p-6 border border-slate-200 flex flex-col justify-between">
+              <div>
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-50 text-purple-700 border border-purple-200 mb-4">
+                  <Lock className="h-5 w-5" />
+                </div>
+                <h3 className="font-heading text-base font-bold text-slate-900">
+                  Admin Oversight Portal
+                </h3>
+                <p className="text-xs text-slate-600 mt-2 leading-relaxed">
+                  Platform governance, organization registry oversight, user role provisioning, empirical validation benchmark analytics, and immutable audit log exploration.
+                </p>
+
+                <ul className="mt-4 space-y-1.5 text-xs text-slate-600">
+                  <li className="flex items-center gap-2">
+                    <Check className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                    <span>Organization & User Governance</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                    <span>Empirical Benchmark Cockpit</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                    <span>Immutable Platform Audit Log</span>
+                  </li>
+                </ul>
+              </div>
+
+              <div className="mt-6 pt-4 border-t border-slate-100">
+                <Link
+                  href="/login/admin"
+                  className="btn-primary-navy w-full flex items-center justify-center gap-2 rounded-lg py-2 text-xs"
+                >
+                  <span>Sign In as Admin</span>
+                  <ArrowRight className="h-3 w-3" />
+                </Link>
               </div>
             </div>
           </div>
-        </section>
+        </div>
+      </section>
 
-        {/* Live Stats Counter Strip — JetBrains Mono Numbers */}
-        <section className="stats-strip-light py-10">
-          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-              <div className="space-y-1">
-                <p className="font-mono-score text-3xl sm:text-4xl font-extrabold text-slate-900">12,480+</p>
-                <p className="text-xs font-bold text-emerald-700 uppercase tracking-widest font-heading">Tenders Verified</p>
-              </div>
-              <div className="space-y-1">
-                <p className="font-mono-score text-3xl sm:text-4xl font-extrabold text-slate-900">94,200+</p>
-                <p className="text-xs font-bold text-teal-700 uppercase tracking-widest font-heading">Compliance Audits</p>
-              </div>
-              <div className="space-y-1">
-                <p className="font-mono-score text-3xl sm:text-4xl font-extrabold text-slate-900">3,150+</p>
-                <p className="text-xs font-bold text-emerald-700 uppercase tracking-widest font-heading">Active Bidders</p>
-              </div>
-              <div className="space-y-1">
-                <p className="font-mono-score text-3xl sm:text-4xl font-extrabold text-slate-900">&lt; 30 sec</p>
-                <p className="text-xs font-bold text-teal-700 uppercase tracking-widest font-heading">Avg. Verification Time</p>
-              </div>
-            </div>
+      {/* Core Architectural Pillars */}
+      <section className="py-12 bg-white border-b border-slate-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="mb-8">
+            <h2 className="font-heading text-xl sm:text-2xl font-bold text-slate-900">
+              Core Technical Capabilities
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-500 mt-1">
+              Engineered for deterministic precision, legal traceability, and enterprise compliance.
+            </p>
           </div>
-        </section>
 
-        {/* Feature Capabilities Grid — Spacious Floating Cards */}
-        <section className="py-16 sm:py-24">
-          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-12">
-              <h2 className="font-heading text-3xl sm:text-4xl font-bold text-slate-900 tracking-tight">
-                Platform <span className="gradient-text-emerald">Capabilities</span>
-              </h2>
-              <p className="mt-3 text-sm text-slate-500 max-w-xl mx-auto">
-                End-to-end compliance automation powered by modern AI for GeM procurement workflows.
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="p-4 rounded-lg border border-slate-200 bg-slate-50/50">
+              <Cpu className="h-5 w-5 text-[#0F1E36] mb-2" />
+              <h4 className="text-sm font-bold text-slate-900">Multimodal Document AI</h4>
+              <p className="text-xs text-slate-600 mt-1 leading-relaxed">
+                PyMuPDF for digital PDFs and OpenCV + PaddleOCR for scanned statutory certificates with confidence scoring.
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {/* Card 1 */}
-              <div className="floating-card rounded-3xl p-8 space-y-4 group">
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 border border-emerald-100 shadow-xs group-hover:scale-110 transition-transform">
-                  <FileCheck2 className="h-6 w-6" />
-                </div>
-                <h3 className="font-heading text-lg font-bold text-slate-900 group-hover:text-emerald-600 transition-colors">
-                  Dynamic Eligibility Rules
-                </h3>
-                <p className="text-xs text-slate-500 leading-relaxed">
-                  Configurable criteria for turnover, local content, statutory documentation, and technical thresholds stored dynamically for each procurement tender.
-                </p>
-              </div>
+            <div className="p-4 rounded-lg border border-slate-200 bg-slate-50/50">
+              <Scale className="h-5 w-5 text-emerald-700 mb-2" />
+              <h4 className="text-sm font-bold text-slate-900">Deterministic Compliance</h4>
+              <p className="text-xs text-slate-600 mt-1 leading-relaxed">
+                Rule-based eligibility verification engine (Turnover, GST, Experience) with transparent PASS / FAIL / REVIEW outcomes.
+              </p>
+            </div>
 
-              {/* Card 2 */}
-              <div className="floating-card rounded-3xl p-8 space-y-4 group">
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-teal-50 text-teal-600 border border-teal-100 shadow-xs group-hover:scale-110 transition-transform">
-                  <Scale className="h-6 w-6" />
-                </div>
-                <h3 className="font-heading text-lg font-bold text-slate-900 group-hover:text-emerald-600 transition-colors">
-                  Lifecycle Governance
-                </h3>
-                <p className="text-xs text-slate-500 leading-relaxed">
-                  Strict multi-stage workflow governance from draft and publishing to bidding closure, evaluation, contract award, and archival.
-                </p>
-              </div>
+            <div className="p-4 rounded-lg border border-slate-200 bg-slate-50/50">
+              <ShieldAlert className="h-5 w-5 text-amber-700 mb-2" />
+              <h4 className="text-sm font-bold text-slate-900">Cross-Document Consistency</h4>
+              <p className="text-xs text-slate-600 mt-1 leading-relaxed">
+                Automated similarity matrix comparing PAN, GSTIN, Udyam, and MCA legal entity names to prevent discrepancy fraud.
+              </p>
+            </div>
 
-              {/* Card 3 */}
-              <div className="floating-card rounded-3xl p-8 space-y-4 group">
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-800 border border-slate-200 shadow-xs group-hover:scale-110 transition-transform">
-                  <Lock className="h-6 w-6" />
-                </div>
-                <h3 className="font-heading text-lg font-bold text-slate-900 group-hover:text-emerald-600 transition-colors">
-                  Enterprise Privacy & Isolation
-                </h3>
-                <p className="text-xs text-slate-500 leading-relaxed">
-                  Dedicated authentication portals for Bidders, Procurement Officers, and Platform Administrators ensuring complete data privacy.
-                </p>
-              </div>
+            <div className="p-4 rounded-lg border border-slate-200 bg-slate-50/50">
+              <History className="h-5 w-5 text-purple-700 mb-2" />
+              <h4 className="text-sm font-bold text-slate-900">Tamper-Evident Audit Trail</h4>
+              <p className="text-xs text-slate-600 mt-1 leading-relaxed">
+                Complete chronological event logging of all officer determinations, rule revisions, and bidder uploads.
+              </p>
             </div>
           </div>
-        </section>
-      </main>
+        </div>
+      </section>
 
-      {/* Footer — Soft Clean Light Design */}
-      <footer className="border-t border-slate-200 bg-white py-10 text-center text-xs text-slate-500 relative z-10">
-        <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-900 text-amber-400">
-              <Landmark className="h-4 w-4" />
-            </div>
-            <span className="font-heading font-bold text-slate-900 text-sm">BidVerify AI</span>
-            <span className="text-slate-400">— GeM Procurement Compliance Platform</span>
+      {/* Footer */}
+      <footer className="bg-slate-900 text-slate-400 py-8 px-4 sm:px-6 lg:px-8 text-xs mt-auto">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-2 text-white">
+            <Landmark className="h-4 w-4 text-amber-400" />
+            <span className="font-bold">BidVerify AI</span>
+            <span className="text-slate-500">•</span>
+            <span className="text-slate-400 text-[11px]">Government Procurement Compliance Platform</span>
           </div>
-          <div>
-            <span className="text-slate-500 font-medium">Designed for Public Procurement Transparency & Statutory Compliance</span>
+
+          <div className="flex items-center gap-4 text-slate-400">
+            <Link href="/procurement/validation" className="hover:text-white transition-colors">
+              Empirical Validation
+            </Link>
+            <Link href="/procurement/audit" className="hover:text-white transition-colors">
+              Audit Log
+            </Link>
+            <Link href="/login" className="hover:text-white transition-colors">
+              Portal Login
+            </Link>
           </div>
         </div>
       </footer>

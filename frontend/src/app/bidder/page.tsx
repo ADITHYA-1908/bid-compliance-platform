@@ -10,6 +10,11 @@ import {
   BidListItem,
   BidderTenderSummary,
 } from "@/lib/api";
+import { StatCard } from "@/components/common/StatCard";
+import { SectionCard } from "@/components/common/SectionCard";
+import { StatusBadge } from "@/components/common/StatusBadge";
+import { EmptyState } from "@/components/common/EmptyState";
+import { LoadingState } from "@/components/common/LoadingState";
 import {
   FileText,
   Send,
@@ -23,6 +28,10 @@ import {
   Layers,
   ChevronRight,
   TrendingUp,
+  Award,
+  MessageSquareQuote,
+  ShieldAlert,
+  Search,
 } from "lucide-react";
 
 export default function BidderDashboardPage() {
@@ -93,359 +102,257 @@ export default function BidderDashboardPage() {
     <DashboardLayout
       allowedRoles={["BIDDER"]}
       title="Bidder Workspace"
-      description="Executive overview of your GeM procurement participation, statutory readiness, and proposal submissions."
+      description="Overview of your GeM procurement participation, active bids, and statutory verification readiness."
       breadcrumbs={[{ label: "Bidder Portal", href: "/bidder" }, { label: "Dashboard" }]}
+      action={
+        <Link
+          href="/bidder/tenders"
+          className="btn-emerald-fintech inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold shadow-md cursor-pointer"
+        >
+          <Search className="h-4 w-4" />
+          <span>Discover Tenders</span>
+        </Link>
+      }
     >
       <div className="space-y-6">
-        {/* Welcome & Account Summary Card */}
-        <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-xs">
+        {/* Welcome Card */}
+        <div className="floating-card rounded-2xl p-6 bg-white border border-slate-200">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <div className="flex items-center gap-2 mb-1">
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-800 border border-emerald-200">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-600"></span>
-                  Authenticated Bidder Session
+              <div className="flex items-center gap-2 mb-1.5">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-bold text-blue-800 border border-blue-200">
+                  <span className="h-2 w-2 rounded-full bg-blue-500 status-indicator-pulse"></span>
+                  Verified Bidder Entity
                 </span>
-                <span className="inline-flex items-center rounded-md bg-blue-50 px-2 py-0.5 text-xs font-semibold text-blue-800 border border-blue-200">
-                  GeM BIDDER
+                <span className="inline-flex items-center rounded-md bg-slate-100 px-2.5 py-0.5 text-xs font-bold text-slate-800 border border-slate-200">
+                  {user?.organization || "Vendor Organization"}
                 </span>
               </div>
-              <h2 className="text-xl font-bold text-slate-900">
-                Welcome back, {user?.full_name}
+              <h2 className="font-heading text-2xl font-bold text-slate-900">
+                {user?.organization || "My Bidder Enterprise"}
               </h2>
               <p className="text-xs text-slate-500 mt-1">
-                Organization:{" "}
-                <span className="font-semibold text-slate-800">
-                  {profileData?.profile.organization?.name || user?.organization || "Enterprise Vendor"}
-                </span>{" "}
-                • Email: <span className="font-mono text-slate-700">{user?.email}</span>
+                Authorized User: <span className="font-semibold text-slate-700">{user?.full_name}</span> • Login ID: <span className="font-mono text-slate-700">{user?.email}</span>
               </p>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2.5">
-              <Link
-                href="/bidder/tenders"
-                className="inline-flex items-center gap-1.5 rounded-md bg-blue-700 px-3.5 py-2 text-xs font-semibold text-white hover:bg-blue-800 transition-colors shadow-xs"
-              >
-                <Briefcase className="h-3.5 w-3.5" />
-                Browse Tenders
-              </Link>
-              <Link
-                href="/bidder/bids"
-                className="inline-flex items-center gap-1.5 rounded-md bg-slate-100 px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-200 transition-colors"
-              >
-                <Layers className="h-3.5 w-3.5" />
-                My Proposals
-              </Link>
-              <Link
-                href="/bidder/organization"
-                className="inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-xs"
-              >
-                <Building2 className="h-3.5 w-3.5 text-slate-500" />
-                Organization
-              </Link>
+            {/* Profile Completion Widget */}
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 sm:w-64">
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-xs font-bold text-slate-700 font-heading">Statutory Readiness</span>
+                <span className="font-mono-score text-xs font-extrabold text-emerald-700">
+                  {completion?.completion_percentage ?? 100}%
+                </span>
+              </div>
+              <div className="h-2 w-full rounded-full bg-slate-200 overflow-hidden">
+                <div
+                  className="h-full rounded-full bg-emerald-500 transition-all duration-500"
+                  style={{ width: `${completion?.completion_percentage ?? 100}%` }}
+                />
+              </div>
+              <p className="mt-1.5 text-[10px] text-slate-500">
+                {completion?.is_complete ? "✓ Ready for GeM procurement bids" : "Missing required statutory fields"}
+              </p>
             </div>
           </div>
         </div>
 
-        {/* Profile Statutory Readiness Card */}
-        {completion && (
-          <div
-            className={`rounded-xl border p-5 transition-all shadow-xs ${
-              completion.is_complete
-                ? "border-emerald-200 bg-emerald-50/50"
-                : "border-blue-200 bg-blue-50/40"
-            }`}
-          >
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <div className="flex items-start gap-3.5">
-                <div
-                  className={`rounded-xl p-2.5 shrink-0 ${
-                    completion.is_complete
-                      ? "bg-emerald-100 text-emerald-800"
-                      : "bg-blue-100 text-blue-800"
-                  }`}
-                >
-                  {completion.is_complete ? (
-                    <CheckCircle2 className="h-5 w-5" />
-                  ) : (
-                    <Sparkles className="h-5 w-5" />
-                  )}
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-sm font-bold text-slate-900">
-                      Organization Profile & Statutory Readiness Gate
-                    </h3>
-                    <span
-                      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-bold border ${
-                        completion.is_complete
-                          ? "bg-emerald-100 text-emerald-800 border-emerald-300"
-                          : "bg-amber-100 text-amber-800 border-amber-300"
-                      }`}
-                    >
-                      {completion.completion_percentage}% Ready
-                    </span>
-                  </div>
-                  <p className="text-xs text-slate-600 mt-1">
-                    {completion.is_complete
-                      ? "Your statutory registration identifiers, GSTIN, PAN, and signatory credentials are 100% verified. You are eligible to submit bids for all open GeM tenders."
-                      : `You have ${completion.missing_required_fields.length} mandatory registration item(s) pending (${completion.missing_required_fields.join(
-                          ", "
-                        )}) before your profile satisfies statutory submission requirements.`}
-                  </p>
-                </div>
-              </div>
+        {/* Executive KPI Cards */}
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+          <StatCard
+            label="Available Tenders"
+            value={loading ? "..." : totalTendersCount}
+            icon={FileText}
+            variant="blue"
+            subtitle="Open opportunities"
+          />
+          <StatCard
+            label="Bids in Progress"
+            value={loading ? "..." : draftBidsCount}
+            icon={Send}
+            variant="purple"
+            subtitle="Draft proposals"
+          />
+          <StatCard
+            label="Submitted Bids"
+            value={loading ? "..." : submittedBidsCount}
+            icon={CheckCircle2}
+            variant="emerald"
+            subtitle="Awaiting evaluation"
+          />
+          <StatCard
+            label="Open Clarifications"
+            value={loading ? "..." : 0}
+            icon={MessageSquareQuote}
+            variant="amber"
+            subtitle="Pending queries"
+          />
+          <StatCard
+            label="Expiring Documents"
+            value={loading ? "..." : 0}
+            icon={Award}
+            variant="slate"
+            subtitle="All credentials valid"
+          />
+        </div>
 
-              <div className="flex items-center gap-3 shrink-0 self-end md:self-center">
-                {!completion.is_complete ? (
+        {/* ACTION REQUIRED ALERTS SECTION */}
+        <SectionCard
+          title="Action Required & Compliance Alerts"
+          description="Urgent statutory document renewals, pending clarification responses, and bid readiness gates."
+          icon={AlertCircle}
+        >
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div className="rounded-xl border border-blue-200 bg-blue-50/40 p-4 flex items-start gap-3">
+              <Sparkles className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-blue-700 font-heading">
+                  Document AI Ready
+                </span>
+                <h4 className="text-xs font-bold text-slate-900 mt-0.5">
+                  PDF-First Extraction Available
+                </h4>
+                <p className="text-[11px] text-slate-600 mt-1 leading-relaxed">
+                  Upload PDF certificates in your Organization profile for instant auto-extraction.
+                </p>
+                <div className="mt-3">
                   <Link
                     href="/bidder/organization"
-                    className="inline-flex items-center gap-1.5 rounded-md bg-blue-700 px-4 py-2 text-xs font-semibold text-white hover:bg-blue-800 transition-colors shadow-xs"
+                    className="rounded-lg btn-emerald-fintech px-3 py-1 text-[11px] font-bold text-white shadow-2xs inline-block"
                   >
-                    Complete Organization Profile
-                    <ArrowRight className="h-3.5 w-3.5" />
+                    Upload Documents
                   </Link>
-                ) : (
-                  <span className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-700">
-                    <CheckCircle2 className="h-4 w-4" />
-                    Statutory Compliant
-                  </span>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Real Dynamic Metrics Grid */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-                Open GeM Tenders
-              </span>
-              <div className="rounded-lg bg-blue-50 p-2 text-blue-800 border border-blue-100">
-                <Briefcase className="h-4 w-4" />
-              </div>
-            </div>
-            <p className="mt-2 text-2xl font-bold font-mono text-slate-900">
-              {loading ? "..." : totalTendersCount}
-            </p>
-            <p className="mt-1 text-[11px] text-slate-500">
-              Available for immediate participation
-            </p>
-          </div>
-
-          <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-                Draft Workspaces
-              </span>
-              <div className="rounded-lg bg-amber-50 p-2 text-amber-700 border border-amber-100">
-                <FileText className="h-4 w-4" />
-              </div>
-            </div>
-            <p className="mt-2 text-2xl font-bold font-mono text-slate-900">
-              {loading ? "..." : draftBidsCount}
-            </p>
-            <p className="mt-1 text-[11px] text-slate-500">
-              In-progress proposal workspaces
-            </p>
-          </div>
-
-          <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-                Submitted Proposals
-              </span>
-              <div className="rounded-lg bg-emerald-50 p-2 text-emerald-700 border border-emerald-100">
-                <Send className="h-4 w-4" />
-              </div>
-            </div>
-            <p className="mt-2 text-2xl font-bold font-mono text-slate-900">
-              {loading ? "..." : submittedBidsCount}
-            </p>
-            <p className="mt-1 text-[11px] text-slate-500">
-              Officially sealed and acknowledged
-            </p>
-          </div>
-
-          <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-                Statutory Readiness
-              </span>
-              <div className="rounded-lg bg-purple-50 p-2 text-purple-700 border border-purple-100">
-                <TrendingUp className="h-4 w-4" />
-              </div>
-            </div>
-            <p className="mt-2 text-2xl font-bold font-mono text-slate-900">
-              {loading ? "..." : `${completion?.completion_percentage || 0}%`}
-            </p>
-            <p className="mt-1 text-[11px] text-slate-500">
-              {completion?.is_complete ? "100% statutory compliant" : "Pending registration items"}
-            </p>
-          </div>
-        </div>
-
-        {/* Two-Column Grid: Recent Bids & Available Opportunities */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Recent Bid Proposals */}
-          <div className="rounded-xl border border-slate-200 bg-white shadow-xs">
-            <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
-              <div className="flex items-center gap-2">
-                <Layers className="h-4 w-4 text-blue-700" />
-                <h3 className="text-sm font-bold text-slate-900">
-                  Recent Bid Proposals
-                </h3>
-              </div>
-              <Link
-                href="/bidder/bids"
-                className="text-xs font-semibold text-blue-700 hover:text-blue-800 flex items-center gap-1"
-              >
-                View All
-                <ChevronRight className="h-3 w-3" />
-              </Link>
-            </div>
-
-            <div className="p-5">
-              {loading ? (
-                <div className="py-8 text-center text-xs text-slate-500">
-                  Loading recent proposals...
                 </div>
-              ) : recentBids.length === 0 ? (
-                <div className="py-8 text-center">
-                  <FileText className="h-8 w-8 text-slate-300 mx-auto mb-2" />
-                  <p className="text-xs font-medium text-slate-700">No bid proposals yet</p>
-                  <p className="text-[11px] text-slate-500 mt-0.5">
-                    Browse open tenders to initiate your first procurement proposal.
-                  </p>
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-amber-200 bg-amber-50/40 p-4 flex items-start gap-3">
+              <Award className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-amber-700 font-heading">
+                  Certificate Monitoring
+                </span>
+                <h4 className="text-xs font-bold text-slate-900 mt-0.5">
+                  All Certificates Active
+                </h4>
+                <p className="text-[11px] text-slate-600 mt-1 leading-relaxed">
+                  GSTIN and PAN statutory credentials are valid for active procurement bids.
+                </p>
+                <div className="mt-3">
                   <Link
-                    href="/bidder/tenders"
-                    className="inline-flex items-center gap-1.5 mt-3 rounded-md bg-blue-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-800 transition-colors shadow-xs"
+                    href="/bidder/certificates"
+                    className="rounded-lg border border-slate-200 bg-white px-3 py-1 text-[11px] font-bold text-slate-700 hover:bg-slate-50 shadow-2xs inline-block"
                   >
-                    Discover Tenders
+                    View Expiry Dates
                   </Link>
                 </div>
-              ) : (
-                <div className="divide-y divide-slate-100">
-                  {recentBids.map((bid) => (
-                    <div
-                      key={bid.id}
-                      className="py-3 first:pt-0 last:pb-0 flex items-center justify-between gap-4"
-                    >
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="font-mono text-xs font-bold text-slate-900">
-                            {bid.bid_number}
-                          </span>
-                          <span
-                            className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold border ${
-                              bid.status === "SUBMITTED"
-                                ? "bg-emerald-50 text-emerald-800 border-emerald-200"
-                                : "bg-amber-50 text-amber-800 border-amber-200"
-                            }`}
-                          >
-                            {bid.status}
-                          </span>
-                        </div>
-                        <p className="text-xs text-slate-600 truncate mt-0.5 font-medium">
-                          {bid.tender_title || "Tender Proposal"}
-                        </p>
-                        <p className="text-[11px] text-slate-500 font-mono mt-0.5">
-                          Quoted: {formatCurrency(bid.quoted_amount)}
-                        </p>
-                      </div>
+              </div>
+            </div>
 
-                      <Link
-                        href={`/bidder/bids/${bid.id}`}
-                        className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-200 transition-colors shrink-0"
-                      >
-                        {bid.status === "SUBMITTED" ? "View Receipt" : "Edit Draft"}
-                        <ChevronRight className="h-3 w-3" />
-                      </Link>
-                    </div>
-                  ))}
+            <div className="rounded-xl border border-purple-200 bg-purple-50/40 p-4 flex items-start gap-3">
+              <MessageSquareQuote className="h-5 w-5 text-purple-600 shrink-0 mt-0.5" />
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-purple-700 font-heading">
+                  Buyer Clarifications
+                </span>
+                <h4 className="text-xs font-bold text-slate-900 mt-0.5">
+                  No Pending Queries
+                </h4>
+                <p className="text-[11px] text-slate-600 mt-1 leading-relaxed">
+                  All submitted bid proposals are up to date with no pending buyer clarifications.
+                </p>
+                <div className="mt-3">
+                  <Link
+                    href="/bidder/clarifications"
+                    className="rounded-lg border border-slate-200 bg-white px-3 py-1 text-[11px] font-bold text-slate-700 hover:bg-slate-50 shadow-2xs inline-block"
+                  >
+                    Check Inbox
+                  </Link>
                 </div>
-              )}
+              </div>
             </div>
           </div>
+        </SectionCard>
 
-          {/* Active Opportunities (Open GeM Tenders) */}
-          <div className="rounded-xl border border-slate-200 bg-white shadow-xs">
-            <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
-              <div className="flex items-center gap-2">
-                <Briefcase className="h-4 w-4 text-emerald-700" />
-                <h3 className="text-sm font-bold text-slate-900">
-                  Featured Open Tenders
-                </h3>
-              </div>
-              <Link
-                href="/bidder/tenders"
-                className="text-xs font-semibold text-blue-700 hover:text-blue-800 flex items-center gap-1"
-              >
-                Browse All ({totalTendersCount})
-                <ChevronRight className="h-3 w-3" />
-              </Link>
-            </div>
-
-            <div className="p-5">
-              {loading ? (
-                <div className="py-8 text-center text-xs text-slate-500">
-                  Loading open tenders...
-                </div>
-              ) : openTenders.length === 0 ? (
-                <div className="py-8 text-center">
-                  <Briefcase className="h-8 w-8 text-slate-300 mx-auto mb-2" />
-                  <p className="text-xs font-medium text-slate-700">No open tenders found</p>
-                  <p className="text-[11px] text-slate-500 mt-0.5">
-                    Check back soon for newly published GeM procurement opportunities.
-                  </p>
-                </div>
-              ) : (
-                <div className="divide-y divide-slate-100">
+        {/* AVAILABLE TENDERS SECTION */}
+        <SectionCard
+          title="Available Procurement Opportunities (GeM)"
+          description="Open government tenders ready for technical and commercial bid submission."
+          icon={FileText}
+          action={
+            <Link
+              href="/bidder/tenders"
+              className="text-xs font-bold text-emerald-700 hover:text-emerald-800 hover:underline inline-flex items-center gap-1"
+            >
+              <span>View All Tenders ({totalTendersCount})</span>
+              <ArrowRight className="h-3 w-3" />
+            </Link>
+          }
+        >
+          {loading ? (
+            <LoadingState label="Loading available tenders..." />
+          ) : openTenders.length === 0 ? (
+            <EmptyState
+              title="No open procurement tenders available"
+              description="New opportunities will automatically appear here once published by buying authorities."
+            />
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs text-slate-600">
+                <thead className="border-b border-slate-200 bg-slate-50/75 text-[11px] font-bold uppercase tracking-wider text-slate-500 font-heading">
+                  <tr>
+                    <th className="px-4 py-3">Tender Title</th>
+                    <th className="px-4 py-3">Department</th>
+                    <th className="px-4 py-3">Submission Deadline</th>
+                    <th className="px-4 py-3">Status</th>
+                    <th className="px-4 py-3 text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
                   {openTenders.map((t) => (
-                    <div
-                      key={t.id}
-                      className="py-3 first:pt-0 last:pb-0 flex items-center justify-between gap-4"
-                    >
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="font-mono text-xs font-bold text-slate-900">
+                    <tr key={t.id} className="hover:bg-slate-50/60 transition-colors">
+                      <td className="px-4 py-3.5">
+                        <div className="flex flex-col">
+                          <Link
+                            href={`/bidder/tenders/${t.id}`}
+                            className="font-heading font-bold text-slate-900 hover:text-emerald-700 transition-colors"
+                          >
+                            {t.title}
+                          </Link>
+                          <span className="font-mono text-[11px] font-bold text-slate-500 mt-0.5">
                             {t.tender_number}
                           </span>
-                          <span className="inline-flex items-center rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-semibold text-blue-700 border border-blue-100">
-                            {t.category}
-                          </span>
                         </div>
-                        <p className="text-xs text-slate-700 truncate mt-0.5 font-medium">
-                          {t.title}
-                        </p>
-                        <div className="flex items-center gap-3 text-[11px] text-slate-500 mt-0.5">
-                          <span className="font-mono text-slate-700 font-medium">
-                            Est: {formatCurrency(t.estimated_value)}
-                          </span>
-                          <span className="flex items-center gap-1 text-slate-500">
-                            <Clock className="h-3 w-3" />
-                            Deadline: {formatDate(t.submission_end_date)}
-                          </span>
-                        </div>
-                      </div>
+                      </td>
 
-                      <Link
-                        href={`/bidder/tenders/${t.id}`}
-                        className="inline-flex items-center gap-1 rounded-md bg-blue-50 text-blue-700 border border-blue-200 px-2.5 py-1.5 text-xs font-semibold hover:bg-blue-100 transition-colors shrink-0"
-                      >
-                        Participate
-                        <ChevronRight className="h-3 w-3" />
-                      </Link>
-                    </div>
+                      <td className="px-4 py-3.5 font-medium text-slate-700">
+                        {t.department || "Procuring Authority"}
+                      </td>
+
+                      <td className="px-4 py-3.5 font-mono text-slate-700">
+                        {formatDate(t.submission_end_date)}
+                      </td>
+
+                      <td className="px-4 py-3.5">
+                        <StatusBadge status={t.status} size="sm" />
+                      </td>
+
+                      <td className="px-4 py-3.5 text-right">
+                        <Link
+                          href={`/bidder/tenders/${t.id}`}
+                          className="btn-emerald-fintech rounded-lg px-3 py-1.5 text-[11px] font-bold text-white shadow-2xs inline-flex items-center gap-1"
+                        >
+                          <span>View & Apply</span>
+                          <ArrowRight className="h-3 w-3" />
+                        </Link>
+                      </td>
+                    </tr>
                   ))}
-                </div>
-              )}
+                </tbody>
+              </table>
             </div>
-          </div>
-        </div>
+          )}
+        </SectionCard>
       </div>
     </DashboardLayout>
   );

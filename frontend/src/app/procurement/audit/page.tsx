@@ -140,37 +140,45 @@ export default function ProcurementAuditPage() {
   };
 
   const getEventTypeBadge = (eventType: string, label: string) => {
+    const humanLabel =
+      label && label !== eventType
+        ? label
+        : eventType
+            .replace(/_/g, " ")
+            .toLowerCase()
+            .replace(/\b\w/g, (c) => c.toUpperCase());
+
     if (eventType.includes("DECISION")) {
       return (
         <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
-          {label}
+          {humanLabel}
         </span>
       );
     }
     if (eventType.includes("REVIEW")) {
       return (
         <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200">
-          {label}
+          {humanLabel}
         </span>
       );
     }
     if (eventType.includes("SHORTLIST")) {
       return (
         <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-bold bg-indigo-50 text-indigo-800 border border-indigo-200">
-          {label}
+          {humanLabel}
         </span>
       );
     }
     if (eventType.includes("AI_")) {
       return (
         <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-bold bg-purple-50 text-purple-800 border border-purple-200">
-          {label}
+          {humanLabel}
         </span>
       );
     }
     return (
       <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-slate-100 text-slate-700 border border-slate-200">
-        {label}
+        {humanLabel}
       </span>
     );
   };
