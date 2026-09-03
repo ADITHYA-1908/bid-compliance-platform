@@ -1,9 +1,3 @@
-"""
-Commercial Evaluation API Endpoints
-Provides procurement officers and administrators with deterministic commercial evaluations,
-L1/QCBS scoring, price comparisons, and explainable ranking breakdowns.
-"""
-
 import uuid
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -13,8 +7,8 @@ from sqlalchemy import select
 from app.db.session import get_db
 from app.db.models.user import User
 from app.db.models.tender import Tender
-from app.db.models.role import Role
-from app.core.auth import get_current_user
+from app.core.deps import get_current_user
+from app.core.authorization import require_any_role
 from app.schemas.commercial_evaluation import (
     CommercialEvaluationResultItem,
     TenderCommercialEvaluationResponse,
@@ -22,17 +16,6 @@ from app.schemas.commercial_evaluation import (
 from app.services.procurement.commercial_evaluation_service import CommercialEvaluationService
 
 router = APIRouter(prefix="/procurement/tenders", tags=["Commercial Evaluation"])
-
-
-def require_procurement_or_admin(user: User = Depends(get_current_user)) -> User:
-    """Ensures caller has PROCUREMENT_OFFICER or ADMIN role."""
-    roles = [r.name for r in user.roles]
-    if "PROCUREMENT_OFFICER" not in roles and "ADMIN" not in roles:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Access forbidden: Requires PROCUREMENT_OFFICER or ADMIN role.",
-        )
-    return user
 
 
 @router.get(
@@ -43,7 +26,7 @@ def require_procurement_or_admin(user: User = Depends(get_current_user)) -> User
 def get_tender_commercial_evaluation(
     tender_id: uuid.UUID,
     db: Session = Depends(get_db),
-    user: User = Depends(require_procurement_or_admin),
+    user: User = Depends(require_any_role("PROCUREMENT_OFFICER", "ADMIN")),
 ):
     """
     Retrieves deterministic commercial evaluation results for all submitted bids against a tender.
@@ -57,8 +40,9 @@ def get_tender_commercial_evaluation(
         )
 
     # Cross-tenant isolation check
-    user_roles = [r.name for r in user.roles]
-    if "ADMIN" not in user_roles and tender.organization_id != user.organization_id:
+    user_role = user.profile.role.name if user.profile and user.profile.role else ""
+    user_org_id = user.profile.organization_id if user.profile else None
+    if user_role != "ADMIN" and tender.organization_id != user_org_id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Access denied: Cross-organization tender access forbidden.",
@@ -133,7 +117,7 @@ def get_tender_commercial_evaluation(
 def evaluate_tender_commercials(
     tender_id: uuid.UUID,
     db: Session = Depends(get_db),
-    user: User = Depends(require_procurement_or_admin),
+    user: User = Depends(require_any_role("PROCUREMENT_OFFICER", "ADMIN")),
 ):
     """
     Forces recalculation of commercial evaluation results for a tender, refreshing L1/QCBS scores.
@@ -145,8 +129,9 @@ def evaluate_tender_commercials(
             detail="Tender not found.",
         )
 
-    user_roles = [r.name for r in user.roles]
-    if "ADMIN" not in user_roles and tender.organization_id != user.organization_id:
+    user_role = user.profile.role.name if user.profile and user.profile.role else ""
+    user_org_id = user.profile.organization_id if user.profile else None
+    if user_role != "ADMIN" and tender.organization_id != user_org_id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Access denied: Cross-organization tender access forbidden.",
