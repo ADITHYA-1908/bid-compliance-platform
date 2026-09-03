@@ -102,7 +102,7 @@ interface RoleSignupFormProps {
 export function RoleSignupForm({ forcedRole, showRoleTabs = true }: RoleSignupFormProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { user, register } = useAuth();
+  const { user, signup } = useAuth();
 
   const getInitialRole = (): RoleType => {
     if (forcedRole) return forcedRole;
@@ -187,12 +187,12 @@ export function RoleSignupForm({ forcedRole, showRoleTabs = true }: RoleSignupFo
 
     setIsSubmitting(true);
     try {
-      const newUser = await register({
+      const newUser = await signup({
         email,
         password,
         full_name: fullName,
         role: activeRole,
-        organization: organizationName,
+        organization_name: organizationName,
         organization_type: organizationType,
       });
       router.push(getDashboardRoute(newUser.role));
