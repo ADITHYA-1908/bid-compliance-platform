@@ -10,7 +10,9 @@ from typing import TYPE_CHECKING, List, Optional
 from sqlalchemy import (
     Boolean,
     DateTime,
+    Float,
     ForeignKey,
+    JSON,
     Numeric,
     String,
     Text,
@@ -74,6 +76,34 @@ class Tender(Base, TimestampMixin):
         server_default="INR",
         nullable=False,
     )
+
+    # Evaluation Method Configuration
+    evaluation_method: Mapped[str] = mapped_column(
+        String(50),
+        default="L1_LOWEST_COMPLIANT_BID",
+        server_default="L1_LOWEST_COMPLIANT_BID",
+        nullable=False,
+        index=True,
+    )
+    technical_weight: Mapped[Optional[float]] = mapped_column(
+        Float,
+        default=70.0,
+        server_default="70.0",
+        nullable=True,
+    )
+    financial_weight: Mapped[Optional[float]] = mapped_column(
+        Float,
+        default=30.0,
+        server_default="30.0",
+        nullable=True,
+    )
+    custom_weights_json: Mapped[Optional[dict]] = mapped_column(
+        JSON,
+        default=dict,
+        server_default="{}",
+        nullable=True,
+    )
+
     publish_date: Mapped[Optional[datetime]] = mapped_column(
         DateTime(timezone=True),
         nullable=True,

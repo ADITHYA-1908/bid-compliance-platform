@@ -199,6 +199,21 @@ class BidComparisonItem(BaseModel):
         description="Authoritative human qualification decision: NOT_DECIDED, UNDER_REVIEW, QUALIFIED, DISQUALIFIED",
     )
 
+    # Commercial Evaluation & Ranking (Tender Method Configuration)
+    eligibility_status: str = Field(
+        default="ELIGIBLE",
+        description="ELIGIBLE, INELIGIBLE_MANDATORY_FAILED, REVIEW_REQUIRED",
+    )
+    commercial_rank: Optional[int] = None
+    rank_label: Optional[str] = None
+    is_l1: bool = False
+    is_tie: bool = False
+    financial_score: Optional[float] = None
+    final_score: Optional[float] = None
+    has_critical_blocker: bool = False
+    blocker_reason: Optional[str] = None
+    commercial_explanation: Optional[str] = None
+
 
 class ComparisonHighlights(BaseModel):
     """Informational markers for prominent comparison metrics (non-binding)."""
@@ -207,6 +222,7 @@ class ComparisonHighlights(BaseModel):
     highest_compliance_score_bid_id: Optional[uuid.UUID] = None
     lowest_risk_score_bid_id: Optional[uuid.UUID] = None
     lowest_quoted_amount_bid_id: Optional[uuid.UUID] = None
+    top_ranked_bid_id: Optional[uuid.UUID] = None
 
 
 class BidComparisonResponse(BaseModel):
@@ -218,6 +234,9 @@ class BidComparisonResponse(BaseModel):
     tender_title: str
     tender_status: str
     procurement_organization_name: str
+    evaluation_method: str = "L1_LOWEST_COMPLIANT_BID"
+    technical_weight: Optional[float] = 70.0
+    financial_weight: Optional[float] = 30.0
     submission_end_date: Optional[datetime] = None
     total_compared_bids: int = 0
     bids: List[BidComparisonItem] = Field(default_factory=list)
@@ -225,3 +244,4 @@ class BidComparisonResponse(BaseModel):
     requirements: List[RequirementComparisonRow] = Field(default_factory=list)
     highlights: ComparisonHighlights = Field(default_factory=ComparisonHighlights)
     generated_at: datetime = Field(default_factory=datetime.utcnow)
+

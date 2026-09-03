@@ -53,6 +53,20 @@ export function TenderForm({
     toDatetimeLocalString(initialData?.evaluation_start_date)
   );
 
+  const [evaluationMethod, setEvaluationMethod] = useState<string>(
+    initialData?.evaluation_method || "L1_LOWEST_COMPLIANT_BID"
+  );
+  const [technicalWeight, setTechnicalWeight] = useState<number>(
+    initialData?.technical_weight !== undefined && initialData?.technical_weight !== null
+      ? initialData.technical_weight
+      : 70
+  );
+  const [financialWeight, setFinancialWeight] = useState<number>(
+    initialData?.financial_weight !== undefined && initialData?.financial_weight !== null
+      ? initialData.financial_weight
+      : 30
+  );
+
   const [validationError, setValidationError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -69,6 +83,9 @@ export function TenderForm({
           : ""
       );
       setCurrency(initialData.currency || "INR");
+      setEvaluationMethod(initialData.evaluation_method || "L1_LOWEST_COMPLIANT_BID");
+      setTechnicalWeight(initialData.technical_weight !== undefined && initialData.technical_weight !== null ? initialData.technical_weight : 70);
+      setFinancialWeight(initialData.financial_weight !== undefined && initialData.financial_weight !== null ? initialData.financial_weight : 30);
       setPublishDate(toDatetimeLocalString(initialData.publish_date));
       setSubmissionStartDate(toDatetimeLocalString(initialData.submission_start_date));
       setSubmissionEndDate(toDatetimeLocalString(initialData.submission_end_date));
@@ -96,6 +113,11 @@ export function TenderForm({
       return;
     }
 
+    if (evaluationMethod === "QCBS_TECHNICAL_FINANCIAL" && technicalWeight + financialWeight !== 100) {
+      setValidationError("For QCBS evaluation, Technical Weight + Financial Weight must equal exactly 100%.");
+      return;
+    }
+
     if (submissionStartDate && submissionEndDate) {
       if (new Date(submissionEndDate) < new Date(submissionStartDate)) {
         setValidationError("Submission end date cannot be earlier than submission start date.");
@@ -105,7 +127,7 @@ export function TenderForm({
 
     if (publishDate && submissionStartDate) {
       if (new Date(submissionStartDate) < new Date(publishDate)) {
-        setValidationError("Submission start date cannot be earlier than publication date.");
+        setValidationError("Submission start date cannot be earlier than publish date.");
         return;
       }
     }
@@ -125,6 +147,9 @@ export function TenderForm({
       procurement_type: procurementType || "GOODS",
       estimated_value: estimatedValue ? parseFloat(estimatedValue) : null,
       currency: currency.trim() || "INR",
+      evaluation_method: evaluationMethod,
+      technical_weight: technicalWeight,
+      financial_weight: financialWeight,
       publish_date: publishDate ? new Date(publishDate).toISOString() : null,
       submission_start_date: submissionStartDate ? new Date(submissionStartDate).toISOString() : null,
       submission_end_date: submissionEndDate ? new Date(submissionEndDate).toISOString() : null,
@@ -402,6 +427,150 @@ export function TenderForm({
               />
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Section 4: Commercial Evaluation Method & Weights */}
+      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-xs space-y-5">
+        <div className="border-b border-slate-100 pb-3">
+          <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider font-heading">
+            4. Commercial Evaluation Method & Scoring Weightage
+          </h3>
+          <p className="text-xs text-slate-500 mt-0.5">
+            Configure how compliant bids will be ranked and commercially evaluated.
+          </p>
+        </div>
+
+        <div className="space-y-4">
+          <div>
+            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+              Evaluation Methodology
+            </label>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <label
+                className={`flex flex-col p-4 rounded-xl border cursor-pointer transition-all ${
+                  evaluationMethod === "L1_LOWEST_COMPLIANT_BID"
+                    ? "border-navy-900 bg-slate-50 ring-2 ring-navy-900"
+                    : "border-slate-200 bg-white hover:border-slate-300"
+                }`}
+              >
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-xs font-bold text-slate-900 font-heading">Lowest Compliant Bid (L1)</span>
+                  <input
+                    type="radio"
+                    name="evalMethod"
+                    checked={evaluationMethod === "L1_LOWEST_COMPLIANT_BID"}
+                    onChange={() => setEvaluationMethod("L1_LOWEST_COMPLIANT_BID")}
+                    className="text-navy-900"
+                  />
+                </div>
+                <p className="text-[11px] text-slate-500 leading-relaxed">
+                  Ranks purely on lowest quoted price among bidders passing mandatory eligibility.
+                </p>
+              </label>
+
+              <label
+                className={`flex flex-col p-4 rounded-xl border cursor-pointer transition-all ${
+                  evaluationMethod === "QCBS_TECHNICAL_FINANCIAL"
+                    ? "border-navy-900 bg-slate-50 ring-2 ring-navy-900"
+                    : "border-slate-200 bg-white hover:border-slate-300"
+                }`}
+              >
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-xs font-bold text-slate-900 font-heading">Technical + Financial (QCBS)</span>
+                  <input
+                    type="radio"
+                    name="evalMethod"
+                    checked={evaluationMethod === "QCBS_TECHNICAL_FINANCIAL"}
+                    onChange={() => setEvaluationMethod("QCBS_TECHNICAL_FINANCIAL")}
+                    className="text-navy-900"
+                  />
+                </div>
+                <p className="text-[11px] text-slate-500 leading-relaxed">
+                  Quality and cost based selection. Technical score and financial score weighted to 100%.
+                </p>
+              </label>
+
+              <label
+                className={`flex flex-col p-4 rounded-xl border cursor-pointer transition-all ${
+                  evaluationMethod === "CUSTOM_WEIGHTED"
+                    ? "border-navy-900 bg-slate-50 ring-2 ring-navy-900"
+                    : "border-slate-200 bg-white hover:border-slate-300"
+                }`}
+              >
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-xs font-bold text-slate-900 font-heading">Custom Weighted</span>
+                  <input
+                    type="radio"
+                    name="evalMethod"
+                    checked={evaluationMethod === "CUSTOM_WEIGHTED"}
+                    onChange={() => setEvaluationMethod("CUSTOM_WEIGHTED")}
+                    className="text-navy-900"
+                  />
+                </div>
+                <p className="text-[11px] text-slate-500 leading-relaxed">
+                  Custom weighted evaluation formula for multi-parameter complex tenders.
+                </p>
+              </label>
+            </div>
+          </div>
+
+          {evaluationMethod === "QCBS_TECHNICAL_FINANCIAL" && (
+            <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-900 font-heading">QCBS Weight Allocation</span>
+                <span
+                  className={`text-xs font-bold font-mono px-2 py-0.5 rounded ${
+                    technicalWeight + financialWeight === 100
+                      ? "bg-emerald-100 text-emerald-800"
+                      : "bg-red-100 text-red-800"
+                  }`}
+                >
+                  Total: {technicalWeight + financialWeight}% {technicalWeight + financialWeight === 100 ? "✓ Valid" : "(Must equal 100%)"}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700">
+                    Technical Quality Weight (%)
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="99"
+                    value={technicalWeight}
+                    onChange={(e) => {
+                      const val = parseInt(e.target.value) || 0;
+                      setTechnicalWeight(val);
+                      setFinancialWeight(100 - val);
+                    }}
+                    className="mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-xs font-mono text-slate-900 focus:border-navy-900 focus:ring-1 focus:ring-navy-900"
+                  />
+                  <p className="text-[10px] text-slate-500 mt-1">Weight for technical compliance and capability evaluation.</p>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700">
+                    Commercial Financial Weight (%)
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="99"
+                    value={financialWeight}
+                    onChange={(e) => {
+                      const val = parseInt(e.target.value) || 0;
+                      setFinancialWeight(val);
+                      setTechnicalWeight(100 - val);
+                    }}
+                    className="mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-xs font-mono text-slate-900 focus:border-navy-900 focus:ring-1 focus:ring-navy-900"
+                  />
+                  <p className="text-[10px] text-slate-500 mt-1">Financial score formula: (Lowest Price / Bidder Price) × 100.</p>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

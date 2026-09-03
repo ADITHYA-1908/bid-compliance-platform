@@ -93,6 +93,10 @@ export interface Tender {
   procurement_type?: string | null;
   estimated_value?: number | string | null;
   currency: string;
+  evaluation_method?: string;
+  technical_weight?: number | null;
+  financial_weight?: number | null;
+  custom_weights_json?: Record<string, any> | null;
   publish_date?: string | null;
   submission_start_date?: string | null;
   submission_end_date?: string | null;
@@ -122,6 +126,10 @@ export interface TenderCreatePayload {
   procurement_type?: string | null;
   estimated_value?: number | string | null;
   currency?: string;
+  evaluation_method?: string;
+  technical_weight?: number | null;
+  financial_weight?: number | null;
+  custom_weights_json?: Record<string, any> | null;
   publish_date?: string | null;
   submission_start_date?: string | null;
   submission_end_date?: string | null;
@@ -136,6 +144,10 @@ export interface TenderUpdatePayload {
   procurement_type?: string | null;
   estimated_value?: number | string | null;
   currency?: string;
+  evaluation_method?: string;
+  technical_weight?: number | null;
+  financial_weight?: number | null;
+  custom_weights_json?: Record<string, any> | null;
   publish_date?: string | null;
   submission_start_date?: string | null;
   submission_end_date?: string | null;
@@ -1109,6 +1121,10 @@ export interface BidderTenderDetail {
   procurement_type?: string | null;
   estimated_value?: number | string | null;
   currency: string;
+  evaluation_method?: string;
+  technical_weight?: number | null;
+  financial_weight?: number | null;
+  custom_weights_json?: Record<string, any> | null;
   status: string;
   publish_date?: string | null;
   submission_start_date?: string | null;

@@ -76,6 +76,10 @@ class TenderBase(BaseModel):
     procurement_type: Optional[str] = Field(default="GOODS", max_length=50)
     estimated_value: Optional[Decimal] = Field(default=None, ge=0)
     currency: str = Field(default="INR", max_length=10)
+    evaluation_method: str = Field(default="L1_LOWEST_COMPLIANT_BID", max_length=50)
+    technical_weight: Optional[float] = Field(default=70.0, ge=0, le=100)
+    financial_weight: Optional[float] = Field(default=30.0, ge=0, le=100)
+    custom_weights_json: Optional[Any] = Field(default_factory=dict)
     publish_date: Optional[datetime] = None
     submission_start_date: Optional[datetime] = None
     submission_end_date: Optional[datetime] = None
@@ -94,6 +98,10 @@ class TenderCreate(BaseModel):
     procurement_type: Optional[str] = Field(default="GOODS", max_length=50, description="GOODS, SERVICES, or WORKS")
     estimated_value: Optional[Decimal] = Field(default=None, ge=0, description="Estimated total contract value")
     currency: str = Field(default="INR", max_length=10, description="Currency ISO code")
+    evaluation_method: Optional[str] = Field(default="L1_LOWEST_COMPLIANT_BID", max_length=50)
+    technical_weight: Optional[float] = Field(default=70.0, ge=0, le=100)
+    financial_weight: Optional[float] = Field(default=30.0, ge=0, le=100)
+    custom_weights_json: Optional[Any] = Field(default_factory=dict)
     publish_date: Optional[datetime] = None
     submission_start_date: Optional[datetime] = None
     submission_end_date: Optional[datetime] = None
@@ -122,6 +130,10 @@ class TenderUpdate(BaseModel):
     procurement_type: Optional[str] = Field(default=None, max_length=50)
     estimated_value: Optional[Decimal] = Field(default=None, ge=0)
     currency: Optional[str] = Field(default=None, max_length=10)
+    evaluation_method: Optional[str] = Field(default=None, max_length=50)
+    technical_weight: Optional[float] = Field(default=None, ge=0, le=100)
+    financial_weight: Optional[float] = Field(default=None, ge=0, le=100)
+    custom_weights_json: Optional[Any] = None
     publish_date: Optional[datetime] = None
     submission_start_date: Optional[datetime] = None
     submission_end_date: Optional[datetime] = None

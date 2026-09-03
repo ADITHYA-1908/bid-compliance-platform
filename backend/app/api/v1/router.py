@@ -14,6 +14,7 @@ from app.api.v1.bidder.clarifications import router as bidder_clarifications_rou
 from app.api.v1.procurement.clarifications import router as procurement_clarifications_router
 
 from app.api.v1.endpoints.organization_identity import router as organization_identity_router
+from app.api.v1.endpoints.commercial_evaluation import router as commercial_evaluation_router
 
 api_v1_router = APIRouter()
 
@@ -31,5 +32,7 @@ api_v1_router.include_router(procurement_certificates_router, prefix="/procureme
 api_v1_router.include_router(bidder_clarifications_router, prefix="/bidder/clarifications", tags=["Bidder Clarifications"])
 api_v1_router.include_router(procurement_clarifications_router, prefix="/procurement/clarifications", tags=["Procurement Clarifications"])
 api_v1_router.include_router(organization_identity_router, prefix="/identity", tags=["Organization Identity & Duplicate Detection"])
+api_v1_router.include_router(commercial_evaluation_router, tags=["Commercial Evaluation"])
+
 
 

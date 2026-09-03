@@ -29,6 +29,7 @@ import {
   FileEdit,
   X,
   AlertTriangle,
+  Scale,
   ExternalLink,
 } from "lucide-react";
 
@@ -518,6 +519,43 @@ export default function BidderTenderDetailPage() {
                           </p>
                         </div>
                       </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Evaluation Method Card */}
+                <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-xs space-y-3">
+                  <div className="flex items-center gap-2">
+                    <div className="rounded-lg bg-blue-50 p-2 text-navy-900">
+                      <Scale className="h-4 w-4" />
+                    </div>
+                    <h3 className="text-sm font-bold text-slate-900 font-heading">
+                      Evaluation Methodology
+                    </h3>
+                  </div>
+
+                  <div className="rounded-lg bg-slate-50 p-3 border border-slate-200 space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-bold text-slate-800">
+                        {tender.evaluation_method === "QCBS_TECHNICAL_FINANCIAL"
+                          ? "Quality & Cost Based (QCBS)"
+                          : tender.evaluation_method === "CUSTOM_WEIGHTED"
+                          ? "Custom Weighted Evaluation"
+                          : "Lowest Compliant Bid (L1)"}
+                      </span>
+                      <span className="text-[10px] font-mono font-bold bg-navy-900 text-white px-1.5 py-0.5 rounded">
+                        {tender.evaluation_method === "QCBS_TECHNICAL_FINANCIAL" ? "QCBS" : "L1"}
+                      </span>
+                    </div>
+
+                    {tender.evaluation_method === "QCBS_TECHNICAL_FINANCIAL" ? (
+                      <p className="text-[11px] text-slate-600 leading-relaxed">
+                        Technical Score ({tender.technical_weight || 70}%) + Financial Score ({tender.financial_weight || 30}%).
+                      </p>
+                    ) : (
+                      <p className="text-[11px] text-slate-600 leading-relaxed">
+                        Evaluated lowest price among 100% mandatory compliant submissions.
+                      </p>
                     )}
                   </div>
                 </div>

@@ -42,6 +42,8 @@ from app.schemas.bid_comparison import (
 from app.db.models.audit_event import AuditActorSource, AuditEntityType, AuditEventType
 from app.schemas.audit import RecordAuditEventDTO
 from app.services.audit.audit_service import AuditService
+from app.services.procurement.commercial_evaluation_service import CommercialEvaluationService
+
 
 logger = logging.getLogger(__name__)
 
@@ -277,6 +279,10 @@ class BidComparisonService:
         ).all()
         decisions_map = {d.bid_id: d for d in decisions}
 
+        # 9.5. Batch-Fetch Commercial Evaluation Results
+        comm_results = CommercialEvaluationService.get_tender_commercial_evaluation(db, tender_id)
+        comm_map = {cr.bid_id: cr for cr in comm_results}
+
         # 10. Extract Categories present in this Tender
         present_categories: List[str] = []
         for cat in CATEGORY_ORDER:
@@ -481,6 +487,16 @@ class BidComparisonService:
                 stale_components=stale_components,
                 category_scores=bid_cat_scores,
                 human_decision_status=decisions_map[b_id].decision if b_id in decisions_map else "NOT_DECIDED",
+                eligibility_status=comm_map[b_id].eligibility_status if b_id in comm_map else "ELIGIBLE",
+                commercial_rank=comm_map[b_id].commercial_rank if b_id in comm_map else None,
+                rank_label=comm_map[b_id].rank_label if b_id in comm_map else "NOT_RANKED",
+                is_l1=comm_map[b_id].is_l1 if b_id in comm_map else False,
+                is_tie=comm_map[b_id].is_tie if b_id in comm_map else False,
+                financial_score=comm_map[b_id].financial_score if b_id in comm_map else None,
+                final_score=comm_map[b_id].final_score if b_id in comm_map else None,
+                has_critical_blocker=comm_map[b_id].has_critical_blocker if b_id in comm_map else False,
+                blocker_reason=comm_map[b_id].blocker_reason if b_id in comm_map else None,
+                commercial_explanation=comm_map[b_id].explanation if b_id in comm_map else None,
             )
             comparison_bids.append(item)
 
@@ -615,10 +631,17 @@ class BidComparisonService:
             default=None,
         )
 
+        top_ranked_bid = min(
+            [b for b in comparison_bids if b.commercial_rank is not None],
+            key=lambda x: x.commercial_rank,
+            default=None,
+        )
+
         highlights = ComparisonHighlights(
             highest_compliance_score_bid_id=best_score_bid.bid_id if best_score_bid else None,
             lowest_risk_score_bid_id=lowest_risk_bid.bid_id if lowest_risk_bid else None,
             lowest_quoted_amount_bid_id=lowest_price_bid.bid_id if lowest_price_bid else None,
+            top_ranked_bid_id=top_ranked_bid.bid_id if top_ranked_bid else None,
         )
 
         proc_org_name = tender.organization.name if tender.organization else "Procuring Entity"
@@ -633,6 +656,9 @@ class BidComparisonService:
             tender_title=tender.title,
             tender_status=tender.status,
             procurement_organization_name=proc_org_name,
+            evaluation_method=tender.evaluation_method or "L1_LOWEST_COMPLIANT_BID",
+            technical_weight=tender.technical_weight if tender.technical_weight is not None else 70.0,
+            financial_weight=tender.financial_weight if tender.financial_weight is not None else 30.0,
             submission_end_date=tender.submission_end_date,
             total_compared_bids=len(comparison_bids),
             bids=comparison_bids,

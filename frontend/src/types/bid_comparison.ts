@@ -146,6 +146,18 @@ export interface BidComparisonItem {
 
   category_scores: Record<string, CategoryScoreComparisonValue>;
   human_decision_status?: string;
+
+  // Commercial Evaluation
+  eligibility_status?: string;
+  commercial_rank?: number | null;
+  rank_label?: string;
+  is_l1?: boolean;
+  is_tie?: boolean;
+  financial_score?: number | null;
+  final_score?: number | null;
+  has_critical_blocker?: boolean;
+  blocker_reason?: string | null;
+  commercial_explanation?: string | null;
 }
 
 export interface ComparisonHighlights {
@@ -161,6 +173,10 @@ export interface BidComparisonResponse {
   tender_status: string;
   procurement_organization_name: string;
   submission_end_date?: string | null;
+  evaluation_method?: string;
+  technical_weight?: number | null;
+  financial_weight?: number | null;
+  lowest_compliant_price?: number | null;
   total_compared_bids: number;
   bids: BidComparisonItem[];
   categories: CategoryComparisonRow[];

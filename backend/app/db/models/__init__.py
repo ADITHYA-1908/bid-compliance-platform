@@ -88,6 +88,7 @@ from app.db.models.organization_identity import (
     OrganizationDuplicateMatchType,
     OrganizationDuplicateMatchStatus,
 )
+from app.db.models.commercial_evaluation import CommercialEvaluationResult
 
 __all__ = [
     "Base",
@@ -159,6 +160,7 @@ __all__ = [
     "OrganizationDuplicateMatch",
     "OrganizationDuplicateMatchType",
     "OrganizationDuplicateMatchStatus",
+    "CommercialEvaluationResult",
 ]
 
 

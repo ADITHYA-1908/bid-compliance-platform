@@ -47,6 +47,7 @@ import {
   HelpCircle,
   ExternalLink,
   Tag,
+  Scale,
 } from "lucide-react";
 
 export default function BidComparisonPage() {
@@ -597,6 +598,37 @@ export default function BidComparisonPage() {
                             </span>
                           </div>
 
+                          {/* Commercial Ranking Badge */}
+                          <div className="mt-2 flex flex-wrap items-center gap-1">
+                            {bid.eligibility_status === "INELIGIBLE_MANDATORY_FAILED" ? (
+                              <span className="inline-flex items-center gap-1 rounded bg-rose-950 px-2 py-0.5 text-[10px] font-bold text-rose-300 border border-rose-800">
+                                <AlertOctagon className="h-2.5 w-2.5 text-rose-400" />
+                                INELIGIBLE
+                              </span>
+                            ) : bid.is_tie ? (
+                              <span className="inline-flex items-center gap-1 rounded bg-amber-950 px-2 py-0.5 text-[10px] font-bold text-amber-300 border border-amber-800">
+                                <Scale className="h-2.5 w-2.5 text-amber-400" />
+                                {bid.rank_label || "COMMERCIAL TIE"}
+                              </span>
+                            ) : bid.is_l1 ? (
+                              <span className="inline-flex items-center gap-1 rounded bg-emerald-950 px-2 py-0.5 text-[10px] font-extrabold text-emerald-300 border border-emerald-600">
+                                <CheckCircle2 className="h-2.5 w-2.5 text-emerald-400" />
+                                {bid.rank_label || "L1"} (LOWEST COMPLIANT)
+                              </span>
+                            ) : bid.rank_label ? (
+                              <span className="inline-flex items-center rounded bg-slate-800 px-2 py-0.5 text-[10px] font-bold text-slate-200 border border-slate-700">
+                                {bid.rank_label}
+                              </span>
+                            ) : null}
+
+                            {bid.has_critical_blocker && (
+                              <span className="inline-flex items-center gap-1 rounded bg-amber-950 px-2 py-0.5 text-[9px] font-bold text-amber-300 border border-amber-700" title={bid.blocker_reason || "Safety review blocker active"}>
+                                <AlertTriangle className="h-2.5 w-2.5 text-amber-400" />
+                                REVIEW REQ.
+                              </span>
+                            )}
+                          </div>
+
                           {/* Human Decision Pill (Part 8D) */}
                           <div className="mt-2 flex items-center gap-1">
                             {bid.human_decision_status === "QUALIFIED" ? (
@@ -656,6 +688,120 @@ export default function BidComparisonPage() {
                         </div>
                       </div>
                     ))}
+                  </div>
+
+                  {/* ========================================================================= */}
+                  {/* SECTION 0: COMMERCIAL EVALUATION & DETERMINISTIC RANKING */}
+                  {/* ========================================================================= */}
+                  <div className="border-b border-slate-200 bg-slate-50/20">
+                    <div className="bg-navy-900/5 px-4 py-2.5 text-left text-xs font-bold uppercase tracking-wider text-navy-900 flex items-center justify-between border-b border-slate-200">
+                      <span className="flex items-center gap-2 font-heading">
+                        <Scale className="h-4 w-4 text-navy-900" />
+                        Commercial Evaluation & Deterministic Ranking ({data.evaluation_method || "L1_LOWEST_COMPLIANT_BID"})
+                      </span>
+                    </div>
+
+                    <div className="divide-y divide-slate-100 text-xs">
+                      {/* Commercial Rank Row */}
+                      <div className="grid hover:bg-slate-50/50"
+                           style={{ gridTemplateColumns: `260px repeat(${sortedBids.length}, minmax(220px, 1fr))` }}>
+                        <div className="p-3.5 font-bold text-slate-900 border-r border-slate-100 bg-slate-50/50">
+                          Commercial Rank
+                        </div>
+                        {sortedBids.map((bid) => (
+                          <div key={bid.bid_id} className="p-3.5 border-r border-slate-100 last:border-r-0">
+                            {bid.eligibility_status === "INELIGIBLE_MANDATORY_FAILED" ? (
+                              <span className="font-bold text-rose-700 bg-rose-50 px-2 py-1 rounded border border-rose-200">
+                                Excluded (Ineligible)
+                              </span>
+                            ) : bid.rank_label ? (
+                              <div className="flex items-center gap-2">
+                                <span className={`font-mono text-sm font-extrabold px-2.5 py-1 rounded ${
+                                  bid.is_l1 || bid.commercial_rank === 1
+                                    ? "bg-emerald-100 text-emerald-900 border border-emerald-300"
+                                    : "bg-slate-100 text-slate-800"
+                                }`}>
+                                  {bid.rank_label}
+                                </span>
+                                {bid.is_tie && (
+                                  <span className="text-[10px] font-bold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">
+                                    Tie
+                                  </span>
+                                )}
+                              </div>
+                            ) : (
+                              <span className="text-slate-400 font-mono">—</span>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Quoted Price Row */}
+                      <div className="grid hover:bg-slate-50/50"
+                           style={{ gridTemplateColumns: `260px repeat(${sortedBids.length}, minmax(220px, 1fr))` }}>
+                        <div className="p-3.5 font-semibold text-slate-800 border-r border-slate-100 bg-slate-50/30">
+                          Quoted Commercial Bid
+                        </div>
+                        {sortedBids.map((bid) => (
+                          <div key={bid.bid_id} className="p-3.5 border-r border-slate-100 last:border-r-0 font-mono font-bold text-slate-900">
+                            {bid.quoted_amount ? `₹${Number(bid.quoted_amount).toLocaleString("en-IN", { minimumFractionDigits: 2 })}` : "—"}
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* QCBS Financial & Final Score Row (if QCBS) */}
+                      {data.evaluation_method === "QCBS_TECHNICAL_FINANCIAL" && (
+                        <>
+                          <div className="grid hover:bg-slate-50/50"
+                               style={{ gridTemplateColumns: `260px repeat(${sortedBids.length}, minmax(220px, 1fr))` }}>
+                            <div className="p-3.5 font-semibold text-slate-800 border-r border-slate-100 bg-slate-50/30">
+                              Financial Score ({data.financial_weight || 30}%)
+                            </div>
+                            {sortedBids.map((bid) => (
+                              <div key={bid.bid_id} className="p-3.5 border-r border-slate-100 last:border-r-0 font-mono font-semibold text-slate-800">
+                                {bid.financial_score !== undefined && bid.financial_score !== null ? `${bid.financial_score.toFixed(2)} pts` : "—"}
+                              </div>
+                            ))}
+                          </div>
+
+                          <div className="grid hover:bg-slate-50/50 bg-blue-50/20"
+                               style={{ gridTemplateColumns: `260px repeat(${sortedBids.length}, minmax(220px, 1fr))` }}>
+                            <div className="p-3.5 font-bold text-navy-900 border-r border-slate-100 bg-navy-50/40">
+                              Combined Final QCBS Score
+                            </div>
+                            {sortedBids.map((bid) => (
+                              <div key={bid.bid_id} className="p-3.5 border-r border-slate-100 last:border-r-0">
+                                {bid.final_score !== undefined && bid.final_score !== null ? (
+                                  <span className="font-mono text-sm font-extrabold text-navy-900 bg-white px-2 py-0.5 rounded border border-navy-200">
+                                    {bid.final_score.toFixed(2)} / 100
+                                  </span>
+                                ) : (
+                                  <span className="text-slate-400 font-mono">—</span>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </>
+                      )}
+
+                      {/* Transparent Justification ("Explain Why") */}
+                      <div className="grid hover:bg-slate-50/50"
+                           style={{ gridTemplateColumns: `260px repeat(${sortedBids.length}, minmax(220px, 1fr))` }}>
+                        <div className="p-3.5 font-semibold text-slate-800 border-r border-slate-100 bg-slate-50/30">
+                          Evaluation Justification
+                        </div>
+                        {sortedBids.map((bid) => (
+                          <div key={bid.bid_id} className="p-3.5 border-r border-slate-100 last:border-r-0 text-[11px] text-slate-600 leading-relaxed">
+                            {bid.commercial_explanation || (bid.eligibility_status === "INELIGIBLE_MANDATORY_FAILED" ? "Disqualified due to mandatory compliance failures." : "Evaluation pending.")}
+                            {bid.has_critical_blocker && bid.blocker_reason && (
+                              <div className="mt-1.5 p-2 rounded bg-amber-50 border border-amber-200 text-amber-900 font-semibold text-[10px]">
+                                ⚠️ Safety Blocker: {bid.blocker_reason}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
                   </div>
 
                   {/* ========================================================================= */}
