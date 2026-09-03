@@ -654,7 +654,7 @@ async def retry_verification_record(
             detail="Verification record not found.",
         )
 
-    if record.verification_status not in [VerificationStatus.UNAVAILABLE, VerificationStatus.FAILED, VerificationStatus.NEEDS_REVIEW]:
+    if record.verification_status not in [VerificationStatus.UNAVAILABLE, VerificationStatus.FAILED, VerificationStatus.NEEDS_REVIEW, VerificationStatus.NOT_VERIFIED]:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Verification in status '{record.verification_status}' cannot be retried. Only UNAVAILABLE or FAILED records are eligible.",

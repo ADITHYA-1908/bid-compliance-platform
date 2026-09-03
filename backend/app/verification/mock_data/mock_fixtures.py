@@ -15,6 +15,20 @@ from typing import Any, Dict
 # Synthetic Mock GST Registry Fixtures (Part 5B)
 # ---------------------------------------------------------------------------
 MOCK_GST_REGISTRY: Dict[str, Dict[str, Any]] = {
+    # 0. BidVerify AI Demo GSTIN
+    "33BCDEF2345G1Z5": {
+        "status": "VERIFIED",
+        "gstin": "33BCDEF2345G1Z5",
+        "legal_name": "Example Test Technologies Pvt. Ltd.",
+        "trade_name": "Example Test Technologies",
+        "registration_date": "2024-04-01",
+        "taxpayer_type": "Regular",
+        "gst_status": "ACTIVE",
+        "state_code": "33",
+        "state": "Tamil Nadu",
+        "address": "Synthetic Demo Address, Tamil Nadu",
+        "nature_of_business": ["IT Solutions", "Hardware Supply"],
+    },
     # 1. Standard Active Matching GSTINs
     "33ABCDE1234F1Z5": {
         "status": "VERIFIED",

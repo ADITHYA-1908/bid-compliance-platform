@@ -1,4 +1,4 @@
-from typing import Tuple
+from typing import Optional, Tuple
 from fastapi import HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
@@ -34,7 +34,7 @@ def build_current_user_response(user: User) -> CurrentUserResponse:
 def signup_user(
     db: Session,
     data: SignupRequest,
-    target_role: Optional[str] = None,
+    target_role: str | None = None,
 ) -> Tuple[User, str]:
     """
     Registers a new user with the specified or requested platform role:
