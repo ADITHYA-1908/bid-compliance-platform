@@ -80,6 +80,14 @@ from app.db.models.clarification import (
     ClarificationPriority,
     ClarificationStatus,
 )
+from app.db.models.organization_identity import (
+    OrganizationIdentityAssessment,
+    IdentityMatchStatus,
+    OrganizationIdentityStatus,
+    OrganizationDuplicateMatch,
+    OrganizationDuplicateMatchType,
+    OrganizationDuplicateMatchStatus,
+)
 
 __all__ = [
     "Base",
@@ -145,6 +153,12 @@ __all__ = [
     "ClarificationType",
     "ClarificationPriority",
     "ClarificationStatus",
+    "OrganizationIdentityAssessment",
+    "IdentityMatchStatus",
+    "OrganizationIdentityStatus",
+    "OrganizationDuplicateMatch",
+    "OrganizationDuplicateMatchType",
+    "OrganizationDuplicateMatchStatus",
 ]
 
 

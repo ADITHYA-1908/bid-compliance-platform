@@ -10,6 +10,11 @@ import {
   BidderOrganizationResponse,
   BidderOrganizationUpdatePayload,
 } from "@/lib/api";
+import {
+  getBidderOrganizationIdentity,
+  evaluateBidderOrganizationIdentity,
+  OrganizationIdentityOverview,
+} from "@/lib/api/organization_identity";
 import { SectionCard } from "@/components/common/SectionCard";
 import { StatusBadge } from "@/components/common/StatusBadge";
 import { ConfidenceBadge } from "@/components/common/ConfidenceBadge";
@@ -32,12 +37,17 @@ import {
   ChevronDown,
   ChevronUp,
   Check,
+  Fingerprint,
+  Layers,
+  ShieldCheck,
 } from "lucide-react";
 
 export default function BidderOrganizationPage() {
   const { refreshUser } = useAuth();
 
   const [orgData, setOrgData] = useState<BidderOrganizationResponse | null>(null);
+  const [identityOverview, setIdentityOverview] = useState<OrganizationIdentityOverview | null>(null);
+  const [evaluatingIdentity, setEvaluatingIdentity] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [saving, setSaving] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -98,12 +108,34 @@ export default function BidderOrganizationPage() {
       setGstin(org.gstin || "");
       setUdyamNumber(org.udyam_number || "");
       setCinLlpin(org.cin_llpin || "");
+
+      // Fetch Organization Identity Assessment
+      try {
+        const idRes = await getBidderOrganizationIdentity();
+        setIdentityOverview(idRes);
+      } catch (idErr) {
+        console.warn("Could not load organization identity overview:", idErr);
+      }
     } catch (err: any) {
       setErrorMessage(
         err instanceof ApiError ? err.message : "Failed to load organization profile."
       );
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleReevaluateIdentity = async () => {
+    setEvaluatingIdentity(true);
+    try {
+      const updatedId = await evaluateBidderOrganizationIdentity();
+      setIdentityOverview(updatedId);
+      setSuccessMessage("Identity assessment and duplicate check refreshed successfully.");
+      setTimeout(() => setSuccessMessage(null), 4000);
+    } catch (err: any) {
+      setErrorMessage(err instanceof ApiError ? err.message : "Failed to re-evaluate identity.");
+    } finally {
+      setEvaluatingIdentity(false);
     }
   };
 
@@ -206,6 +238,204 @@ export default function BidderOrganizationPage() {
             <p className="text-xs font-bold text-red-900">{errorMessage}</p>
           </div>
         )}
+
+        {/* ORGANIZATION IDENTITY & DUPLICATE DETECTION COCKPIT */}
+        <SectionCard
+          title="Organization Identity & Legal Entity Verification"
+          description="Deterministic multi-dimensional statutory verification distinguishing true legal entity credentials from similar display names."
+          icon={Fingerprint}
+          badge={
+            identityOverview ? (
+              <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-bold border border-slate-200 bg-slate-100 text-slate-800">
+                <ShieldCheck className="h-3 w-3 text-slate-700" />
+                Score: {identityOverview.assessment.identity_score}%
+              </span>
+            ) : null
+          }
+          action={
+            <button
+              type="button"
+              onClick={handleReevaluateIdentity}
+              disabled={evaluatingIdentity}
+              className="btn-secondary-outline inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold shadow-xs disabled:opacity-50 cursor-pointer"
+            >
+              <RefreshCw className={`h-3.5 w-3.5 ${evaluatingIdentity ? "animate-spin" : ""}`} />
+              <span>{evaluatingIdentity ? "Re-Evaluating..." : "Re-Evaluate Identity"}</span>
+            </button>
+          }
+        >
+          {identityOverview ? (
+            <div className="space-y-4">
+              {/* Top Banner: Status & Composite Confidence */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 rounded-xl border border-slate-200 bg-slate-50/70">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-lg bg-slate-900 text-white flex items-center justify-center shrink-0">
+                    <Fingerprint className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold text-slate-900">Legal Entity Status:</span>
+                      <StatusBadge status={identityOverview.assessment.identity_status} />
+                    </div>
+                    <p className="text-[11px] text-slate-500 mt-0.5">
+                      Evaluated against primary registries, document extractions, and cross-profile deduplication index.
+                    </p>
+                  </div>
+                </div>
+                <div className="text-right shrink-0">
+                  <div className="text-xs font-bold text-slate-700">Identity Confidence</div>
+                  <div className="text-lg font-black text-slate-900 font-heading">
+                    {identityOverview.assessment.identity_score}%
+                  </div>
+                </div>
+              </div>
+
+              {/* Dimensional Statutory Verification Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {/* Legal Name */}
+                <div className="rounded-lg border border-slate-200 bg-white p-3 shadow-2xs">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold text-slate-500 uppercase">Legal Name Alignment</span>
+                    <StatusBadge status={identityOverview.assessment.legal_name_status} />
+                  </div>
+                  <div className="text-xs font-bold text-slate-900 mt-1 truncate" title={name}>
+                    {name || "Not registered"}
+                  </div>
+                </div>
+
+                {/* PAN */}
+                <div className="rounded-lg border border-slate-200 bg-white p-3 shadow-2xs">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold text-slate-500 uppercase">Permanent Account Number</span>
+                    <StatusBadge status={identityOverview.assessment.pan_status} />
+                  </div>
+                  <div className="text-xs font-mono font-bold text-slate-900 mt-1">
+                    {panNumber || "Not provided"}
+                  </div>
+                </div>
+
+                {/* GSTIN */}
+                <div className="rounded-lg border border-slate-200 bg-white p-3 shadow-2xs">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold text-slate-500 uppercase">GST Registration</span>
+                    <StatusBadge status={identityOverview.assessment.gst_status} />
+                  </div>
+                  <div className="text-xs font-mono font-bold text-slate-900 mt-1 truncate">
+                    {gstin || "Not provided"}
+                  </div>
+                </div>
+
+                {/* Embedded PAN Match */}
+                <div className="rounded-lg border border-slate-200 bg-white p-3 shadow-2xs">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold text-slate-500 uppercase">PAN in GSTIN Coherence</span>
+                    <StatusBadge status={identityOverview.assessment.pan_gst_embedded_status} />
+                  </div>
+                  <div className="text-[11px] text-slate-600 mt-1">
+                    {identityOverview.assessment.pan_gst_embedded_status === "MATCH"
+                      ? "✓ Embedded PAN in GST matches PAN field"
+                      : identityOverview.assessment.pan_gst_embedded_status === "MISMATCH"
+                      ? "⚠️ Conflict between PAN and GSTIN"
+                      : "Pending registration"}
+                  </div>
+                </div>
+
+                {/* CIN / LLPIN */}
+                <div className="rounded-lg border border-slate-200 bg-white p-3 shadow-2xs">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold text-slate-500 uppercase">CIN / LLPIN (MCA)</span>
+                    <StatusBadge status={identityOverview.assessment.cin_status} />
+                  </div>
+                  <div className="text-xs font-mono font-bold text-slate-900 mt-1 truncate">
+                    {cinLlpin || "Not registered"}
+                  </div>
+                </div>
+
+                {/* Registered Address */}
+                <div className="rounded-lg border border-slate-200 bg-white p-3 shadow-2xs">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold text-slate-500 uppercase">Registered Address</span>
+                    <StatusBadge status={identityOverview.assessment.address_status} />
+                  </div>
+                  <div className="text-xs text-slate-900 mt-1 truncate" title={registeredAddress}>
+                    {city && stateVal ? `${city}, ${stateVal}` : "Address pending"}
+                  </div>
+                </div>
+              </div>
+
+              {/* Signals and Explainable Notices */}
+              {identityOverview.assessment.signals_json && identityOverview.assessment.signals_json.length > 0 && (
+                <div className="space-y-2 pt-1">
+                  <h4 className="text-[11px] font-bold text-slate-700 uppercase tracking-wider">Identity Signals & Coherence Observations:</h4>
+                  {identityOverview.assessment.signals_json.map((sig, idx) => (
+                    <div
+                      key={idx}
+                      className={`rounded-lg border p-3 text-xs flex items-start gap-2.5 ${
+                        sig.severity === "CRITICAL"
+                          ? "border-red-200 bg-red-50/70 text-red-900"
+                          : sig.severity === "WARNING"
+                          ? "border-amber-200 bg-amber-50/70 text-amber-900"
+                          : "border-slate-200 bg-slate-50/80 text-slate-800"
+                      }`}
+                    >
+                      {sig.severity === "CRITICAL" ? (
+                        <ShieldAlert className="h-4 w-4 text-red-600 shrink-0 mt-0.5" />
+                      ) : sig.severity === "WARNING" ? (
+                        <AlertCircle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
+                      ) : (
+                        <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
+                      )}
+                      <div>
+                        <span className="font-bold mr-1.5">{sig.signal}:</span>
+                        <span>{sig.message}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Duplicate Entity / Same Name Disambiguation Notices */}
+              {identityOverview.duplicate_matches && identityOverview.duplicate_matches.length > 0 && (
+                <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-4 space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Layers className="h-4 w-4 text-slate-700" />
+                    <h4 className="text-xs font-bold text-slate-900 font-heading">
+                      Cross-Profile Entity Index & Deduplication Signals
+                    </h4>
+                  </div>
+                  <div className="space-y-2">
+                    {identityOverview.duplicate_matches.map((dup) => (
+                      <div
+                        key={dup.id}
+                        className="rounded-lg border border-slate-200 bg-white p-3 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2"
+                      >
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-bold text-slate-900">
+                              {dup.organization_b_name || dup.organization_a_name || "Registered Entity"}
+                            </span>
+                            <StatusBadge status={dup.match_type} />
+                            <StatusBadge status={dup.status} />
+                          </div>
+                          <p className="text-[11px] text-slate-600 mt-1">{dup.notes}</p>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <span className="text-[10px] text-slate-500 font-medium">Similarity</span>
+                          <div className="text-xs font-bold text-slate-800">{dup.similarity_score}%</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="py-6 text-center text-xs text-slate-500">
+              <Loader2 className="h-5 w-5 animate-spin mx-auto text-slate-400 mb-2" />
+              Loading organization identity coherence assessment...
+            </div>
+          )}
+        </SectionCard>
 
         {/* DOCUMENT-FIRST STATUTORY INGESTION SECTION (Requirement 12) */}
         <SectionCard
