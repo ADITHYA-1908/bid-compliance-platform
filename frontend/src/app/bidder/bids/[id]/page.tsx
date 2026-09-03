@@ -337,15 +337,32 @@ export default function BidWorkspacePage() {
     setIsUploadModalOpen(true);
   };
 
-  // Handle File Selection
+  // Handle File Selection (Strict PDF-First Validation)
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      if (file.size > 10 * 1024 * 1024) {
-        setUploadError("File exceeds 10 MB limit. Please select a smaller file.");
+      const validTypes = ["application/pdf", "image/jpeg", "image/png"];
+      const isPdf = file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
+      const isImage = file.type.startsWith("image/") || file.name.toLowerCase().match(/\.(jpg|jpeg|png)$/i);
+
+      if (!isPdf && !isImage) {
+        setUploadError("Invalid file format. Please upload an authentic PDF document (application/pdf).");
         setSelectedFile(null);
         return;
       }
+
+      if (file.size > 15 * 1024 * 1024) {
+        setUploadError("File exceeds 15 MB limit. Please select a smaller PDF document.");
+        setSelectedFile(null);
+        return;
+      }
+
+      if (file.size === 0) {
+        setUploadError("The selected file is empty (0 bytes). Please select a valid document.");
+        setSelectedFile(null);
+        return;
+      }
+
       setSelectedFile(file);
       setUploadError(null);
     }

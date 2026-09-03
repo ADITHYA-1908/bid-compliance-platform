@@ -9,10 +9,8 @@ import {
   Building2,
   FileCheck2,
   Lock,
-  ShieldCheck,
   AlertCircle,
-  CheckCircle2,
-  ArrowRight,
+  Landmark,
 } from "lucide-react";
 import { RoleType } from "./RoleLoginForm";
 
@@ -38,7 +36,7 @@ const SIGNUP_CONFIGS: Record<RoleType, RoleSignupConfig> = {
     tagline: "Register Vendor Entity",
     subtitle: "Create a vendor account to discover GeM tenders, submit bids, and verify statutory compliance.",
     primaryColor: "blue",
-    buttonClass: "bg-blue-900 hover:bg-blue-800 text-white focus-visible:outline-blue-900",
+    buttonClass: "btn-emerald-fintech",
     icon: Building2,
     orgLabel: "Company / Enterprise Name",
     orgPlaceholder: "e.g. ABC Technologies Pvt Ltd",
@@ -59,7 +57,7 @@ const SIGNUP_CONFIGS: Record<RoleType, RoleSignupConfig> = {
     tagline: "Register Procurement Account",
     subtitle: "Create an official buyer account to publish tenders, evaluate bids, and manage contract decisions.",
     primaryColor: "emerald",
-    buttonClass: "bg-emerald-900 hover:bg-emerald-800 text-white focus-visible:outline-emerald-900",
+    buttonClass: "btn-emerald-fintech",
     icon: FileCheck2,
     orgLabel: "Ministry / Department / PSU Name",
     orgPlaceholder: "e.g. Ministry of Electronics & IT",
@@ -79,7 +77,7 @@ const SIGNUP_CONFIGS: Record<RoleType, RoleSignupConfig> = {
     tagline: "Register Administrator Account",
     subtitle: "Create a platform oversight account for system governance, role provisioning, and audit oversight.",
     primaryColor: "purple",
-    buttonClass: "bg-purple-900 hover:bg-purple-800 text-white focus-visible:outline-purple-900",
+    buttonClass: "btn-emerald-fintech",
     icon: Lock,
     orgLabel: "Platform Oversight Entity",
     orgPlaceholder: "e.g. GeM Platform Oversight Agency",
@@ -205,53 +203,49 @@ export function RoleSignupForm({ forcedRole, showRoleTabs = true }: RoleSignupFo
   };
 
   return (
-    <div className="flex min-h-screen flex-col justify-center px-4 py-12 sm:px-6 lg:px-8 bg-slate-50">
-      <div className="sm:mx-auto sm:w-full sm:max-w-lg text-center">
+    <div className="flex min-h-screen flex-col justify-center px-4 py-12 sm:px-6 lg:px-8 bg-[#F5F8F7] text-slate-900 selection:bg-emerald-500 selection:text-white font-body relative overflow-x-hidden">
+      {/* Background Ambient Blobs */}
+      <div className="blob-emerald top-[-100px] left-[20%] opacity-60" />
+      <div className="blob-teal top-[300px] right-[15%] opacity-50" />
+
+      <div className="sm:mx-auto sm:w-full sm:max-w-lg text-center relative z-10">
         {/* Platform Brand */}
-        <Link href="/" className="inline-flex items-center gap-2 mb-4 group cursor-pointer">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-tr from-blue-900 to-indigo-700 shadow-md group-hover:scale-105 transition-transform">
-            <ShieldCheck className="h-5 w-5 text-white" />
+        <Link href="/" className="inline-flex items-center gap-2.5 mb-6 group cursor-pointer">
+          <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-900 text-amber-400 shadow-md border border-slate-700 group-hover:scale-105 transition-transform">
+            <Landmark className="h-5 w-5" />
           </div>
-          <span className="font-bold text-lg tracking-tight text-slate-900">
-            BidVerify <span className="text-blue-700">AI</span>
+          <span className="font-heading font-bold text-xl tracking-tight text-slate-900">
+            BidVerify <span className="text-emerald-600 font-extrabold">AI</span>
           </span>
         </Link>
 
         {/* Role Badge & Title */}
         <div className="flex justify-center">
-          <span
-            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wider ${
-              activeRole === "BIDDER"
-                ? "bg-blue-100 text-blue-800"
-                : activeRole === "PROCUREMENT_OFFICER"
-                ? "bg-emerald-100 text-emerald-800"
-                : "bg-purple-100 text-purple-800"
-            }`}
-          >
-            <IconComponent className="h-3.5 w-3.5" />
+          <span className="inline-flex items-center gap-1.5 rounded-full px-3.5 py-1 text-xs font-bold uppercase tracking-wider bg-emerald-50 text-emerald-800 border border-emerald-200 shadow-xs">
+            <IconComponent className="h-3.5 w-3.5 text-emerald-600" />
             {config.badge}
           </span>
         </div>
 
-        <h2 className="mt-3 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+        <h2 className="mt-4 font-heading text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
           {config.tagline}
         </h2>
-        <p className="mt-2 text-sm text-slate-600 max-w-md mx-auto">
+        <p className="mt-2 text-xs sm:text-sm text-slate-500 max-w-md mx-auto leading-relaxed">
           {config.subtitle}
         </p>
       </div>
 
-      <div className="mt-6 sm:mx-auto sm:w-full sm:max-w-lg">
+      <div className="mt-6 sm:mx-auto sm:w-full sm:max-w-lg relative z-10">
         {/* Role Selector Tabs */}
         {showRoleTabs && !forcedRole && (
-          <div className="mb-4 grid grid-cols-3 gap-1 rounded-xl bg-slate-200/80 p-1 text-xs font-medium text-slate-600">
+          <div className="mb-5 grid grid-cols-3 gap-1.5 rounded-2xl bg-white border border-slate-200 p-1.5 text-xs font-semibold shadow-xs">
             <button
               type="button"
               onClick={() => handleRoleChange("BIDDER")}
-              className={`flex items-center justify-center gap-1.5 rounded-lg py-2 transition-all ${
+              className={`flex items-center justify-center gap-1.5 rounded-xl py-2.5 transition-all cursor-pointer ${
                 activeRole === "BIDDER"
-                  ? "bg-white font-semibold text-blue-900 shadow-xs"
-                  : "hover:text-slate-900"
+                  ? "btn-emerald-fintech font-bold text-white shadow-xs"
+                  : "text-slate-500 hover:text-slate-900 hover:bg-slate-50"
               }`}
             >
               <Building2 className="h-3.5 w-3.5" />
@@ -261,23 +255,23 @@ export function RoleSignupForm({ forcedRole, showRoleTabs = true }: RoleSignupFo
             <button
               type="button"
               onClick={() => handleRoleChange("PROCUREMENT_OFFICER")}
-              className={`flex items-center justify-center gap-1.5 rounded-lg py-2 transition-all ${
+              className={`flex items-center justify-center gap-1.5 rounded-xl py-2.5 transition-all cursor-pointer ${
                 activeRole === "PROCUREMENT_OFFICER"
-                  ? "bg-white font-semibold text-emerald-900 shadow-xs"
-                  : "hover:text-slate-900"
+                  ? "btn-emerald-fintech font-bold text-white shadow-xs"
+                  : "text-slate-500 hover:text-slate-900 hover:bg-slate-50"
               }`}
             >
               <FileCheck2 className="h-3.5 w-3.5" />
-              <span>Procurement</span>
+              <span>Officer</span>
             </button>
 
             <button
               type="button"
               onClick={() => handleRoleChange("ADMIN")}
-              className={`flex items-center justify-center gap-1.5 rounded-lg py-2 transition-all ${
+              className={`flex items-center justify-center gap-1.5 rounded-xl py-2.5 transition-all cursor-pointer ${
                 activeRole === "ADMIN"
-                  ? "bg-white font-semibold text-purple-900 shadow-xs"
-                  : "hover:text-slate-900"
+                  ? "btn-emerald-fintech font-bold text-white shadow-xs"
+                  : "text-slate-500 hover:text-slate-900 hover:bg-slate-50"
               }`}
             >
               <Lock className="h-3.5 w-3.5" />
@@ -286,31 +280,23 @@ export function RoleSignupForm({ forcedRole, showRoleTabs = true }: RoleSignupFo
           </div>
         )}
 
-        {/* Signup Card */}
-        <div className="bg-white px-6 py-8 shadow-sm ring-1 ring-slate-900/5 sm:rounded-xl sm:px-10 border border-slate-200">
+        {/* Floating White Card */}
+        <div className="bg-white rounded-3xl px-6 py-8 shadow-xl sm:px-10 border border-slate-200/90">
           {/* Target Role Pill */}
-          <div className="mb-5 flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-xs">
-            <span className="font-medium text-slate-600">Provisioned Role:</span>
-            <span
-              className={`font-semibold px-2 py-0.5 rounded-md ${
-                activeRole === "BIDDER"
-                  ? "bg-blue-100 text-blue-800"
-                  : activeRole === "PROCUREMENT_OFFICER"
-                  ? "bg-emerald-100 text-emerald-800"
-                  : "bg-purple-100 text-purple-800"
-              }`}
-            >
+          <div className="mb-5 flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50/80 px-3.5 py-2.5 text-xs">
+            <span className="font-semibold text-slate-500">Provisioned Role:</span>
+            <span className="font-bold px-2.5 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-[11px]">
               {activeRole}
             </span>
           </div>
 
           {/* Error Alert */}
           {error && (
-            <div className="mb-5 rounded-lg bg-red-50 p-3.5 border border-red-200" role="alert">
+            <div className="mb-5 rounded-2xl bg-red-50 p-3.5 border border-red-200 text-xs" role="alert">
               <div className="flex items-start">
-                <AlertCircle className="h-4 w-4 text-red-500 mt-0.5 shrink-0" />
+                <AlertCircle className="h-4 w-4 text-red-600 mt-0.5 shrink-0" />
                 <div className="ml-2.5">
-                  <p className="text-xs font-medium text-red-800 leading-relaxed">{error}</p>
+                  <p className="font-semibold text-red-800 leading-relaxed">{error}</p>
                 </div>
               </div>
             </div>
@@ -319,10 +305,10 @@ export function RoleSignupForm({ forcedRole, showRoleTabs = true }: RoleSignupFo
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label htmlFor="fullName" className="block text-xs font-medium text-slate-700">
-                Full Name <span className="text-red-500">*</span>
+              <label htmlFor="fullName" className="block text-xs font-semibold text-slate-700">
+                Full Name <span className="text-emerald-600">*</span>
               </label>
-              <div className="mt-1">
+              <div className="mt-1.5">
                 <input
                   id="fullName"
                   name="fullName"
@@ -331,21 +317,21 @@ export function RoleSignupForm({ forcedRole, showRoleTabs = true }: RoleSignupFo
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
                   placeholder="e.g. Adithya Ramanathan"
-                  className="block w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600"
+                  className="input-light-focus block w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 transition-all"
                 />
               </div>
             </div>
 
             <div>
-              <label htmlFor="email" className="block text-xs font-medium text-slate-700">
+              <label htmlFor="email" className="block text-xs font-semibold text-slate-700">
                 {activeRole === "BIDDER"
                   ? "Business / Work Email"
                   : activeRole === "PROCUREMENT_OFFICER"
                   ? "Official Department Email"
                   : "Administrator Email"}{" "}
-                <span className="text-red-500">*</span>
+                <span className="text-emerald-600">*</span>
               </label>
-              <div className="mt-1">
+              <div className="mt-1.5">
                 <input
                   id="email"
                   name="email"
@@ -361,17 +347,17 @@ export function RoleSignupForm({ forcedRole, showRoleTabs = true }: RoleSignupFo
                       ? "officer@meity.gov.in"
                       : "admin@gem.gov.in"
                   }
-                  className="block w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600"
+                  className="input-light-focus block w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 transition-all"
                 />
               </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label htmlFor="organizationName" className="block text-xs font-medium text-slate-700">
-                  {config.orgLabel} <span className="text-red-500">*</span>
+                <label htmlFor="organizationName" className="block text-xs font-semibold text-slate-700">
+                  {config.orgLabel} <span className="text-emerald-600">*</span>
                 </label>
-                <div className="mt-1">
+                <div className="mt-1.5">
                   <input
                     id="organizationName"
                     name="organizationName"
@@ -380,25 +366,25 @@ export function RoleSignupForm({ forcedRole, showRoleTabs = true }: RoleSignupFo
                     value={organizationName}
                     onChange={(e) => setOrganizationName(e.target.value)}
                     placeholder={config.orgPlaceholder}
-                    className="block w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600"
+                    className="input-light-focus block w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 transition-all"
                   />
                 </div>
               </div>
 
               <div>
-                <label htmlFor="organizationType" className="block text-xs font-medium text-slate-700">
+                <label htmlFor="organizationType" className="block text-xs font-semibold text-slate-700">
                   {config.orgTypeLabel}
                 </label>
-                <div className="mt-1">
+                <div className="mt-1.5">
                   <select
                     id="organizationType"
                     name="organizationType"
                     value={organizationType}
                     onChange={(e) => setOrganizationType(e.target.value)}
-                    className="block w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600 bg-white"
+                    className="input-light-focus block w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 transition-all"
                   >
                     {config.orgTypeOptions.map((opt) => (
-                      <option key={opt} value={opt}>
+                      <option key={opt} value={opt} className="bg-white text-slate-900">
                         {opt}
                       </option>
                     ))}
@@ -409,10 +395,10 @@ export function RoleSignupForm({ forcedRole, showRoleTabs = true }: RoleSignupFo
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label htmlFor="password" className="block text-xs font-medium text-slate-700">
-                  Password <span className="text-red-500">*</span>
+                <label htmlFor="password" className="block text-xs font-semibold text-slate-700">
+                  Password <span className="text-emerald-600">*</span>
                 </label>
-                <div className="mt-1">
+                <div className="mt-1.5">
                   <input
                     id="password"
                     name="password"
@@ -422,16 +408,16 @@ export function RoleSignupForm({ forcedRole, showRoleTabs = true }: RoleSignupFo
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Min 8 chars"
-                    className="block w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600"
+                    className="input-light-focus block w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 transition-all"
                   />
                 </div>
               </div>
 
               <div>
-                <label htmlFor="confirmPassword" className="block text-xs font-medium text-slate-700">
-                  Confirm Password <span className="text-red-500">*</span>
+                <label htmlFor="confirmPassword" className="block text-xs font-semibold text-slate-700">
+                  Confirm Password <span className="text-emerald-600">*</span>
                 </label>
-                <div className="mt-1">
+                <div className="mt-1.5">
                   <input
                     id="confirmPassword"
                     name="confirmPassword"
@@ -441,7 +427,7 @@ export function RoleSignupForm({ forcedRole, showRoleTabs = true }: RoleSignupFo
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     placeholder="Re-enter password"
-                    className="block w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600"
+                    className="input-light-focus block w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 transition-all"
                   />
                 </div>
               </div>
@@ -451,7 +437,7 @@ export function RoleSignupForm({ forcedRole, showRoleTabs = true }: RoleSignupFo
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className={`flex w-full justify-center rounded-lg px-4 py-2.5 text-sm font-semibold shadow-xs disabled:opacity-50 transition-all cursor-pointer ${config.buttonClass}`}
+                className="btn-emerald-fintech flex w-full justify-center rounded-xl px-4 py-3 text-sm font-bold text-white shadow-md disabled:opacity-50 transition-all cursor-pointer"
               >
                 {isSubmitting ? "Creating Account..." : `Complete ${config.badge}`}
               </button>
@@ -460,11 +446,11 @@ export function RoleSignupForm({ forcedRole, showRoleTabs = true }: RoleSignupFo
 
           {/* Already have an account */}
           <div className="mt-6 border-t border-slate-100 pt-4 text-center">
-            <p className="text-xs text-slate-600">
+            <p className="text-xs text-slate-500">
               Already have an account?{" "}
               <Link
                 href={config.loginUrl}
-                className="font-semibold text-blue-700 hover:text-blue-900 hover:underline"
+                className="font-bold text-emerald-600 hover:text-emerald-700 hover:underline transition-colors"
               >
                 Sign in to {config.name}
               </Link>
@@ -476,7 +462,7 @@ export function RoleSignupForm({ forcedRole, showRoleTabs = true }: RoleSignupFo
         <div className="mt-6 text-center">
           <Link
             href="/"
-            className="text-xs text-slate-500 hover:text-slate-800 transition-colors inline-flex items-center gap-1"
+            className="text-xs text-slate-500 hover:text-slate-900 transition-colors inline-flex items-center gap-1 font-semibold"
           >
             ← Back to GeM Compliance Home
           </Link>

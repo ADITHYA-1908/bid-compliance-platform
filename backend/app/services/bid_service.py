@@ -196,9 +196,14 @@ def create_bid(
     # 3. Validate tender eligibility
     validate_tender_for_bid_creation(tender)
 
-    # 4. Check for duplicate participation
+    # 4. Check for duplicate participation / idempotent draft bid reuse
     existing_bid = db.scalars(
-        select(Bid).where(
+        select(Bid)
+        .options(
+            joinedload(Bid.tender).joinedload(Tender.organization),
+            joinedload(Bid.bidder_organization),
+        )
+        .where(
             and_(
                 Bid.tender_id == tender_id,
                 Bid.bidder_organization_id == org.id,
@@ -208,10 +213,14 @@ def create_bid(
     ).first()
 
     if existing_bid:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="A bid already exists for this tender.",
-        )
+        if existing_bid.status == "DRAFT":
+            # Return existing draft workspace cleanly (idempotent start bid)
+            return _format_bid_response(existing_bid)
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=f"A bid ({existing_bid.bid_number}) has already been submitted for this tender.",
+            )
 
     # 5. Generate deterministic unique bid number
     bid_number = generate_bid_number(db)

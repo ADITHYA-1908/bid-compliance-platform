@@ -28,7 +28,11 @@ export function DashboardLayout({
 
   return (
     <RequireRole allowedRoles={allowedRoles}>
-      <div className="min-h-screen bg-slate-50 text-slate-900 flex">
+      <div className="min-h-screen bg-[#F5F8F7] text-slate-900 flex font-body relative overflow-x-hidden selection:bg-emerald-500 selection:text-white">
+        {/* Background Ambient Blobs */}
+        <div className="blob-emerald top-[-100px] left-[15%] opacity-50" />
+        <div className="blob-teal top-[400px] right-[10%] opacity-40" />
+
         {/* Desktop Fixed Sidebar */}
         <Sidebar />
 
@@ -39,7 +43,7 @@ export function DashboardLayout({
         />
 
         {/* Main Content Area */}
-        <div className="flex flex-1 flex-col lg:pl-64">
+        <div className="flex flex-1 flex-col lg:pl-64 relative z-10">
           {/* Top Header */}
           <TopNavbar onOpenMobileMenu={() => setMobileMenuOpen(true)} />
 
