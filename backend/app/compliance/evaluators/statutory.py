@@ -256,12 +256,19 @@ class StatutoryRuleEvaluator(ComplianceRuleEvaluator):
             )
 
         if v_status == VerificationStatus.NOT_VERIFIED:
+            reason = self._build_verification_failure_reason(
+                v_type=v_type,
+                requirement=requirement,
+                primary_v=primary_v,
+                v_payload=v_payload,
+                v_source_name=v_source_name,
+            )
             return ComplianceRuleResult(
                 compliance_status=ComplianceStatus.FAIL,
                 actual_value="NOT_VERIFIED",
                 expected_value=expected,
                 operator=operator,
-                reason=f"{v_type} statutory credential could not be verified in authoritative source ({v_source_name}).",
+                reason=reason,
                 evidence=evidence_dict,
                 source_verification_ids=source_ids,
                 is_mandatory=is_mandatory,
@@ -294,6 +301,71 @@ class StatutoryRuleEvaluator(ComplianceRuleEvaluator):
         evidence_dict["extracted_field"] = extracted_field
         evidence_dict["actual_value_evaluated"] = actual_val
 
+        # ---------------------------------------------------------------------
+        # Special Check: GST Registration Presence
+        # A GST_REGISTRATION BOOLEAN requirement is satisfied when GST
+        # verification succeeds and the registration status is ACTIVE/VALID,
+        # rather than comparing the GSTIN string to True.
+        # ---------------------------------------------------------------------
+        if v_type == "GST" and code_upper == "GST_REGISTRATION" and req_type in ("BOOLEAN", "BOOL"):
+            expected_bool = str(expected).strip().lower() in (
+                "true",
+                "yes",
+                "1",
+                "y",
+                "active",
+                "valid",
+                "verified",
+            )
+
+            registration_status = str(
+                v_payload.get("registration_status")
+                or v_payload.get("gst_status")
+                or v_payload.get("status")
+                or "UNKNOWN"
+            ).strip().upper()
+
+            actual_bool = (
+                v_status == VerificationStatus.VERIFIED
+                and registration_status in ("ACTIVE", "VALID")
+            )
+
+            evidence_dict["extracted_field"] = "registration_status"
+            evidence_dict["actual_value_evaluated"] = actual_bool
+            evidence_dict["gstin"] = primary_v.verified_value or primary_v.claimed_value
+            evidence_dict["registration_status"] = registration_status
+
+            if actual_bool == expected_bool:
+                return ComplianceRuleResult(
+                    compliance_status=ComplianceStatus.PASS,
+                    actual_value=actual_bool,
+                    expected_value=expected_bool,
+                    operator=operator,
+                    reason=(
+                        f"GST registration is verified as valid and active by "
+                        f"{v_source_name}. GSTIN: "
+                        f"'{primary_v.verified_value or primary_v.claimed_value}'."
+                    ),
+                    evidence=evidence_dict,
+                    source_verification_ids=source_ids,
+                    is_mandatory=is_mandatory,
+                    weight=weight,
+                )
+
+            return ComplianceRuleResult(
+                compliance_status=ComplianceStatus.FAIL,
+                actual_value=actual_bool,
+                expected_value=expected_bool,
+                operator=operator,
+                reason=(
+                    f"GST registration verification result ({actual_bool}) "
+                    f"does not satisfy required value ({expected_bool})."
+                ),
+                evidence=evidence_dict,
+                source_verification_ids=source_ids,
+                is_mandatory=is_mandatory,
+                weight=weight,
+            )
         # Special Check: PAN Holder Name Mismatch
         if v_type == "PAN" and v_match_status == VerificationMatchStatus.MISMATCH:
             return ComplianceRuleResult(
@@ -487,6 +559,39 @@ class StatutoryRuleEvaluator(ComplianceRuleEvaluator):
 
         # General fallback
         return primary_v.verified_value or primary_v.claimed_value or "ACTIVE", "verified_value"
+
+    def _build_verification_failure_reason(
+        self,
+        v_type: Optional[str],
+        requirement: TenderRequirement,
+        primary_v: VerificationRecord,
+        v_payload: Dict[str, Any],
+        v_source_name: str,
+    ) -> str:
+        """
+        Prefer the verifier's bidder-specific failure detail over a generic
+        statutory compliance sentence.
+        """
+        evidence = primary_v.evidence if isinstance(primary_v.evidence, dict) else {}
+        claim = primary_v.claimed_value
+
+        for message in (
+            primary_v.error_message,
+            evidence.get("reason"),
+            evidence.get("details"),
+            v_payload.get("reason") if isinstance(v_payload, dict) else None,
+            v_payload.get("details") if isinstance(v_payload, dict) else None,
+            v_payload.get("error_message") if isinstance(v_payload, dict) else None,
+        ):
+            if message:
+                prefix = f"{v_type or requirement.code} verification failed"
+                claim_text = f" for bidder claim '{claim}'" if claim else ""
+                return f"{prefix}{claim_text}: {message}"
+
+        return (
+            f"{v_type or requirement.code} statutory credential"
+            f"{f' ({claim})' if claim else ''} could not be verified in authoritative source ({v_source_name})."
+        )
 
     def _build_human_reason(
         self,

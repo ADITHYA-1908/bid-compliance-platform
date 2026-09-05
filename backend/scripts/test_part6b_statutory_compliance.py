@@ -166,6 +166,8 @@ async def run_part6b_master_test_suite():
             source_type=VerificationSourceType.MOCK,
             claimed_value="33ABCDE1234F1Z5",
             match_status=VerificationMatchStatus.UNKNOWN,
+            evidence={"details": "GSTIN not found in Mock GST Registry records."},
+            error_message="GSTIN was not found in Mock GST Registry records.",
             is_active=True,
         )
         ctx_gst_not_verified = ComplianceContext(
@@ -176,6 +178,11 @@ async def run_part6b_master_test_suite():
         )
         res_gst_not_ver = evaluator.evaluate(req_gst_check, ctx_gst_not_verified)
         record_result("GST NOT_VERIFIED evaluates to FAIL", res_gst_not_ver.compliance_status == ComplianceStatus.FAIL, f"-> {res_gst_not_ver.reason}")
+        record_result(
+            "GST NOT_VERIFIED reason includes bidder claim and registry detail",
+            "33ABCDE1234F1Z5" in (res_gst_not_ver.reason or "") and "not found" in (res_gst_not_ver.reason or "").lower(),
+            f"-> {res_gst_not_ver.reason}",
+        )
 
         # =========================================================================
         # 3. PAN Verification & Holder Name Mismatch Check
