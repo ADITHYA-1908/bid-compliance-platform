@@ -9,6 +9,7 @@ import {
   ExternalLink,
   AlertTriangle,
   CheckCircle2,
+  XCircle,
   Info,
   ShieldAlert,
   Clock,
@@ -127,7 +128,7 @@ export function NotificationBell() {
   const getSeverityIcon = (sev: NotificationSeverity) => {
     switch (sev) {
       case "CRITICAL":
-        return <ShieldAlert className="h-4 w-4 text-red-600 shrink-0 mt-0.5" />;
+        return <XCircle className="h-4 w-4 text-red-600 shrink-0 mt-0.5" />;
       case "WARNING":
         return <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />;
       case "SUCCESS":

@@ -256,7 +256,7 @@ export default function ProcurementCompliancePage() {
     if (criticalFailure || (isCritical && status === ComplianceStatus.FAIL)) {
       return (
         <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-red-100 text-red-900 border border-red-300 animate-pulse">
-          <AlertOctagon className="w-3.5 h-3.5 text-red-700" />
+          <XCircle className="w-3.5 h-3.5 text-red-700" />
           CRITICAL FAIL
         </span>
       );

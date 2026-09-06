@@ -8,7 +8,7 @@ import {
   TenderUpdatePayload,
 } from "@/lib/api";
 import { toDatetimeLocalString } from "@/lib/formatters";
-import { ArrowLeft, Save, ShieldAlert } from "lucide-react";
+import { ArrowLeft, Save, ShieldAlert, CheckCircle2 } from "lucide-react";
 
 interface TenderFormProps {
   mode: "create" | "edit";
@@ -520,13 +520,20 @@ export function TenderForm({
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-slate-900 font-heading">QCBS Weight Allocation</span>
                 <span
-                  className={`text-xs font-bold font-mono px-2 py-0.5 rounded ${
+                  className={`inline-flex items-center gap-1 text-xs font-bold font-mono px-2 py-0.5 rounded ${
                     technicalWeight + financialWeight === 100
                       ? "bg-emerald-100 text-emerald-800"
                       : "bg-red-100 text-red-800"
                   }`}
                 >
-                  Total: {technicalWeight + financialWeight}% {technicalWeight + financialWeight === 100 ? "✓ Valid" : "(Must equal 100%)"}
+                  {technicalWeight + financialWeight === 100 ? (
+                    <>
+                      <CheckCircle2 className="h-3 w-3 shrink-0" />
+                      <span>Total: {technicalWeight + financialWeight}% Valid</span>
+                    </>
+                  ) : (
+                    <span>Total: {technicalWeight + financialWeight}% (Must equal 100%)</span>
+                  )}
                 </span>
               </div>
 

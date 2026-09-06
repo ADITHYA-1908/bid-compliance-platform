@@ -24,6 +24,7 @@ import {
   ArrowRight,
   Info,
 } from "lucide-react";
+import { StatusBadge } from "@/components/common/StatusBadge";
 
 export default function BidderVerificationPage() {
   const [bids, setBids] = useState<BidListItem[]>([]);
@@ -226,21 +227,7 @@ export default function BidderVerificationPage() {
                     </div>
 
                     <div className="flex items-center gap-2">
-                      <span
-                        className={`text-[10px] font-bold px-2 py-0.5 rounded border uppercase ${
-                          v.verification_status === "VERIFIED"
-                            ? "bg-emerald-50 text-emerald-800 border-emerald-200"
-                            : v.verification_status === "NOT_VERIFIED"
-                            ? "bg-rose-50 text-rose-800 border-rose-200"
-                            : v.verification_status === "NEEDS_REVIEW"
-                            ? "bg-amber-50 text-amber-800 border-amber-200"
-                            : v.verification_status === "UNAVAILABLE"
-                            ? "bg-slate-100 text-slate-800 border-slate-300"
-                            : "bg-red-100 text-red-800 border-red-300"
-                        }`}
-                      >
-                        {v.verification_status.replace(/_/g, " ")}
-                      </span>
+                      <StatusBadge status={v.verification_status} size="sm" />
 
                       {v.is_retryable && (
                         <button

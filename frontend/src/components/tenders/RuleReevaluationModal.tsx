@@ -8,6 +8,8 @@ import {
   X,
   AlertCircle,
   CheckCircle2,
+  XCircle,
+  Clock,
   ShieldCheck,
   AlertTriangle,
   UserCheck,
@@ -61,13 +63,33 @@ export function RuleReevaluationModal({
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "PASS":
-        return <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">PASS</span>;
+        return (
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+            <CheckCircle2 className="w-3 h-3 text-emerald-700 shrink-0" />
+            PASS
+          </span>
+        );
       case "FAIL":
-        return <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-800">FAIL</span>;
+        return (
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-800 border border-rose-200">
+            <XCircle className="w-3 h-3 text-rose-700 shrink-0" />
+            FAIL
+          </span>
+        );
       case "REVIEW":
-        return <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800">REVIEW</span>;
+        return (
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200">
+            <AlertTriangle className="w-3 h-3 text-amber-700 shrink-0" />
+            REVIEW
+          </span>
+        );
       default:
-        return <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-700">{status}</span>;
+        return (
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-700 border border-slate-200">
+            <Clock className="w-3 h-3 text-slate-500 shrink-0" />
+            {status}
+          </span>
+        );
     }
   };
 

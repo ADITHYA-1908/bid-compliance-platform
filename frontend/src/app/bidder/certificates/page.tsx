@@ -7,6 +7,7 @@ import {
   AlertTriangle,
   CheckCircle2,
   Clock,
+  XCircle,
   FileCheck2,
   FileText,
   Filter,
@@ -122,42 +123,42 @@ function BidderCertificatesContent() {
       case ValidityStatus.VALID:
         return (
           <span className="inline-flex items-center gap-1 rounded-md bg-emerald-50 px-2 py-0.5 text-xs font-bold text-emerald-700 border border-emerald-200">
-            <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
+            <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
             VALID
           </span>
         );
       case ValidityStatus.EXPIRING_SOON:
         return (
           <span className="inline-flex items-center gap-1 rounded-md bg-amber-50 px-2 py-0.5 text-xs font-bold text-amber-700 border border-amber-200">
-            <Clock className="h-3.5 w-3.5 text-amber-600" />
+            <AlertTriangle className="h-3.5 w-3.5 text-amber-600 shrink-0" />
             EXPIRING SOON
           </span>
         );
       case ValidityStatus.EXPIRED:
         return (
           <span className="inline-flex items-center gap-1 rounded-md bg-rose-50 px-2 py-0.5 text-xs font-bold text-rose-700 border border-rose-200">
-            <ShieldAlert className="h-3.5 w-3.5 text-rose-600" />
+            <XCircle className="h-3.5 w-3.5 text-rose-600 shrink-0" />
             EXPIRED
           </span>
         );
       case ValidityStatus.NO_EXPIRY:
         return (
-          <span className="inline-flex items-center gap-1 rounded-md bg-blue-50 px-2 py-0.5 text-xs font-bold text-blue-700 border border-blue-200">
-            <ShieldCheck className="h-3.5 w-3.5 text-blue-600" />
+          <span className="inline-flex items-center gap-1 rounded-md bg-emerald-50 px-2 py-0.5 text-xs font-bold text-emerald-700 border border-emerald-200">
+            <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
             PERMANENT / NO EXPIRY
           </span>
         );
       case ValidityStatus.REVIEW_REQUIRED:
         return (
-          <span className="inline-flex items-center gap-1 rounded-md bg-purple-50 px-2 py-0.5 text-xs font-bold text-purple-700 border border-purple-200">
-            <AlertTriangle className="h-3.5 w-3.5 text-purple-600" />
+          <span className="inline-flex items-center gap-1 rounded-md bg-amber-50 px-2 py-0.5 text-xs font-bold text-amber-800 border border-amber-200">
+            <AlertTriangle className="h-3.5 w-3.5 text-amber-600 shrink-0" />
             REVIEW REQUIRED
           </span>
         );
       default:
         return (
           <span className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-0.5 text-xs font-bold text-slate-600 border border-slate-200">
-            <Info className="h-3.5 w-3.5 text-slate-500" />
+            <Clock className="h-3.5 w-3.5 text-slate-500 shrink-0" />
             UNKNOWN
           </span>
         );

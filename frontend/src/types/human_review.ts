@@ -7,18 +7,37 @@ export type ReviewType =
   | "VERIFICATION_REVIEW"
   | "DOCUMENT_REVIEW"
   | "IDENTITY_MISMATCH"
+  | "ORGANIZATION_MISMATCH"
   | "LOW_CONFIDENCE"
   | "PENDING_SOURCE"
   | "CRITICAL_REVIEW"
+  | "POTENTIAL_DOCUMENT_REUSE"
+  | "DOCUMENT_REUSE_ALERT"
+  | "CROSS_BIDDER_REUSE"
+  | "POOR_DOCUMENT_QUALITY"
+  | "EXPIRED_CERTIFICATE"
+  | "BLACKLISTING_SIGNAL"
+  | "UNRESOLVED_CLARIFICATION"
   | "OTHER";
 
-export type ReviewSeverity = "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
+export type ReviewSeverity = "LOW" | "NORMAL" | "MEDIUM" | "HIGH" | "CRITICAL";
 
-export type ReviewStatus = "OPEN" | "IN_REVIEW" | "RESOLVED" | "ESCALATED" | "SUPERSEDED";
+export type ReviewStatus =
+  | "OPEN"
+  | "IN_REVIEW"
+  | "IN_PROGRESS"
+  | "AWAITING_CLARIFICATION"
+  | "RESOLVED"
+  | "DISMISSED"
+  | "ESCALATED"
+  | "SUPERSEDED";
 
 export type ReviewResolution =
   | "CONFIRMED"
+  | "CONFIRMED_BENIGN"
+  | "CONFIRMED_REUSE"
   | "REJECTED"
+  | "DISMISSED"
   | "NEEDS_MORE_EVIDENCE"
   | "ESCALATED"
   | "NOT_APPLICABLE";
@@ -37,6 +56,7 @@ export interface ReviewQueueItem {
   requirement_name?: string | null;
   category?: string | null;
   review_type: ReviewType;
+  issue_type_display?: string | null;
   severity: ReviewSeverity;
   status: ReviewStatus;
   source_type: string;
@@ -54,6 +74,8 @@ export interface ReviewQueueItem {
 export interface ReviewQueueKPIs {
   total_open: number;
   critical_open: number;
+  high_open: number;
+  awaiting_clarification: number;
   in_review: number;
   resolved_today: number;
   escalated: number;
@@ -133,6 +155,7 @@ export interface ReviewVerificationEvidenceSection {
   match_status?: string | null;
   source_type?: string | null;
   source_name?: string | null;
+  source_badge_label?: string | null;
   is_mock: boolean;
   is_available: boolean;
   confidence_score?: number | null;
@@ -151,6 +174,23 @@ export interface ReviewComplianceEvidenceSection {
   effective_compliance_status?: string | null;
   human_resolution?: string | null;
   human_reason?: string | null;
+}
+
+export interface ReviewRiskSection {
+  risk_level: string;
+  risk_score?: number | null;
+  top_signals: string[];
+  is_critical: boolean;
+}
+
+export interface ReviewClarificationSection {
+  clarification_id?: string | null;
+  status?: string | null;
+  status_label?: string | null;
+  subject?: string | null;
+  question?: string | null;
+  response?: string | null;
+  has_active_request: boolean;
 }
 
 export interface CrossDocumentComparisonRow {
@@ -197,6 +237,7 @@ export interface ReviewDetailResponse {
   bidder_pan?: string | null;
   bidder_gstin?: string | null;
   review_type: ReviewType;
+  issue_type_display?: string | null;
   severity: ReviewSeverity;
   status: ReviewStatus;
   title: string;
@@ -219,6 +260,8 @@ export interface ReviewDetailResponse {
   source_document_section?: ReviewSourceDocumentSection | null;
   verification_section?: ReviewVerificationEvidenceSection | null;
   compliance_section?: ReviewComplianceEvidenceSection | null;
+  risk_section?: ReviewRiskSection | null;
+  clarification_section?: ReviewClarificationSection | null;
   cross_document_section: CrossDocumentComparisonRow[];
   ai_explanation_section?: ReviewAIExplanationSection | null;
   notes_history: ReviewNoteItem[];

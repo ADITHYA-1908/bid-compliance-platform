@@ -26,6 +26,8 @@ import {
   Loader2,
   CheckCircle2,
   AlertCircle,
+  AlertTriangle,
+  Clock,
   ShieldAlert,
   Info,
   RefreshCw,
@@ -331,12 +333,23 @@ export default function BidderOrganizationPage() {
                     <span className="text-[10px] font-bold text-slate-500 uppercase">PAN in GSTIN Coherence</span>
                     <StatusBadge status={identityOverview.assessment.pan_gst_embedded_status} />
                   </div>
-                  <div className="text-[11px] text-slate-600 mt-1">
-                    {identityOverview.assessment.pan_gst_embedded_status === "MATCH"
-                      ? "✓ Embedded PAN in GST matches PAN field"
-                      : identityOverview.assessment.pan_gst_embedded_status === "MISMATCH"
-                      ? "⚠️ Conflict between PAN and GSTIN"
-                      : "Pending registration"}
+                  <div className="text-[11px] text-slate-600 mt-1.5 flex items-center gap-1.5">
+                    {identityOverview.assessment.pan_gst_embedded_status === "MATCH" ? (
+                      <>
+                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                        <span>Embedded PAN in GST matches PAN field</span>
+                      </>
+                    ) : identityOverview.assessment.pan_gst_embedded_status === "MISMATCH" ? (
+                      <>
+                        <AlertTriangle className="h-3.5 w-3.5 text-amber-600 shrink-0" />
+                        <span>Conflict between PAN and GSTIN</span>
+                      </>
+                    ) : (
+                      <>
+                        <Clock className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                        <span>Pending registration</span>
+                      </>
+                    )}
                   </div>
                 </div>
 

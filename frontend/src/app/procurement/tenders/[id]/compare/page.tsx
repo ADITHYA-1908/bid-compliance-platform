@@ -22,6 +22,8 @@ import {
   ArrowLeft,
   Building2,
   CheckCircle2,
+  XCircle,
+  MinusCircle,
   ShieldAlert,
   ShieldCheck,
   AlertTriangle,
@@ -271,40 +273,42 @@ export default function BidComparisonPage() {
       case "PASS":
         return (
           <span className="inline-flex items-center gap-1 rounded-md bg-emerald-50 px-2 py-0.5 text-[11px] font-bold text-emerald-700 border border-emerald-200">
-            <CheckCircle2 className="h-3 w-3 text-emerald-600" />
+            <CheckCircle2 className="h-3 w-3 text-emerald-600 shrink-0" />
             PASS
           </span>
         );
       case "FAIL":
         return (
           <span className="inline-flex items-center gap-1 rounded-md bg-rose-50 px-2 py-0.5 text-[11px] font-bold text-rose-700 border border-rose-200">
-            <ShieldAlert className="h-3 w-3 text-rose-600" />
+            <XCircle className="h-3 w-3 text-rose-600 shrink-0" />
             FAIL
           </span>
         );
       case "REVIEW":
         return (
           <span className="inline-flex items-center gap-1 rounded-md bg-amber-50 px-2 py-0.5 text-[11px] font-bold text-amber-700 border border-amber-200">
-            <AlertCircle className="h-3 w-3 text-amber-600" />
+            <AlertTriangle className="h-3 w-3 text-amber-600 shrink-0" />
             REVIEW
           </span>
         );
       case "PENDING":
         return (
           <span className="inline-flex items-center gap-1 rounded-md bg-blue-50 px-2 py-0.5 text-[11px] font-semibold text-blue-700 border border-blue-200">
-            <Clock className="h-3 w-3 text-blue-600" />
+            <Clock className="h-3 w-3 text-blue-600 shrink-0" />
             PENDING
           </span>
         );
       case "NOT_APPLICABLE":
         return (
-          <span className="inline-flex items-center rounded bg-slate-100 px-2 py-0.5 text-[11px] font-mono text-slate-500">
+          <span className="inline-flex items-center gap-1 rounded bg-slate-100 px-2 py-0.5 text-[11px] font-mono text-slate-600 border border-slate-200">
+            <MinusCircle className="h-3 w-3 text-slate-500 shrink-0" />
             N/A
           </span>
         );
       default:
         return (
-          <span className="inline-flex items-center rounded bg-slate-100 px-2 py-0.5 text-[11px] font-mono text-slate-400">
+          <span className="inline-flex items-center gap-1 rounded bg-slate-100 px-2 py-0.5 text-[11px] font-mono text-slate-500 border border-slate-200">
+            <Clock className="h-3 w-3 text-slate-400 shrink-0" />
             NOT_EVALUATED
           </span>
         );
@@ -794,8 +798,9 @@ export default function BidComparisonPage() {
                           <div key={bid.bid_id} className="p-3.5 border-r border-slate-100 last:border-r-0 text-[11px] text-slate-600 leading-relaxed">
                             {bid.commercial_explanation || (bid.eligibility_status === "INELIGIBLE_MANDATORY_FAILED" ? "Disqualified due to mandatory compliance failures." : "Evaluation pending.")}
                             {bid.has_critical_blocker && bid.blocker_reason && (
-                              <div className="mt-1.5 p-2 rounded bg-amber-50 border border-amber-200 text-amber-900 font-semibold text-[10px]">
-                                ⚠️ Safety Blocker: {bid.blocker_reason}
+                              <div className="mt-1.5 p-2 rounded bg-amber-50 border border-amber-200 text-amber-900 font-semibold text-[10px] flex items-start gap-1.5">
+                                <AlertTriangle className="h-3.5 w-3.5 text-amber-600 shrink-0 mt-0.5" />
+                                <span>Safety Blocker: {bid.blocker_reason}</span>
                               </div>
                             )}
                           </div>

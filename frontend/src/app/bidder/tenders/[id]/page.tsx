@@ -208,12 +208,12 @@ export default function BidderTenderDetailPage() {
                           : "bg-blue-50 text-blue-800 border-blue-200"
                       }`}
                     >
-                      <span
-                        className={`h-1.5 w-1.5 rounded-full ${
-                          isOpen ? "bg-emerald-600 animate-pulse" : "bg-blue-600"
-                        }`}
-                      />
-                      {isOpen ? "OPEN FOR BIDDING" : "UPCOMING NOTICE"}
+                      {isOpen ? (
+                        <CheckCircle2 className="h-3 w-3 text-emerald-600 shrink-0" />
+                      ) : (
+                        <Clock className="h-3 w-3 text-blue-600 shrink-0" />
+                      )}
+                      <span>{isOpen ? "OPEN FOR BIDDING" : "UPCOMING NOTICE"}</span>
                     </span>
                     {tender.category && (
                       <span className="rounded-md bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-700">

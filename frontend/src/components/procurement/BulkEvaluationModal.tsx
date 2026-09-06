@@ -20,6 +20,7 @@ import {
   RotateCw,
   AlertTriangle,
   CheckCircle2,
+  XCircle,
   AlertCircle,
   Clock,
   Ban,
@@ -234,46 +235,46 @@ export function BulkEvaluationModal({
 
   const getStatusBadge = (st: string) => {
     switch (st) {
-      case "SUCCESS":
       case "COMPLETED":
+      case "SUCCESS":
         return (
           <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-[10px] font-bold text-emerald-800 border border-emerald-200">
-            <CheckCircle2 className="h-3 w-3 text-emerald-600" />
+            <CheckCircle2 className="h-3 w-3 text-emerald-600 shrink-0" />
             SUCCESS
           </span>
         );
       case "REVIEW_REQUIRED":
         return (
           <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-0.5 text-[10px] font-bold text-amber-800 border border-amber-200">
-            <AlertCircle className="h-3 w-3 text-amber-600" />
+            <AlertTriangle className="h-3 w-3 text-amber-600 shrink-0" />
             REVIEW REQ.
           </span>
         );
       case "RUNNING":
         return (
           <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2.5 py-0.5 text-[10px] font-bold text-blue-800 border border-blue-200 animate-pulse">
-            <Loader2 className="h-3 w-3 text-blue-600 animate-spin" />
+            <Loader2 className="h-3 w-3 text-blue-600 animate-spin shrink-0" />
             RUNNING
           </span>
         );
       case "QUEUED":
         return (
           <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-0.5 text-[10px] font-semibold text-slate-700 border border-slate-300">
-            <Clock className="h-3 w-3 text-slate-500" />
+            <Clock className="h-3 w-3 text-slate-500 shrink-0" />
             QUEUED
           </span>
         );
       case "FAILED":
         return (
           <span className="inline-flex items-center gap-1 rounded-full bg-rose-50 px-2.5 py-0.5 text-[10px] font-bold text-rose-800 border border-rose-200">
-            <AlertTriangle className="h-3 w-3 text-rose-600" />
+            <XCircle className="h-3 w-3 text-rose-600 shrink-0" />
             FAILED
           </span>
         );
       case "PARTIALLY_COMPLETED":
         return (
           <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-0.5 text-[10px] font-bold text-amber-800 border border-amber-200">
-            <AlertCircle className="h-3 w-3 text-amber-600" />
+            <AlertTriangle className="h-3 w-3 text-amber-600 shrink-0" />
             PARTIAL
           </span>
         );
@@ -281,7 +282,7 @@ export function BulkEvaluationModal({
       case "SKIPPED":
         return (
           <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-0.5 text-[10px] font-semibold text-slate-600 border border-slate-200">
-            <Ban className="h-3 w-3 text-slate-400" />
+            <XCircle className="h-3 w-3 text-slate-400 shrink-0" />
             {st}
           </span>
         );

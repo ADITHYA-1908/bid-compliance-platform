@@ -15,25 +15,35 @@ class ReviewTypeEnum(str, Enum):
     VERIFICATION_REVIEW = "VERIFICATION_REVIEW"
     DOCUMENT_REVIEW = "DOCUMENT_REVIEW"
     IDENTITY_MISMATCH = "IDENTITY_MISMATCH"
+    ORGANIZATION_MISMATCH = "ORGANIZATION_MISMATCH"
     LOW_CONFIDENCE = "LOW_CONFIDENCE"
     PENDING_SOURCE = "PENDING_SOURCE"
     CRITICAL_REVIEW = "CRITICAL_REVIEW"
+    POTENTIAL_DOCUMENT_REUSE = "POTENTIAL_DOCUMENT_REUSE"
+    POOR_DOCUMENT_QUALITY = "POOR_DOCUMENT_QUALITY"
+    EXPIRED_CERTIFICATE = "EXPIRED_CERTIFICATE"
+    BLACKLISTING_SIGNAL = "BLACKLISTING_SIGNAL"
+    UNRESOLVED_CLARIFICATION = "UNRESOLVED_CLARIFICATION"
     OTHER = "OTHER"
 
 
 class ReviewSeverityEnum(str, Enum):
-    LOW = "LOW"
-    MEDIUM = "MEDIUM"
-    HIGH = "HIGH"
     CRITICAL = "CRITICAL"
+    HIGH = "HIGH"
+    MEDIUM = "MEDIUM"
+    NORMAL = "NORMAL"
+    LOW = "LOW"
 
 
 class ReviewStatusEnum(str, Enum):
     OPEN = "OPEN"
+    IN_PROGRESS = "IN_PROGRESS"
     IN_REVIEW = "IN_REVIEW"
+    AWAITING_CLARIFICATION = "AWAITING_CLARIFICATION"
     RESOLVED = "RESOLVED"
     ESCALATED = "ESCALATED"
     SUPERSEDED = "SUPERSEDED"
+    DISMISSED = "DISMISSED"
 
 
 class ReviewResolutionEnum(str, Enum):
@@ -42,6 +52,9 @@ class ReviewResolutionEnum(str, Enum):
     NEEDS_MORE_EVIDENCE = "NEEDS_MORE_EVIDENCE"
     ESCALATED = "ESCALATED"
     NOT_APPLICABLE = "NOT_APPLICABLE"
+    CONFIRMED_BENIGN = "CONFIRMED_BENIGN"
+    CONFIRMED_REUSE = "CONFIRMED_REUSE"
+    DISMISSED = "DISMISSED"
 
 
 # -------------------------------------------------------------------------
@@ -62,6 +75,7 @@ class ReviewQueueItemResponse(BaseModel):
     requirement_name: Optional[str] = None
     category: Optional[str] = None
     review_type: ReviewTypeEnum
+    issue_type_display: Optional[str] = None
     severity: ReviewSeverityEnum
     status: ReviewStatusEnum
     source_type: str
@@ -72,6 +86,8 @@ class ReviewQueueItemResponse(BaseModel):
     claimed_by_name: Optional[str] = None
     resolved_by_name: Optional[str] = None
     resolution: Optional[ReviewResolutionEnum] = None
+    clarification_status: Optional[str] = None
+    risk_level: Optional[str] = None
     created_at: datetime
     resolved_at: Optional[datetime] = None
 
@@ -79,6 +95,8 @@ class ReviewQueueItemResponse(BaseModel):
 class ReviewQueueKPIs(BaseModel):
     total_open: int = 0
     critical_open: int = 0
+    high_open: int = 0
+    awaiting_clarification: int = 0
     in_review: int = 0
     resolved_today: int = 0
     escalated: int = 0
@@ -143,6 +161,7 @@ class ReviewRequirementSection(BaseModel):
 
 class ReviewActualEvidenceSection(BaseModel):
     claimed_value: Any = None
+    extracted_value: Any = None
     verified_value: Any = None
     match_status: Optional[str] = None
     extraction_confidence: Optional[float] = None
@@ -173,6 +192,7 @@ class ReviewVerificationEvidenceSection(BaseModel):
     match_status: Optional[str] = None
     source_type: Optional[str] = None
     source_name: Optional[str] = None
+    source_badge_label: str = "OFFICIAL API"  # MOCK | SANDBOX | OFFICIAL API | MANUAL
     is_mock: bool = False
     is_available: bool = True
     confidence_score: Optional[float] = None
@@ -191,6 +211,23 @@ class ReviewComplianceEvidenceSection(BaseModel):
     effective_compliance_status: Optional[str] = None
     human_resolution: Optional[str] = None
     human_reason: Optional[str] = None
+
+
+class ReviewRiskSection(BaseModel):
+    risk_level: Optional[str] = None
+    risk_score: Optional[float] = None
+    top_signals: List[str] = Field(default_factory=list)
+    is_critical: bool = False
+
+
+class ReviewClarificationSection(BaseModel):
+    clarification_id: Optional[uuid.UUID] = None
+    status: Optional[str] = None
+    status_label: Optional[str] = None
+    subject: Optional[str] = None
+    question: Optional[str] = None
+    response: Optional[str] = None
+    has_active_request: bool = False
 
 
 class CrossDocumentComparisonRow(BaseModel):
@@ -241,6 +278,7 @@ class ReviewDetailResponse(BaseModel):
     bidder_pan: Optional[str] = None
     bidder_gstin: Optional[str] = None
     review_type: ReviewTypeEnum
+    issue_type_display: Optional[str] = None
     severity: ReviewSeverityEnum
     status: ReviewStatusEnum
     title: str
@@ -263,6 +301,8 @@ class ReviewDetailResponse(BaseModel):
     source_document_section: Optional[ReviewSourceDocumentSection] = None
     verification_section: Optional[ReviewVerificationEvidenceSection] = None
     compliance_section: Optional[ReviewComplianceEvidenceSection] = None
+    risk_section: Optional[ReviewRiskSection] = None
+    clarification_section: Optional[ReviewClarificationSection] = None
     cross_document_section: List[CrossDocumentComparisonRow] = Field(default_factory=list)
     ai_explanation_section: Optional[ReviewAIExplanationSection] = None
     notes_history: List[ReviewNoteItem] = Field(default_factory=list)

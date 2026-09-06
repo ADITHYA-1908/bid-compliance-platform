@@ -7,6 +7,7 @@ import {
   FileText,
   CheckCircle2,
   XCircle,
+  Clock,
   Copy,
   Hash,
   ShieldCheck,
@@ -168,7 +169,7 @@ export function DuplicateMatchDetailModal({
                   {/* Status Badge */}
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-slate-400">Status:</span>
-                    <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+                    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${
                       detail.status === "CONFIRMED_REUSE"
                         ? "bg-rose-600/20 text-rose-400 border border-rose-600/40"
                         : detail.status === "CONFIRMED_BENIGN"
@@ -177,7 +178,16 @@ export function DuplicateMatchDetailModal({
                         ? "bg-slate-700 text-slate-300"
                         : "bg-amber-500/20 text-amber-300 border border-amber-500/40 animate-pulse"
                     }`}>
-                      {detail.status.replace(/_/g, " ")}
+                      {detail.status === "CONFIRMED_REUSE" ? (
+                        <XCircle className="w-3.5 h-3.5 shrink-0" />
+                      ) : detail.status === "CONFIRMED_BENIGN" ? (
+                        <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                      ) : detail.status === "DISMISSED" ? (
+                        <Clock className="w-3.5 h-3.5 shrink-0" />
+                      ) : (
+                        <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                      )}
+                      <span>{detail.status.replace(/_/g, " ")}</span>
                     </span>
                   </div>
                 </div>

@@ -18,6 +18,8 @@ import {
   Mail,
   ShieldCheck,
   CheckCircle2,
+  AlertTriangle,
+  XCircle,
   AlertCircle,
   ArrowRight,
   Save,
@@ -303,9 +305,17 @@ export default function BidderProfilePage() {
                         : "bg-amber-50 text-amber-800 border-amber-200"
                     }`}
                   >
-                    {profileData.completion.is_complete
-                      ? "Ready for Bidding"
-                      : "Incomplete"}
+                    {profileData.completion.is_complete ? (
+                      <>
+                        <CheckCircle2 className="h-3 w-3 text-emerald-600 shrink-0" />
+                        <span>Ready for Bidding</span>
+                      </>
+                    ) : (
+                      <>
+                        <AlertTriangle className="h-3 w-3 text-amber-600 shrink-0" />
+                        <span>Incomplete</span>
+                      </>
+                    )}
                   </span>
                 </div>
 
@@ -338,7 +348,7 @@ export default function BidderProfilePage() {
                 {profileData.completion.missing_required_fields.length > 0 ? (
                   <div className="rounded-lg bg-amber-50/70 border border-amber-200 p-3.5 text-xs text-amber-900">
                     <p className="font-semibold mb-1.5 flex items-center gap-1">
-                      <AlertCircle className="h-3.5 w-3.5 text-amber-700" />
+                      <AlertTriangle className="h-3.5 w-3.5 text-amber-700 shrink-0" />
                       Pending Mandatory Items:
                     </p>
                     <ul className="list-disc list-inside space-y-0.5 text-[11px] text-amber-800 font-medium">

@@ -179,39 +179,45 @@ export default function ReviewDetailPage() {
       case "OPEN":
         return (
           <span className="inline-flex items-center gap-1 rounded-md bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-700 border border-blue-200">
-            <Clock className="h-3.5 w-3.5 text-blue-600" />
+            <Clock className="h-3.5 w-3.5 text-blue-600 shrink-0" />
             OPEN FOR REVIEW
           </span>
         );
       case "IN_REVIEW":
         return (
           <span className="inline-flex items-center gap-1 rounded-md bg-purple-50 px-2.5 py-1 text-xs font-bold text-purple-700 border border-purple-200">
-            <UserCheck className="h-3.5 w-3.5 text-purple-600" />
+            <Clock className="h-3.5 w-3.5 text-purple-600 shrink-0" />
             IN REVIEW
           </span>
         );
       case "RESOLVED":
         return (
           <span className="inline-flex items-center gap-1 rounded-md bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-700 border border-emerald-200">
-            <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
+            <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
             RESOLVED
           </span>
         );
       case "ESCALATED":
         return (
-          <span className="inline-flex items-center gap-1 rounded-md bg-rose-50 px-2.5 py-1 text-xs font-bold text-rose-700 border border-rose-200">
-            <BadgeAlert className="h-3.5 w-3.5 text-rose-600" />
+          <span className="inline-flex items-center gap-1 rounded-md bg-amber-50 px-2.5 py-1 text-xs font-bold text-amber-800 border border-amber-200">
+            <AlertTriangle className="h-3.5 w-3.5 text-amber-600 shrink-0" />
             ESCALATED
           </span>
         );
       case "SUPERSEDED":
         return (
-          <span className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-500 line-through">
+          <span className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-500 border border-slate-200">
+            <XCircle className="h-3.5 w-3.5 text-slate-400 shrink-0" />
             SUPERSEDED
           </span>
         );
       default:
-        return <span>{status}</span>;
+        return (
+          <span className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600 border border-slate-200">
+            <Clock className="h-3.5 w-3.5 text-slate-500 shrink-0" />
+            {status}
+          </span>
+        );
     }
   };
 

@@ -16,6 +16,7 @@ import {
   FileText,
   Building2,
   CheckCircle2,
+  XCircle,
   ShieldAlert,
   ShieldCheck,
   AlertTriangle,
@@ -39,7 +40,6 @@ import {
   CheckSquare,
   Square,
   X,
-  XCircle,
   MinusCircle,
   Play,
 } from "lucide-react";
@@ -186,30 +186,31 @@ export default function TenderEvaluationWorkspacePage() {
   const getEvaluationStatusBadge = (status: string) => {
     switch (status) {
       case "EVALUATION_COMPLETE":
+      case "COMPLETE":
         return (
           <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-800 border border-emerald-200">
-            <CheckCircle2 className="h-2.5 w-2.5 text-emerald-600" />
+            <CheckCircle2 className="h-3 w-3 text-emerald-600 shrink-0" />
             COMPLETE
           </span>
         );
       case "REVIEW_REQUIRED":
         return (
           <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-800 border border-amber-200">
-            <AlertCircle className="h-2.5 w-2.5 text-amber-600" />
+            <AlertTriangle className="h-3 w-3 text-amber-600 shrink-0" />
             REVIEW REQ.
           </span>
         );
       case "PROVISIONAL":
         return (
-          <span className="inline-flex items-center gap-1 rounded-full bg-indigo-50 px-2 py-0.5 text-[10px] font-semibold text-indigo-800 border border-indigo-200">
-            <Clock className="h-2.5 w-2.5 text-indigo-600" />
+          <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-semibold text-blue-800 border border-blue-200">
+            <Clock className="h-3 w-3 text-blue-600 shrink-0" />
             PROVISIONAL
           </span>
         );
       case "AI_STALE":
         return (
-          <span className="inline-flex items-center gap-1 rounded-full bg-purple-50 px-2 py-0.5 text-[10px] font-semibold text-purple-800 border border-purple-200">
-            <Sparkles className="h-2.5 w-2.5 text-purple-600" />
+          <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-800 border border-amber-200">
+            <AlertTriangle className="h-3 w-3 text-amber-600 shrink-0" />
             AI STALE
           </span>
         );
@@ -217,8 +218,9 @@ export default function TenderEvaluationWorkspacePage() {
       case "PROCESSING":
       default:
         return (
-          <span className="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600 border border-slate-200">
-            {status}
+          <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600 border border-slate-200">
+            <Clock className="h-3 w-3 text-slate-400 shrink-0" />
+            {status.replace(/_/g, " ")}
           </span>
         );
     }
@@ -227,8 +229,8 @@ export default function TenderEvaluationWorkspacePage() {
   const getAIRecBadge = (rec?: string | null, aiStatus?: string) => {
     if (aiStatus === "STALE") {
       return (
-        <span className="inline-flex items-center gap-1 rounded bg-purple-50 px-2 py-0.5 text-[10px] font-medium text-purple-800 border border-purple-200" title="Recommendation is stale relative to upstream scores">
-          <Sparkles className="h-2.5 w-2.5 text-purple-600" />
+        <span className="inline-flex items-center gap-1 rounded bg-amber-50 px-2 py-0.5 text-[10px] font-medium text-amber-800 border border-amber-200" title="Recommendation is stale relative to upstream scores">
+          <AlertTriangle className="h-3 w-3 text-amber-600 shrink-0" />
           AI Stale
         </span>
       );
@@ -245,31 +247,35 @@ export default function TenderEvaluationWorkspacePage() {
       case "PROCEED":
         return (
           <span className="inline-flex items-center gap-1 rounded bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-800 border border-emerald-200">
-            <CheckCircle2 className="h-2.5 w-2.5 text-emerald-600" />
+            <CheckCircle2 className="h-3 w-3 text-emerald-600 shrink-0" />
             PROCEED
           </span>
         );
       case "PROCEED_WITH_REVIEW":
         return (
-          <span className="inline-flex items-center gap-1 rounded bg-blue-50 px-2 py-0.5 text-[10px] font-semibold text-blue-800 border border-blue-200">
+          <span className="inline-flex items-center gap-1 rounded bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-800 border border-amber-200">
+            <AlertTriangle className="h-3 w-3 text-amber-600 shrink-0" />
             PROCEED W/ REV.
           </span>
         );
       case "REVIEW_REQUIRED":
         return (
           <span className="inline-flex items-center gap-1 rounded bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-800 border border-amber-200">
+            <AlertTriangle className="h-3 w-3 text-amber-600 shrink-0" />
             REVIEW REQ.
           </span>
         );
       case "DO_NOT_PROCEED_WITHOUT_REVIEW":
         return (
           <span className="inline-flex items-center gap-1 rounded bg-rose-50 px-2 py-0.5 text-[10px] font-bold text-rose-800 border border-rose-200">
+            <XCircle className="h-3 w-3 text-rose-600 shrink-0" />
             DO NOT PROCEED
           </span>
         );
       default:
         return (
-          <span className="inline-flex items-center rounded bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-700">
+          <span className="inline-flex items-center gap-1 rounded bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600">
+            <Clock className="h-3 w-3 text-slate-400 shrink-0" />
             {rec}
           </span>
         );
@@ -281,28 +287,28 @@ export default function TenderEvaluationWorkspacePage() {
       case "QUALIFIED":
         return (
           <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-[10px] font-bold text-emerald-800 border border-emerald-200">
-            <CheckCircle2 className="h-2.5 w-2.5 text-emerald-600" />
+            <CheckCircle2 className="h-3 w-3 text-emerald-600 shrink-0" />
             QUALIFIED
           </span>
         );
       case "DISQUALIFIED":
         return (
           <span className="inline-flex items-center gap-1 rounded-full bg-rose-50 px-2.5 py-0.5 text-[10px] font-bold text-rose-800 border border-rose-200">
-            <XCircle className="h-2.5 w-2.5 text-rose-600" />
+            <XCircle className="h-3 w-3 text-rose-600 shrink-0" />
             DISQUALIFIED
           </span>
         );
       case "UNDER_REVIEW":
         return (
           <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-0.5 text-[10px] font-bold text-amber-800 border border-amber-200">
-            <Clock className="h-2.5 w-2.5 text-amber-600" />
+            <Clock className="h-3 w-3 text-amber-600 shrink-0" />
             UNDER REVIEW
           </span>
         );
       default:
         return (
           <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-0.5 text-[10px] font-medium text-slate-600 border border-slate-200">
-            <MinusCircle className="h-2.5 w-2.5 text-slate-400" />
+            <MinusCircle className="h-3 w-3 text-slate-400 shrink-0" />
             NOT DECIDED
           </span>
         );

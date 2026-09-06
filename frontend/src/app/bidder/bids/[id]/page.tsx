@@ -860,15 +860,23 @@ export default function BidWorkspacePage() {
                       </div>
 
                       <span
-                        className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-bold border self-start sm:self-auto ${
+                        className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold border self-start sm:self-auto ${
                           readiness.ready_to_submit
                             ? "bg-emerald-50 text-emerald-800 border-emerald-200"
                             : "bg-amber-50 text-amber-800 border-amber-200"
                         }`}
                       >
-                        {readiness.ready_to_submit
-                          ? "✓ Ready to Submit"
-                          : "⚠️ Incomplete Submission"}
+                        {readiness.ready_to_submit ? (
+                          <>
+                            <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                            <span>Ready to Submit</span>
+                          </>
+                        ) : (
+                          <>
+                            <AlertTriangle className="h-3.5 w-3.5 text-amber-600 shrink-0" />
+                            <span>Incomplete Submission</span>
+                          </>
+                        )}
                       </span>
                     </div>
 
@@ -1067,7 +1075,7 @@ export default function BidWorkspacePage() {
                                           uploadedDoc.processing.extraction_method === "HYBRID" ? (
                                             <>
                                               <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded border bg-emerald-50 text-emerald-800 border-emerald-200">
-                                                <FileText className="h-3 w-3 text-emerald-600" />
+                                                <CheckCircle2 className="h-3 w-3 text-emerald-600" />
                                                 Text Extracted • {uploadedDoc.processing.extraction_method === "HYBRID" ? "Hybrid" : uploadedDoc.processing.extraction_method === "OCR" ? "OCR" : "Digital PDF"} ({uploadedDoc.processing.page_count || 1} {uploadedDoc.processing.page_count === 1 ? "Page" : "Pages"})
                                               </span>
                                               <button
@@ -1103,7 +1111,7 @@ export default function BidWorkspacePage() {
                                           ) : uploadedDoc.processing.processing_status === "FAILED" ? (
                                             <div className="flex items-center gap-2">
                                               <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded border bg-rose-50 text-rose-800 border-rose-200">
-                                                <AlertCircle className="h-3 w-3 text-rose-600" />
+                                                <XCircle className="h-3 w-3 text-rose-600" />
                                                 Extraction Failed: {uploadedDoc.processing.error_code || "ERROR"}
                                               </span>
                                               <button
@@ -1141,7 +1149,7 @@ export default function BidWorkspacePage() {
                                         {uploadedDoc.processing.detected_document_type && (
                                           <div className="flex flex-wrap items-center gap-1.5">
                                             <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded border bg-indigo-50 text-indigo-900 border-indigo-200">
-                                              <FileCheck className="h-3 w-3 text-indigo-600" />
+                                              <CheckCircle2 className="h-3 w-3 text-indigo-600" />
                                               Class: {uploadedDoc.processing.detected_document_type.replace(/_/g, " ")}
                                             </span>
                                             {uploadedDoc.processing.classification_confidence !== undefined && uploadedDoc.processing.classification_confidence !== null && (
@@ -1205,9 +1213,10 @@ export default function BidWorkspacePage() {
                                     )}
                                   </div>
                                 ) : (
-                                  <p className="text-[11px] font-semibold text-rose-600 pt-0.5">
-                                    ✗ Document Not Yet Uploaded
-                                  </p>
+                                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-rose-600 pt-0.5">
+                                    <XCircle className="h-3 w-3 shrink-0" />
+                                    Document Not Yet Uploaded
+                                  </span>
                                 )}
                               </div>
 
@@ -1956,7 +1965,7 @@ export default function BidWorkspacePage() {
                         {readiness?.checks.bid_details_complete ? (
                           <CheckCircle2 className="h-4 w-4 text-emerald-600" />
                         ) : (
-                          <FileText className="h-4 w-4 text-blue-600" />
+                          <Clock className="h-4 w-4 text-blue-600" />
                         )}
                         <span className="font-bold">2. Proposal Details</span>
                       </div>
@@ -1983,7 +1992,7 @@ export default function BidWorkspacePage() {
                         {readiness?.checks.mandatory_documents_complete ? (
                           <CheckCircle2 className="h-4 w-4 text-emerald-600" />
                         ) : (
-                          <FileUp className="h-4 w-4 text-blue-600" />
+                          <Clock className="h-4 w-4 text-blue-600" />
                         )}
                         <span className="font-bold">3. Document Package</span>
                       </div>
@@ -2012,9 +2021,9 @@ export default function BidWorkspacePage() {
                     >
                       <div className="flex items-center gap-2">
                         {isSubmitted ? (
-                          <ShieldCheck className="h-4 w-4 text-white" />
+                          <CheckCircle2 className="h-4 w-4 text-white" />
                         ) : (
-                          <Lock className="h-4 w-4 text-slate-400" />
+                          <Clock className="h-4 w-4 text-slate-400" />
                         )}
                         <span>4. Final Submission</span>
                       </div>

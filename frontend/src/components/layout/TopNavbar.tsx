@@ -54,9 +54,9 @@ export function TopNavbar({ onOpenMobileMenu }: { onOpenMobileMenu: () => void }
 
         <div className="hidden sm:flex items-center gap-2 text-xs font-semibold text-slate-500">
           <Landmark className="h-3.5 w-3.5 text-slate-600" />
-          <span className="text-slate-700 font-bold">Government of India GeM Integration</span>
+          <span className="text-slate-700 font-bold">GeM-Aligned Bid Compliance Platform</span>
           <span>•</span>
-          <span className="text-slate-600">Bid Compliance Platform</span>
+          <span className="text-slate-500">BidVerify AI</span>
         </div>
       </div>
 

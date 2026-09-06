@@ -14,6 +14,7 @@ import {
   formatDateTime,
   formatDeadlineRemaining,
 } from "@/lib/formatters";
+import { StatusBadge } from "@/components/common/StatusBadge";
 import {
   FileText,
   Search,
@@ -352,22 +353,7 @@ export default function BidderBidsPage() {
 
                           {/* Bid Status Badge */}
                           <td className="py-4 px-4 whitespace-nowrap">
-                            <span
-                              className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-bold border ${
-                                bid.status === "SUBMITTED"
-                                  ? "bg-emerald-50 text-emerald-800 border-emerald-200"
-                                  : "bg-amber-50 text-amber-800 border-amber-200"
-                              }`}
-                            >
-                              <span
-                                className={`h-1.5 w-1.5 rounded-full ${
-                                  bid.status === "SUBMITTED"
-                                    ? "bg-emerald-500"
-                                    : "bg-amber-500"
-                                }`}
-                              />
-                              {bid.status}
-                            </span>
+                            <StatusBadge status={bid.status} size="sm" />
                           </td>
 
                           {/* Submission Deadline */}

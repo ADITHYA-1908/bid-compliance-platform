@@ -5,8 +5,7 @@ import { QualityLevel } from "@/types/document_quality";
 import {
   CheckCircle2,
   AlertTriangle,
-  AlertOctagon,
-  Eye,
+  XCircle,
   FileWarning,
 } from "lucide-react";
 
@@ -43,15 +42,15 @@ export const DocumentQualityBadge: React.FC<DocumentQualityBadgeProps> = ({
 
   if (normLevel === "UNUSABLE" || isCorrupted || isPasswordProtected) {
     badgeStyle = "bg-rose-50 text-rose-800 border-rose-200";
-    icon = <AlertOctagon className="h-3.5 w-3.5 text-rose-600 shrink-0" />;
+    icon = <XCircle className="h-3.5 w-3.5 text-rose-600 shrink-0" />;
     label = isCorrupted ? "Corrupted File" : isPasswordProtected ? "Password Locked" : "Quality: UNUSABLE";
   } else if (normLevel === "POOR" || hasUnreadablePages || isBlurry) {
     badgeStyle = "bg-amber-50 text-amber-800 border-amber-200";
     icon = <AlertTriangle className="h-3.5 w-3.5 text-amber-600 shrink-0" />;
     label = "Quality: POOR";
   } else if (normLevel === "ACCEPTABLE") {
-    badgeStyle = "bg-blue-50 text-blue-800 border-blue-200";
-    icon = <Eye className="h-3.5 w-3.5 text-blue-600 shrink-0" />;
+    badgeStyle = "bg-amber-50 text-amber-800 border-amber-200";
+    icon = <AlertTriangle className="h-3.5 w-3.5 text-amber-600 shrink-0" />;
     label = "Quality: ACCEPTABLE";
   }
 

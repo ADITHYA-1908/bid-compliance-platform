@@ -7,6 +7,7 @@ import {
   CheckCheck,
   CheckCircle2,
   AlertTriangle,
+  XCircle,
   ShieldAlert,
   Info,
   Clock,
@@ -137,7 +138,7 @@ function NotificationCenterContent() {
       case "CRITICAL":
         return (
           <span className="inline-flex items-center gap-1 rounded-md bg-red-50 px-2 py-0.5 text-xs font-bold text-red-700 border border-red-200">
-            <ShieldAlert className="h-3.5 w-3.5 text-red-600" />
+            <XCircle className="h-3.5 w-3.5 text-red-600 shrink-0" />
             CRITICAL
           </span>
         );

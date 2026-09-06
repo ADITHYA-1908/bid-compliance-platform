@@ -5,6 +5,7 @@ import {
   AlertTriangle,
   CheckCircle2,
   XCircle,
+  Clock,
   ShieldCheck,
   ShieldAlert,
   Search,
@@ -322,7 +323,7 @@ export function DuplicateMatchesList({
 
                     {/* Status Badge */}
                     <td className="py-3.5 px-4">
-                      <span className={`inline-flex px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
+                      <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
                         item.status === "CONFIRMED_REUSE"
                           ? "bg-rose-600/20 text-rose-400 border border-rose-600/40"
                           : item.status === "CONFIRMED_BENIGN"
@@ -331,7 +332,16 @@ export function DuplicateMatchesList({
                           ? "bg-slate-700 text-slate-300"
                           : "bg-amber-500/20 text-amber-300 border border-amber-500/40"
                       }`}>
-                        {item.status.replace(/_/g, " ")}
+                        {item.status === "CONFIRMED_REUSE" ? (
+                          <XCircle className="w-3 h-3 shrink-0" />
+                        ) : item.status === "CONFIRMED_BENIGN" ? (
+                          <CheckCircle2 className="w-3 h-3 shrink-0" />
+                        ) : item.status === "DISMISSED" ? (
+                          <Clock className="w-3 h-3 shrink-0" />
+                        ) : (
+                          <AlertTriangle className="w-3 h-3 shrink-0" />
+                        )}
+                        <span>{item.status.replace(/_/g, " ")}</span>
                       </span>
                     </td>
 

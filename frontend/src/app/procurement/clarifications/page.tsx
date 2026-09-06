@@ -10,6 +10,7 @@ import {
   Search,
   Filter,
   CheckCircle2,
+  XCircle,
   AlertCircle,
   FileText,
   Eye,
@@ -35,17 +36,17 @@ import { CreateClarificationModal } from "@/components/clarifications/CreateClar
 
 const STATUS_CONFIG: Record<
   ClarificationStatus,
-  { label: string; bg: string; text: string; border: string }
+  { label: string; bg: string; text: string; border: string; icon: React.ElementType }
 > = {
-  DRAFT: { label: "Draft", bg: "bg-slate-100", text: "text-slate-700", border: "border-slate-200" },
-  SENT: { label: "Awaiting Bidder", bg: "bg-blue-50", text: "text-blue-700", border: "border-blue-200" },
-  VIEWED: { label: "Viewed by Bidder", bg: "bg-indigo-50", text: "text-indigo-700", border: "border-indigo-200" },
-  RESPONDED: { label: "Responded (Action)", bg: "bg-amber-50", text: "text-amber-800", border: "border-amber-200" },
-  UNDER_REVIEW: { label: "Under Review", bg: "bg-purple-50", text: "text-purple-700", border: "border-purple-200" },
-  RESOLVED: { label: "Resolved", bg: "bg-emerald-50", text: "text-emerald-700", border: "border-emerald-200" },
-  CLOSED: { label: "Closed", bg: "bg-slate-100", text: "text-slate-600", border: "border-slate-200" },
-  EXPIRED: { label: "Expired", bg: "bg-rose-50", text: "text-rose-700", border: "border-rose-200" },
-  CANCELLED: { label: "Cancelled", bg: "bg-slate-100", text: "text-slate-500", border: "border-slate-200" },
+  DRAFT: { label: "Draft", bg: "bg-slate-100", text: "text-slate-700", border: "border-slate-200", icon: Clock },
+  SENT: { label: "Awaiting Bidder", bg: "bg-blue-50", text: "text-blue-700", border: "border-blue-200", icon: Clock },
+  VIEWED: { label: "Viewed by Bidder", bg: "bg-indigo-50", text: "text-indigo-700", border: "border-indigo-200", icon: Clock },
+  RESPONDED: { label: "Responded (Action)", bg: "bg-amber-50", text: "text-amber-800", border: "border-amber-200", icon: AlertTriangle },
+  UNDER_REVIEW: { label: "Under Review", bg: "bg-purple-50", text: "text-purple-700", border: "border-purple-200", icon: Clock },
+  RESOLVED: { label: "Resolved", bg: "bg-emerald-50", text: "text-emerald-700", border: "border-emerald-200", icon: CheckCircle2 },
+  CLOSED: { label: "Closed", bg: "bg-slate-100", text: "text-slate-600", border: "border-slate-200", icon: Clock },
+  EXPIRED: { label: "Expired", bg: "bg-rose-50", text: "text-rose-700", border: "border-rose-200", icon: XCircle },
+  CANCELLED: { label: "Cancelled", bg: "bg-slate-100", text: "text-slate-500", border: "border-slate-200", icon: XCircle },
 };
 
 const PRIORITY_CONFIG: Record<
@@ -347,7 +348,8 @@ export default function ProcurementClarificationsPage() {
                     <div className="space-y-2 flex-1">
                       {/* Status / Priority tags */}
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-bold border ${statusInfo.bg} ${statusInfo.text} ${statusInfo.border}`}>
+                        <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-bold border ${statusInfo.bg} ${statusInfo.text} ${statusInfo.border}`}>
+                          {statusInfo.icon && React.createElement(statusInfo.icon, { className: "h-3 w-3 shrink-0" })}
                           {statusInfo.label}
                         </span>
                         <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium border ${priorityInfo.bg}`}>

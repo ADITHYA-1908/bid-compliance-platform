@@ -55,7 +55,7 @@ export const NAVIGATION_BY_ROLE: Record<string, RoleNavigationConfig> = {
         category: "SUBMISSIONS",
       },
       {
-        label: "Documents Vault",
+        label: "Documents",
         href: "/bidder/documents",
         icon: Files,
         description: "Compliance documents repository and verified credentials",
@@ -80,7 +80,7 @@ export const NAVIGATION_BY_ROLE: Record<string, RoleNavigationConfig> = {
         href: "/bidder/organization",
         icon: Building2,
         description: "Organization details, GST, PAN, and Udyam credentials",
-        category: "ENTITY",
+        category: "COMPLIANCE",
       },
     ],
   },

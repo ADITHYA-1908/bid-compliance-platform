@@ -7,6 +7,7 @@ import {
   AlertTriangle,
   BarChart3,
   CheckCircle2,
+  XCircle,
   ChevronLeft,
   ChevronRight,
   Clock,
@@ -632,12 +633,12 @@ export default function ValidationDashboardPage() {
                           <td className="py-3 px-4">
                             {c.is_correct ? (
                               <span className="inline-flex items-center gap-1 rounded-md bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700">
-                                <CheckCircle2 className="h-3 w-3" />
+                                <CheckCircle2 className="h-3 w-3 shrink-0" />
                                 PASSED
                               </span>
                             ) : (
                               <span className="inline-flex items-center gap-1 rounded-md bg-rose-50 px-2 py-0.5 text-[10px] font-bold text-rose-700">
-                                <AlertOctagon className="h-3 w-3" />
+                                <XCircle className="h-3 w-3 shrink-0" />
                                 {c.error_type}
                               </span>
                             )}

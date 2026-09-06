@@ -155,13 +155,13 @@ export default function ProcurementEvaluationsPage() {
       case "PROCEED":
         return {
           bg: "bg-emerald-500/10 text-emerald-700 border-emerald-300",
-          icon: ShieldCheck,
+          icon: CheckCircle2,
           label: "PROCEED",
         };
       case "PROCEED_WITH_REVIEW":
         return {
-          bg: "bg-blue-500/10 text-blue-700 border-blue-300",
-          icon: Info,
+          bg: "bg-amber-500/10 text-amber-700 border-amber-300",
+          icon: AlertTriangle,
           label: "PROCEED WITH REVIEW",
         };
       case "REVIEW_REQUIRED":
@@ -173,7 +173,7 @@ export default function ProcurementEvaluationsPage() {
       case "DO_NOT_PROCEED_WITHOUT_REVIEW":
         return {
           bg: "bg-rose-500/10 text-rose-700 border-rose-300",
-          icon: ShieldAlert,
+          icon: XCircle,
           label: "DO NOT PROCEED WITHOUT REVIEW",
         };
       case "INSUFFICIENT_EVIDENCE":
@@ -185,7 +185,7 @@ export default function ProcurementEvaluationsPage() {
       default:
         return {
           bg: "bg-slate-100 text-slate-700 border-slate-300",
-          icon: Info,
+          icon: Clock,
           label: rec || "PENDING",
         };
     }

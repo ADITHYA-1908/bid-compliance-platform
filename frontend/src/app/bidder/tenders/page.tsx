@@ -23,6 +23,7 @@ import {
   AlertCircle,
   FileText,
   Clock,
+  CheckCircle2,
   Sparkles,
   ChevronLeft,
   ChevronRight,
@@ -375,12 +376,12 @@ export default function BidderTendersPage() {
                             : "bg-blue-50 text-blue-800 border-blue-200"
                         }`}
                       >
-                        <span
-                          className={`h-1.5 w-1.5 rounded-full ${
-                            isOpen ? "bg-emerald-600 animate-pulse" : "bg-blue-600"
-                          }`}
-                        />
-                        {isOpen ? "OPEN FOR BIDDING" : "UPCOMING"}
+                        {isOpen ? (
+                          <CheckCircle2 className="h-3 w-3 text-emerald-600 shrink-0" />
+                        ) : (
+                          <Clock className="h-3 w-3 text-blue-600 shrink-0" />
+                        )}
+                        <span>{isOpen ? "OPEN FOR BIDDING" : "UPCOMING"}</span>
                       </span>
                     </div>
 

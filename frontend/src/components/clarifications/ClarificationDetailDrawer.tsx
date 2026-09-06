@@ -9,6 +9,7 @@ import {
   Send,
   Upload,
   CheckCircle2,
+  XCircle,
   AlertCircle,
   Eye,
   Calendar,
@@ -41,17 +42,17 @@ interface ClarificationDetailDrawerProps {
 
 const STATUS_CONFIG: Record<
   ClarificationStatus,
-  { label: string; bg: string; text: string; border: string }
+  { label: string; bg: string; text: string; border: string; icon: React.ElementType }
 > = {
-  DRAFT: { label: "Draft", bg: "bg-slate-100", text: "text-slate-700", border: "border-slate-200" },
-  SENT: { label: "Sent to Bidder", bg: "bg-blue-50", text: "text-blue-700", border: "border-blue-200" },
-  VIEWED: { label: "Viewed by Bidder", bg: "bg-indigo-50", text: "text-indigo-700", border: "border-indigo-200" },
-  RESPONDED: { label: "Responded", bg: "bg-amber-50", text: "text-amber-800", border: "border-amber-200" },
-  UNDER_REVIEW: { label: "Under Review", bg: "bg-purple-50", text: "text-purple-700", border: "border-purple-200" },
-  RESOLVED: { label: "Resolved", bg: "bg-emerald-50", text: "text-emerald-700", border: "border-emerald-200" },
-  CLOSED: { label: "Closed", bg: "bg-slate-100", text: "text-slate-600", border: "border-slate-200" },
-  EXPIRED: { label: "Expired", bg: "bg-rose-50", text: "text-rose-700", border: "border-rose-200" },
-  CANCELLED: { label: "Cancelled", bg: "bg-slate-100", text: "text-slate-500", border: "border-slate-200" },
+  DRAFT: { label: "Draft", bg: "bg-slate-100", text: "text-slate-700", border: "border-slate-200", icon: Clock },
+  SENT: { label: "Sent to Bidder", bg: "bg-blue-50", text: "text-blue-700", border: "border-blue-200", icon: AlertTriangle },
+  VIEWED: { label: "Viewed by Bidder", bg: "bg-indigo-50", text: "text-indigo-700", border: "border-indigo-200", icon: AlertTriangle },
+  RESPONDED: { label: "Responded", bg: "bg-amber-50", text: "text-amber-800", border: "border-amber-200", icon: Clock },
+  UNDER_REVIEW: { label: "Under Review", bg: "bg-purple-50", text: "text-purple-700", border: "border-purple-200", icon: Clock },
+  RESOLVED: { label: "Resolved", bg: "bg-emerald-50", text: "text-emerald-700", border: "border-emerald-200", icon: CheckCircle2 },
+  CLOSED: { label: "Closed", bg: "bg-slate-100", text: "text-slate-600", border: "border-slate-200", icon: Clock },
+  EXPIRED: { label: "Expired", bg: "bg-rose-50", text: "text-rose-700", border: "border-rose-200", icon: XCircle },
+  CANCELLED: { label: "Cancelled", bg: "bg-slate-100", text: "text-slate-500", border: "border-slate-200", icon: XCircle },
 };
 
 const PRIORITY_CONFIG: Record<
@@ -246,7 +247,8 @@ export const ClarificationDetailDrawer: React.FC<ClarificationDetailDrawerProps>
               <div className="flex items-start justify-between">
                 <div>
                   <div className="flex flex-wrap items-center gap-2 mb-2">
-                    <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-bold border ${statusObj.bg} ${statusObj.text} ${statusObj.border}`}>
+                    <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-bold border ${statusObj.bg} ${statusObj.text} ${statusObj.border}`}>
+                      {React.createElement(statusObj.icon, { className: "h-3 w-3 shrink-0" })}
                       {statusObj.label}
                     </span>
                     <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${priorityObj.bg}`}>

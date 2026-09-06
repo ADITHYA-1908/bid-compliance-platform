@@ -6,7 +6,7 @@ import {
   X,
   ShieldCheck,
   AlertTriangle,
-  AlertOctagon,
+  XCircle,
   CheckCircle2,
   Scan,
   Info,
@@ -113,11 +113,11 @@ export const DocumentQualityModal: React.FC<DocumentQualityModalProps> = ({
               <div className="text-sm font-bold mt-1.5 flex items-center gap-1.5">
                 {quality.is_corrupted ? (
                   <span className="text-rose-700 flex items-center gap-1">
-                    <AlertOctagon className="h-4 w-4" /> Corrupted File
+                    <XCircle className="h-4 w-4" /> Corrupted File
                   </span>
                 ) : quality.is_password_protected ? (
                   <span className="text-rose-700 flex items-center gap-1">
-                    <AlertOctagon className="h-4 w-4" /> Password Locked
+                    <XCircle className="h-4 w-4" /> Password Locked
                   </span>
                 ) : quality.review_required ? (
                   <span className="text-amber-700 flex items-center gap-1">
@@ -144,23 +144,83 @@ export const DocumentQualityModal: React.FC<DocumentQualityModalProps> = ({
             <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5 text-xs">
               <div className={`p-2.5 rounded-lg border flex flex-col items-center text-center ${quality.is_blurry ? "bg-amber-50 border-amber-200 text-amber-900" : "bg-slate-50 border-slate-200 text-slate-700"}`}>
                 <span className="font-semibold">Blur Detection</span>
-                <span className="text-[11px] mt-1 font-bold">{quality.is_blurry ? "⚠️ Blurry Scan" : "✓ Sharp"}</span>
+                <span className="text-[11px] mt-1 font-bold">
+                  {quality.is_blurry ? (
+                    <span className="inline-flex items-center gap-1">
+                      <AlertTriangle className="h-3 w-3 shrink-0 text-amber-600" />
+                      Blurry Scan
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1">
+                      <CheckCircle2 className="h-3 w-3 shrink-0 text-emerald-600" />
+                      Sharp
+                    </span>
+                  )}
+                </span>
               </div>
               <div className={`p-2.5 rounded-lg border flex flex-col items-center text-center ${quality.has_blank_pages ? "bg-amber-50 border-amber-200 text-amber-900" : "bg-slate-50 border-slate-200 text-slate-700"}`}>
                 <span className="font-semibold">Blank Pages</span>
-                <span className="text-[11px] mt-1 font-bold">{quality.has_blank_pages ? "⚠️ Blank Found" : "✓ No Blank"}</span>
+                <span className="text-[11px] mt-1 font-bold">
+                  {quality.has_blank_pages ? (
+                    <span className="inline-flex items-center gap-1">
+                      <AlertTriangle className="h-3 w-3 shrink-0 text-amber-600" />
+                      Blank Found
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1">
+                      <CheckCircle2 className="h-3 w-3 shrink-0 text-emerald-600" />
+                      No Blank
+                    </span>
+                  )}
+                </span>
               </div>
               <div className={`p-2.5 rounded-lg border flex flex-col items-center text-center ${quality.has_unreadable_pages ? "bg-rose-50 border-rose-200 text-rose-900" : "bg-slate-50 border-slate-200 text-slate-700"}`}>
                 <span className="font-semibold">Legibility</span>
-                <span className="text-[11px] mt-1 font-bold">{quality.has_unreadable_pages ? "❌ Unreadable" : "✓ Legible"}</span>
+                <span className="text-[11px] mt-1 font-bold">
+                  {quality.has_unreadable_pages ? (
+                    <span className="inline-flex items-center gap-1">
+                      <XCircle className="h-3 w-3 shrink-0 text-rose-600" />
+                      Unreadable
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1">
+                      <CheckCircle2 className="h-3 w-3 shrink-0 text-emerald-600" />
+                      Legible
+                    </span>
+                  )}
+                </span>
               </div>
               <div className={`p-2.5 rounded-lg border flex flex-col items-center text-center ${quality.has_low_resolution_pages ? "bg-amber-50 border-amber-200 text-amber-900" : "bg-slate-50 border-slate-200 text-slate-700"}`}>
                 <span className="font-semibold">Resolution</span>
-                <span className="text-[11px] mt-1 font-bold">{quality.has_low_resolution_pages ? "⚠️ Low DPI" : "✓ Standard"}</span>
+                <span className="text-[11px] mt-1 font-bold">
+                  {quality.has_low_resolution_pages ? (
+                    <span className="inline-flex items-center gap-1">
+                      <AlertTriangle className="h-3 w-3 shrink-0 text-amber-600" />
+                      Low DPI
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1">
+                      <CheckCircle2 className="h-3 w-3 shrink-0 text-emerald-600" />
+                      Standard
+                    </span>
+                  )}
+                </span>
               </div>
               <div className={`p-2.5 rounded-lg border flex flex-col items-center text-center ${quality.has_skewed_pages ? "bg-amber-50 border-amber-200 text-amber-900" : "bg-slate-50 border-slate-200 text-slate-700"}`}>
                 <span className="font-semibold">Skew / Tilt</span>
-                <span className="text-[11px] mt-1 font-bold">{quality.has_skewed_pages ? "⚠️ Tilted" : "✓ Upright"}</span>
+                <span className="text-[11px] mt-1 font-bold">
+                  {quality.has_skewed_pages ? (
+                    <span className="inline-flex items-center gap-1">
+                      <AlertTriangle className="h-3 w-3 shrink-0 text-amber-600" />
+                      Tilted
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1">
+                      <CheckCircle2 className="h-3 w-3 shrink-0 text-emerald-600" />
+                      Upright
+                    </span>
+                  )}
+                </span>
               </div>
             </div>
           </div>
