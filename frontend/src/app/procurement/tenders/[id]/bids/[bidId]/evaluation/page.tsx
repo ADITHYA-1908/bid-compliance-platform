@@ -60,6 +60,18 @@ import {
   Building2,
   ExternalLink,
 } from "lucide-react";
+import {
+  BidComplianceSummaryResponse,
+  ComplianceResultItem,
+  ComplianceStatus,
+} from "@/types/compliance";
+import {
+  getProcurementBidCompliance,
+  evaluateProcurementBidCompliance,
+} from "@/lib/api/compliance";
+import { EvidenceDetails } from "@/components/common/EvidenceDetails";
+import { EvidenceViewerModal } from "@/components/common/EvidenceViewerModal";
+import { ConfidenceBadge } from "@/components/common/ConfidenceBadge";
 
 export default function BidDetailEvaluationPage() {
   const params = useParams();
@@ -109,13 +121,55 @@ export default function BidDetailEvaluationPage() {
     }
   };
 
+  // Step 3 Compliance Matrix & Evidence State
+  const [complianceData, setComplianceData] = useState<BidComplianceSummaryResponse | null>(null);
+  const [loadingCompliance, setLoadingCompliance] = useState<boolean>(false);
+  const [evaluatingCompliance, setEvaluatingCompliance] = useState<boolean>(false);
+  const [complianceSearch, setComplianceSearch] = useState<string>("");
+  const [complianceCategoryFilter, setComplianceCategoryFilter] = useState<string>("ALL");
+  const [complianceStatusFilter, setComplianceStatusFilter] = useState<string>("ALL");
+  const [selectedRuleForEvidence, setSelectedRuleForEvidence] = useState<ComplianceResultItem | null>(null);
+  const [isEvidenceViewerOpen, setIsEvidenceViewerOpen] = useState<boolean>(false);
+  const [explainWhyRule, setExplainWhyRule] = useState<ComplianceResultItem | null>(null);
+
+  const loadCompliance = async () => {
+    if (!bidId) return;
+    setLoadingCompliance(true);
+    try {
+      const comp = await getProcurementBidCompliance(bidId);
+      setComplianceData(comp);
+    } catch (err: any) {
+      console.warn("Failed to load compliance matrix:", err);
+    } finally {
+      setLoadingCompliance(false);
+    }
+  };
+
+  const handleReevaluateCompliance = async () => {
+    if (!bidId) return;
+    setEvaluatingCompliance(true);
+    try {
+      const comp = await evaluateProcurementBidCompliance(bidId);
+      setComplianceData(comp);
+      await loadEvaluation();
+    } catch (err: any) {
+      console.error("Failed to re-evaluate compliance:", err);
+    } finally {
+      setEvaluatingCompliance(false);
+    }
+  };
+
   const loadEvaluation = async () => {
     if (!bidId) return;
     setLoading(true);
     setError(null);
     try {
-      const data = await getProcurementBidEvaluationSummary(bidId);
+      const [data, comp] = await Promise.all([
+        getProcurementBidEvaluationSummary(bidId),
+        getProcurementBidCompliance(bidId).catch(() => null),
+      ]);
       setEvaluation(data);
+      if (comp) setComplianceData(comp);
       if (tenderId) {
         loadDecision();
       }
@@ -675,41 +729,373 @@ export default function BidDetailEvaluationPage() {
               </div>
             )}
 
-            {/* TAB 3: Rule-Level Compliance */}
+            {/* TAB 3: Rule-Level Compliance Breakdown */}
             {activeTab === "compliance" && (
-              <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-xs space-y-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-purple-900" />
-                    Tender Requirement Compliance Matrix
-                  </h3>
-                  <span className="text-xs text-slate-500">
-                    Version: <span className="font-mono font-semibold text-slate-700">v{evaluation.compliance.evaluation_version}</span>
-                  </span>
+              <div className="space-y-6">
+                {/* Header & Controls */}
+                <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-xs space-y-5">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                      <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                        <CheckCircle2 className="h-4 w-4 text-purple-900" />
+                        Tender Requirement Compliance Matrix
+                      </h3>
+                      <p className="text-xs text-slate-500 mt-0.5">
+                        Deterministic clause-by-clause audit evaluation backed by verified document evidence.
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-xs text-slate-500 bg-slate-100 px-2.5 py-1 rounded border border-slate-200">
+                        Version: <span className="font-bold text-slate-800">v{complianceData?.evaluation_version ?? evaluation.compliance.evaluation_version}</span>
+                      </span>
+
+                      <button
+                        type="button"
+                        onClick={handleReevaluateCompliance}
+                        disabled={evaluatingCompliance}
+                        className="inline-flex items-center gap-1.5 rounded-lg bg-purple-900 hover:bg-purple-800 px-3 py-1.5 text-xs font-bold text-white transition-colors shadow-xs disabled:opacity-50 cursor-pointer"
+                      >
+                        <RefreshCw className={`h-3.5 w-3.5 ${evaluatingCompliance ? "animate-spin" : ""}`} />
+                        <span>{evaluatingCompliance ? "Re-evaluating..." : "Re-evaluate Rules"}</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Summary Metric Counters */}
+                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 text-center text-xs">
+                    <div className="rounded-lg bg-emerald-50 p-3 border border-emerald-200">
+                      <p className="text-[10px] font-bold text-emerald-800 uppercase">PASS</p>
+                      <p className="text-xl font-bold font-mono text-emerald-900 mt-1">
+                        {complianceData?.counts?.passed ?? evaluation.compliance.pass_count}
+                      </p>
+                    </div>
+                    <div className="rounded-lg bg-rose-50 p-3 border border-rose-200">
+                      <p className="text-[10px] font-bold text-rose-800 uppercase">FAIL</p>
+                      <p className="text-xl font-bold font-mono text-rose-900 mt-1">
+                        {complianceData?.counts?.failed ?? evaluation.compliance.fail_count}
+                      </p>
+                    </div>
+                    <div className="rounded-lg bg-amber-50 p-3 border border-amber-200">
+                      <p className="text-[10px] font-bold text-amber-800 uppercase">REVIEW</p>
+                      <p className="text-xl font-bold font-mono text-amber-900 mt-1">
+                        {complianceData?.counts?.review ?? evaluation.compliance.review_count}
+                      </p>
+                    </div>
+                    <div className="rounded-lg bg-indigo-50 p-3 border border-indigo-200">
+                      <p className="text-[10px] font-bold text-indigo-800 uppercase">PENDING</p>
+                      <p className="text-xl font-bold font-mono text-indigo-900 mt-1">
+                        {complianceData?.counts?.pending ?? evaluation.compliance.pending_count}
+                      </p>
+                    </div>
+                    <div className="rounded-lg bg-slate-50 p-3 border border-slate-200 col-span-2 sm:col-span-1">
+                      <p className="text-[10px] font-bold text-slate-600 uppercase">N / A</p>
+                      <p className="text-xl font-bold font-mono text-slate-700 mt-1">
+                        {complianceData?.counts?.not_applicable ?? evaluation.compliance.not_applicable_count}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Mandatory & Critical Warnings */}
+                  {((complianceData?.counts?.mandatory_failures ?? 0) > 0 || (complianceData?.counts?.critical_failures ?? 0) > 0) && (
+                    <div className="rounded-lg bg-rose-50 border border-rose-200 p-3 text-xs text-rose-900 flex items-center gap-3">
+                      <ShieldAlert className="h-5 w-5 text-rose-600 shrink-0" />
+                      <div>
+                        <span className="font-bold">Rule Defect Warning: </span>
+                        <span>
+                          {complianceData?.counts?.mandatory_failures ?? 0} mandatory requirement failure(s) and {complianceData?.counts?.critical_failures ?? 0} critical failure(s) detected.
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Filter Toolbar */}
+                  <div className="pt-2 border-t border-slate-100 flex flex-col md:flex-row gap-3 items-start md:items-center justify-between">
+                    {/* Search */}
+                    <div className="relative w-full md:w-72">
+                      <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+                      <input
+                        type="text"
+                        value={complianceSearch}
+                        onChange={(e) => setComplianceSearch(e.target.value)}
+                        placeholder="Search rules, codes, evidence..."
+                        className="w-full h-9 rounded-lg border border-slate-300 pl-9 pr-3 text-xs focus:border-purple-600 focus:outline-hidden focus:ring-1 focus:ring-purple-600"
+                      />
+                    </div>
+
+                    {/* Filter Pills */}
+                    <div className="flex flex-wrap items-center gap-2 text-xs">
+                      {/* Status filter */}
+                      <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg">
+                        {["ALL", "PASS", "FAIL", "REVIEW", "PENDING"].map((st) => (
+                          <button
+                            key={st}
+                            type="button"
+                            onClick={() => setComplianceStatusFilter(st)}
+                            className={`px-2 py-1 rounded text-[11px] font-bold transition-colors cursor-pointer ${
+                              complianceStatusFilter === st
+                                ? "bg-white text-slate-900 shadow-2xs"
+                                : "text-slate-600 hover:text-slate-900"
+                            }`}
+                          >
+                            {st}
+                          </button>
+                        ))}
+                      </div>
+
+                      {/* Category filter */}
+                      {complianceData?.results && (
+                        <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg">
+                          {["ALL", ...Array.from(new Set(complianceData.results.map((r) => r.category).filter(Boolean)))].map(
+                            (cat) => (
+                              <button
+                                key={cat}
+                                type="button"
+                                onClick={() => setComplianceCategoryFilter(cat)}
+                                className={`px-2 py-1 rounded text-[11px] font-bold transition-colors cursor-pointer ${
+                                  complianceCategoryFilter === cat
+                                    ? "bg-white text-slate-900 shadow-2xs"
+                                    : "text-slate-600 hover:text-slate-900"
+                                }`}
+                              >
+                                {cat}
+                              </button>
+                            )
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
 
-                <div className="grid grid-cols-5 gap-3 text-center text-xs">
-                  <div className="rounded-lg bg-emerald-50 p-3 border border-emerald-200">
-                    <p className="text-[10px] font-bold text-emerald-800 uppercase">PASS</p>
-                    <p className="text-xl font-bold font-mono text-emerald-900 mt-1">{evaluation.compliance.pass_count}</p>
+                {/* Itemized Compliance Rules Breakdown */}
+                {loadingCompliance ? (
+                  <div className="rounded-xl border border-slate-200 bg-white p-12 text-center text-slate-500">
+                    <RefreshCw className="h-6 w-6 animate-spin mx-auto text-purple-600 mb-2" />
+                    <p className="text-xs font-medium">Loading itemized compliance results...</p>
                   </div>
-                  <div className="rounded-lg bg-rose-50 p-3 border border-rose-200">
-                    <p className="text-[10px] font-bold text-rose-800 uppercase">FAIL</p>
-                    <p className="text-xl font-bold font-mono text-rose-900 mt-1">{evaluation.compliance.fail_count}</p>
+                ) : !complianceData?.results || complianceData.results.length === 0 ? (
+                  <div className="rounded-xl border border-slate-200 bg-white p-12 text-center text-slate-500">
+                    <CheckCircle2 className="h-8 w-8 mx-auto text-slate-300 mb-2" />
+                    <p className="text-sm font-semibold text-slate-700">No Evaluated Rules Available</p>
+                    <p className="text-xs text-slate-500 mt-1">
+                      Click &ldquo;Re-evaluate Rules&rdquo; above to run the compliance evaluation engine.
+                    </p>
                   </div>
-                  <div className="rounded-lg bg-amber-50 p-3 border border-amber-200">
-                    <p className="text-[10px] font-bold text-amber-800 uppercase">REVIEW</p>
-                    <p className="text-xl font-bold font-mono text-amber-900 mt-1">{evaluation.compliance.review_count}</p>
+                ) : (
+                  <div className="space-y-3">
+                    {complianceData.results
+                      .filter((r) => {
+                        if (complianceStatusFilter !== "ALL" && r.compliance_status !== complianceStatusFilter) {
+                          return false;
+                        }
+                        if (complianceCategoryFilter !== "ALL" && r.category !== complianceCategoryFilter) {
+                          return false;
+                        }
+                        if (complianceSearch.trim()) {
+                          const q = complianceSearch.toLowerCase();
+                          const matchCode = r.requirement_code?.toLowerCase().includes(q);
+                          const matchName = r.requirement_name?.toLowerCase().includes(q);
+                          const matchReason = r.reason?.toLowerCase().includes(q);
+                          const matchDoc = r.document_name?.toLowerCase().includes(q);
+                          const matchSnippet = r.evidence_snippet?.toLowerCase().includes(q);
+                          if (!matchCode && !matchName && !matchReason && !matchDoc && !matchSnippet) {
+                            return false;
+                          }
+                        }
+                        return true;
+                      })
+                      .map((rule) => {
+                        const status = rule.compliance_status;
+                        const isPass = status === "PASS";
+                        const isFail = status === "FAIL";
+                        const isReview = status === "REVIEW";
+
+                        const docName =
+                          rule.document_name ||
+                          (rule.evidence && (rule.evidence.document_name || rule.evidence.doc_name || rule.evidence.filename)) ||
+                          (rule.document_id ? "Attached Document" : null);
+
+                        const pageNum =
+                          rule.page_number ??
+                          (rule.evidence && (rule.evidence.page_number || rule.evidence.page)) ??
+                          null;
+
+                        const snippet =
+                          rule.evidence_snippet ||
+                          (rule.evidence && (rule.evidence.evidence_snippet || rule.evidence.snippet || rule.evidence.matched_text)) ||
+                          null;
+
+                        return (
+                          <div
+                            key={rule.id || rule.tender_requirement_id}
+                            className={`rounded-xl border bg-white p-5 shadow-xs transition-colors hover:shadow-sm ${
+                              isFail
+                                ? "border-rose-200 bg-rose-50/20"
+                                : isReview
+                                ? "border-amber-200 bg-amber-50/20"
+                                : isPass
+                                ? "border-slate-200 hover:border-slate-300"
+                                : "border-slate-200"
+                            }`}
+                          >
+                            {/* Top Row: Code, Name, Status */}
+                            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                              <div className="min-w-0 flex-1">
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <span className="font-mono text-xs font-bold text-slate-900 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
+                                    {rule.requirement_code}
+                                  </span>
+                                  {rule.category && (
+                                    <span className="rounded bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-700">
+                                      {rule.category}
+                                    </span>
+                                  )}
+                                  {rule.is_mandatory && (
+                                    <span className="rounded bg-rose-100 text-rose-800 px-2 py-0.5 text-[10px] font-bold">
+                                      Mandatory
+                                    </span>
+                                  )}
+                                  {rule.is_critical && (
+                                    <span className="rounded bg-amber-100 text-amber-900 px-2 py-0.5 text-[10px] font-bold">
+                                      Critical
+                                    </span>
+                                  )}
+                                </div>
+                                <h4 className="text-sm font-bold text-slate-900 mt-1.5">
+                                  {rule.requirement_name}
+                                </h4>
+                              </div>
+
+                              <div className="flex items-center gap-2 self-start">
+                                {isPass && (
+                                  <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-200 px-3 py-1 text-xs font-bold text-emerald-800">
+                                    <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                                    PASS
+                                  </span>
+                                )}
+                                {isFail && (
+                                  <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-50 border border-rose-200 px-3 py-1 text-xs font-bold text-rose-800">
+                                    <XCircle className="h-4 w-4 text-rose-600" />
+                                    FAIL
+                                  </span>
+                                )}
+                                {isReview && (
+                                  <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 border border-amber-200 px-3 py-1 text-xs font-bold text-amber-800">
+                                    <AlertTriangle className="h-4 w-4 text-amber-600" />
+                                    REVIEW
+                                  </span>
+                                )}
+                                {!isPass && !isFail && !isReview && (
+                                  <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 border border-slate-200 px-3 py-1 text-xs font-medium text-slate-600">
+                                    <MinusCircle className="h-4 w-4 text-slate-400" />
+                                    {status}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Comparison & Reason Grid */}
+                            <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
+                              {/* Expected Criteria */}
+                              <div className="rounded-lg bg-slate-50 p-3 border border-slate-200 text-xs">
+                                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
+                                  Expected Criteria
+                                </span>
+                                <div className="mt-1 flex items-baseline gap-1.5 font-mono">
+                                  {rule.operator && (
+                                    <span className="rounded bg-slate-200 px-1 py-0.2 text-[11px] font-semibold text-slate-700">
+                                      {rule.operator}
+                                    </span>
+                                  )}
+                                  <span className="font-bold text-slate-900">
+                                    {rule.expected_value !== null && rule.expected_value !== undefined
+                                      ? String(rule.expected_value)
+                                      : "—"}
+                                  </span>
+                                </div>
+                              </div>
+
+                              {/* Verified Actual Value */}
+                              <div className="rounded-lg bg-slate-50 p-3 border border-slate-200 text-xs">
+                                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
+                                  Verified Actual Value
+                                </span>
+                                <div className="mt-1 font-mono font-bold text-slate-900">
+                                  {rule.actual_value !== null && rule.actual_value !== undefined
+                                    ? String(rule.actual_value)
+                                    : "Not Found / Missing"}
+                                </div>
+                              </div>
+
+                              {/* Document & Confidence Source */}
+                              <div className="rounded-lg bg-slate-50 p-3 border border-slate-200 text-xs flex flex-col justify-between">
+                                <div>
+                                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
+                                    Evidence Source
+                                  </span>
+                                  <div className="mt-1 flex items-center gap-1.5 text-slate-700 truncate">
+                                    <FileText className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                                    <span className="truncate font-medium text-slate-800">
+                                      {docName || "Document Attached"}
+                                    </span>
+                                    {pageNum && (
+                                      <span className="rounded bg-slate-200 px-1.5 py-0.2 font-mono text-[10px] font-bold text-slate-700">
+                                        p.{pageNum}
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                                {rule.confidence !== null && rule.confidence !== undefined && (
+                                  <div className="mt-2 self-start">
+                                    <ConfidenceBadge score={rule.confidence} />
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Deterministic Reason / Snippet */}
+                            {rule.reason && (
+                              <div className="mt-3 rounded-lg bg-slate-50/70 border border-slate-200 p-3 text-xs text-slate-700">
+                                <span className="font-semibold text-slate-900">Reason: </span>
+                                <span>{rule.reason}</span>
+                              </div>
+                            )}
+
+                            {snippet && (
+                              <div className="mt-2 rounded-lg border-l-3 border-blue-500 bg-blue-50/30 p-2.5 text-[11px] font-mono italic text-slate-700">
+                                &ldquo;{snippet}&rdquo;
+                              </div>
+                            )}
+
+                            {/* Action Buttons */}
+                            <div className="mt-4 flex flex-wrap items-center justify-end gap-2 pt-3 border-t border-slate-100">
+                              <button
+                                type="button"
+                                onClick={() => setExplainWhyRule(rule)}
+                                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-700 transition-colors cursor-pointer"
+                              >
+                                <Sparkles className="h-3.5 w-3.5 text-purple-700" />
+                                <span>Explain Why</span>
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setSelectedRuleForEvidence(rule);
+                                  setIsEvidenceViewerOpen(true);
+                                }}
+                                className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 px-3.5 py-1.5 text-xs font-bold text-white shadow-xs transition-colors cursor-pointer"
+                              >
+                                <Eye className="h-3.5 w-3.5" />
+                                <span>View Evidence {pageNum ? `(p.${pageNum})` : ""}</span>
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
                   </div>
-                  <div className="rounded-lg bg-indigo-50 p-3 border border-indigo-200">
-                    <p className="text-[10px] font-bold text-indigo-800 uppercase">PENDING</p>
-                    <p className="text-xl font-bold font-mono text-indigo-900 mt-1">{evaluation.compliance.pending_count}</p>
-                  </div>
-                  <div className="rounded-lg bg-slate-50 p-3 border border-slate-200">
-                    <p className="text-[10px] font-bold text-slate-600 uppercase">N / A</p>
-                    <p className="text-xl font-bold font-mono text-slate-700 mt-1">{evaluation.compliance.not_applicable_count}</p>
-                  </div>
-                </div>
+                )}
               </div>
             )}
 
@@ -1278,6 +1664,85 @@ export default function BidDetailEvaluationPage() {
             </div>
           </>
         ) : null}
+
+        {/* Explain Why Modal Dialog */}
+        {explainWhyRule && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4">
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+              <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between sticky top-0 bg-white z-10">
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-purple-800" />
+                    Explain Why &amp; Determination Analysis
+                  </h3>
+                  <p className="text-xs font-mono text-slate-500 mt-0.5">
+                    Requirement: {explainWhyRule.requirement_code}
+                  </p>
+                </div>
+                <button
+                  onClick={() => setExplainWhyRule(null)}
+                  className="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="p-6">
+                <EvidenceDetails
+                  rule={explainWhyRule}
+                  onViewDocument={() => {
+                    const r = explainWhyRule;
+                    setExplainWhyRule(null);
+                    setSelectedRuleForEvidence(r);
+                    setIsEvidenceViewerOpen(true);
+                  }}
+                  showFullHeader={true}
+                />
+              </div>
+
+              <div className="px-6 py-4 border-t border-slate-200 bg-slate-50 flex items-center justify-between">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const r = explainWhyRule;
+                    setExplainWhyRule(null);
+                    setSelectedRuleForEvidence(r);
+                    setIsEvidenceViewerOpen(true);
+                  }}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors cursor-pointer"
+                >
+                  <Eye className="w-4 h-4" />
+                  <span>Open in Evidence Viewer</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setExplainWhyRule(null)}
+                  className="px-4 py-2 text-xs font-bold rounded-lg bg-slate-200 text-slate-700 hover:bg-slate-300 transition-colors cursor-pointer"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Interactive In-App PDF Evidence Viewer Modal */}
+        {bidId && (
+          <EvidenceViewerModal
+            isOpen={isEvidenceViewerOpen}
+            onClose={() => {
+              setIsEvidenceViewerOpen(false);
+              setSelectedRuleForEvidence(null);
+            }}
+            bidId={bidId}
+            documentId={selectedRuleForEvidence?.document_id}
+            initialPage={selectedRuleForEvidence?.page_number}
+            documentName={selectedRuleForEvidence?.document_name}
+            rule={selectedRuleForEvidence}
+            isProcurement={true}
+          />
+        )}
       </div>
     </DashboardLayout>
   );

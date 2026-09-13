@@ -1,11 +1,12 @@
 import uuid
 from datetime import datetime
 from typing import Any, Dict, List, Optional
-from fastapi import APIRouter, BackgroundTasks, Depends, Query, status
+from fastapi import APIRouter, BackgroundTasks, Depends, Query, Response, status
 from sqlalchemy.orm import Session
-from app.core.authorization import require_role
+from app.core.authorization import require_role, require_any_role
 from app.db.session import get_db
 from app.db.models.user import User
+from app.schemas.bid_document import BidDocumentDownloadResponse
 from app.schemas.compliance import BidComplianceSummaryResponse
 from app.schemas.scoring import BidScoringFoundationResponse
 from app.schemas.risk import BidRiskAssessmentResponse
@@ -60,6 +61,10 @@ from app.schemas.duplicate_detection import (
     DuplicateReviewResponse,
 )
 from app.schemas.document_quality import DocumentQualityResponse
+from app.schemas.document_processing import (
+    DocumentExtractedTextResponse,
+    DocumentProcessingResponse,
+)
 from app.services.compliance_service import evaluate_bid_compliance, get_bid_compliance
 from app.services.scoring_service import calculate_and_save_bid_score, get_bid_score
 from app.services.risk_service import calculate_and_save_bid_risk, get_bid_risk
@@ -72,8 +77,13 @@ from app.services.procurement.bid_decision_service import BidDecisionService
 from app.services.procurement.bulk_evaluation_service import BulkEvaluationService
 from app.services.procurement.duplicate_detection_service import DuplicateDetectionService
 from app.services.document_quality_service import DocumentQualityService
+from app.services.document_processing_service import (
+    get_procurement_document_processing,
+    get_procurement_document_extracted_text,
+)
 from app.services.audit.audit_service import AuditService
 from app.services.reports.procurement_report_service import ProcurementReportService
+from app.services.bid_document_service import generate_procurement_download_access
 from fastapi.responses import Response
 
 router = APIRouter()
@@ -1387,6 +1397,140 @@ def read_procurement_document_quality(
         bid_id=bid_id,
         document_id=document_id,
     )
+
+
+# =============================================================================
+# Document Streaming & Signed Access Endpoints (Step 3: Evidence Viewer)
+# =============================================================================
+
+@router.get(
+    "/bids/{bid_id}/documents/{document_id}/download",
+    summary="Securely stream document binary for Procurement Officer or Admin",
+)
+def download_procurement_document_binary(
+    bid_id: uuid.UUID,
+    document_id: uuid.UUID,
+    current_user: User = Depends(require_any_role("PROCUREMENT_OFFICER", "ADMIN")),
+    db: Session = Depends(get_db),
+):
+    """
+    Protected binary streaming endpoint for Procurement Officers and Admins to inspect document evidence.
+    Streams directly with correct MIME type and content-disposition header.
+    """
+    doc, signed_url, content_bytes = generate_procurement_download_access(
+        db=db,
+        current_user=current_user,
+        bid_id=bid_id,
+        document_id=document_id,
+    )
+
+    headers = {
+        "Content-Disposition": f'inline; filename="{doc.original_filename}"',
+    }
+    return Response(
+        content=content_bytes,
+        media_type=doc.mime_type,
+        headers=headers,
+    )
+
+
+@router.get(
+    "/bids/{bid_id}/documents/{document_id}/download-url",
+    response_model=BidDocumentDownloadResponse,
+    summary="Get short-lived signed download URL for document (Procurement Officer)",
+)
+def get_procurement_document_download_url(
+    bid_id: uuid.UUID,
+    document_id: uuid.UUID,
+    current_user: User = Depends(require_any_role("PROCUREMENT_OFFICER", "ADMIN")),
+    db: Session = Depends(get_db),
+):
+    """
+    Protected endpoint returning signed download URL metadata for direct client PDF rendering.
+    """
+    doc, signed_url, _ = generate_procurement_download_access(
+        db=db,
+        current_user=current_user,
+        bid_id=bid_id,
+        document_id=document_id,
+    )
+    return BidDocumentDownloadResponse(
+        document_id=doc.id,
+        filename=doc.original_filename,
+        mime_type=doc.mime_type,
+        download_url=signed_url,
+        expires_in_seconds=300,
+    )
+
+
+@router.get(
+    "/tenders/{tender_id}/bids/{bid_id}/documents/{document_id}/download",
+    summary="Securely stream document binary for Procurement Officer or Admin (Tender-scoped)",
+)
+def download_tender_procurement_document_binary(
+    tender_id: uuid.UUID,
+    bid_id: uuid.UUID,
+    document_id: uuid.UUID,
+    current_user: User = Depends(require_any_role("PROCUREMENT_OFFICER", "ADMIN")),
+    db: Session = Depends(get_db),
+):
+    """Alias for download_procurement_document_binary scoped with tender_id."""
+    return download_procurement_document_binary(
+        bid_id=bid_id,
+        document_id=document_id,
+        current_user=current_user,
+        db=db,
+    )
+
+
+@router.get(
+    "/bids/{bid_id}/documents/{document_id}/processing",
+    response_model=DocumentProcessingResponse,
+    summary="Get document processing telemetry and extraction status (Procurement Officer)",
+)
+def read_procurement_document_processing_status(
+    bid_id: uuid.UUID,
+    document_id: uuid.UUID,
+    current_user: User = Depends(require_any_role("PROCUREMENT_OFFICER", "ADMIN")),
+    db: Session = Depends(get_db),
+):
+    """
+    Protected endpoint for Procurement Officers and Admins to inspect document processing telemetry.
+    """
+    return get_procurement_document_processing(
+        db=db,
+        current_user=current_user,
+        bid_id=bid_id,
+        document_id=document_id,
+    )
+
+
+@router.get(
+    "/bids/{bid_id}/documents/{document_id}/extracted-text",
+    response_model=DocumentExtractedTextResponse,
+    summary="Get extracted text and quality telemetry for document (Procurement Officer)",
+)
+@router.get(
+    "/bids/{bid_id}/documents/{document_id}/text",
+    response_model=DocumentExtractedTextResponse,
+    summary="Get extracted text and quality telemetry for document (Procurement Officer alias)",
+)
+def read_procurement_document_extracted_text(
+    bid_id: uuid.UUID,
+    document_id: uuid.UUID,
+    current_user: User = Depends(require_any_role("PROCUREMENT_OFFICER", "ADMIN")),
+    db: Session = Depends(get_db),
+):
+    """
+    Protected endpoint for Procurement Officers and Admins to inspect extracted text and page provenance.
+    """
+    return get_procurement_document_extracted_text(
+        db=db,
+        current_user=current_user,
+        bid_id=bid_id,
+        document_id=document_id,
+    )
+
 
 
 

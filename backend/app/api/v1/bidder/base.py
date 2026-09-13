@@ -716,6 +716,11 @@ def retry_failed_document_processing(
     response_model=DocumentExtractedTextResponse,
     summary="Get extracted text and quality telemetry for document",
 )
+@router.get(
+    "/bids/{bid_id}/documents/{document_id}/text",
+    response_model=DocumentExtractedTextResponse,
+    summary="Get extracted text and quality telemetry for document (alias)",
+)
 def read_document_extracted_text(
     bid_id: uuid.UUID,
     document_id: uuid.UUID,

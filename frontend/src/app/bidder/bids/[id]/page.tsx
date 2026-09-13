@@ -148,6 +148,7 @@ export default function BidWorkspacePage() {
   const [extractedTextData, setExtractedTextData] = useState<DocumentExtractedTextResponse | null>(null);
   const [loadingExtractedText, setLoadingExtractedText] = useState<boolean>(false);
   const [copiedText, setCopiedText] = useState<boolean>(false);
+  const [extractedTextPageTab, setExtractedTextPageTab] = useState<number | "ALL">("ALL");
 
   // Part 11: Document Quality Diagnostic States
   const [qualityModalDoc, setQualityModalDoc] = useState<BidDocument | null>(null);
@@ -574,6 +575,7 @@ export default function BidWorkspacePage() {
     setLoadingExtractedText(true);
     setExtractedTextData(null);
     setCopiedText(false);
+    setExtractedTextPageTab("ALL");
     try {
       const data = await api.getDocumentExtractedText(bidId, doc.id);
       setExtractedTextData(data);
@@ -2885,37 +2887,108 @@ export default function BidWorkspacePage() {
                   )}
                 </div>
 
-                {/* Text Content Area */}
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <label className="text-xs font-bold text-slate-700">
-                      Normalized Machine-Readable Text
-                    </label>
-                    <button
-                      type="button"
-                      onClick={handleCopyExtractedText}
-                      className="inline-flex items-center gap-1 text-[11px] font-bold text-blue-700 hover:text-blue-800"
-                    >
-                      {copiedText ? (
-                        <>
-                          <Check className="h-3 w-3 text-emerald-600" />
-                          <span className="text-emerald-700">Copied!</span>
-                        </>
-                      ) : (
-                        <>
-                          <Copy className="h-3 w-3" />
-                          Copy Text
-                        </>
-                      )}
-                    </button>
-                  </div>
+                {/* Text Content Area: Page-by-Page Traceable Viewer */}
+                {(() => {
+                  const fullText = extractedTextData.normalized_text || extractedTextData.raw_text || "";
+                  const hasPageHeaders = /\[PAGE\s+(\d+)\]/i.test(fullText);
 
-                  <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 font-mono text-xs text-slate-800 max-h-72 overflow-y-auto whitespace-pre-wrap leading-relaxed select-text">
-                    {extractedTextData.normalized_text || extractedTextData.raw_text || (
-                      <span className="text-slate-400 italic">No text extracted.</span>
-                    )}
-                  </div>
-                </div>
+                  const pageList: { pageNum: number; content: string }[] = [];
+                  if (hasPageHeaders) {
+                    const rawChunks = fullText.split(/\[PAGE\s+(\d+)\]/i);
+                    for (let i = 1; i < rawChunks.length; i += 2) {
+                      const pNum = parseInt(rawChunks[i], 10) || (pageList.length + 1);
+                      const text = (rawChunks[i + 1] || "").trim();
+                      pageList.push({ pageNum: pNum, content: text });
+                    }
+                  }
+
+                  const displayedPages = extractedTextPageTab === "ALL"
+                    ? (pageList.length > 0 ? pageList : [{ pageNum: 1, content: fullText }])
+                    : pageList.filter((p) => p.pageNum === extractedTextPageTab);
+
+                  return (
+                    <div className="space-y-2">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <label className="text-xs font-bold text-slate-700">
+                          Normalized Machine-Readable Text
+                        </label>
+
+                        {pageList.length > 1 && (
+                          <div className="flex items-center gap-1 bg-slate-100 p-0.5 rounded-lg border border-slate-200">
+                            <button
+                              type="button"
+                              onClick={() => setExtractedTextPageTab("ALL")}
+                              className={`px-2 py-0.5 text-[10px] font-bold rounded cursor-pointer transition-colors ${
+                                extractedTextPageTab === "ALL"
+                                  ? "bg-white text-blue-700 shadow-2xs"
+                                  : "text-slate-600 hover:text-slate-900"
+                              }`}
+                            >
+                              All ({pageList.length} Pages)
+                            </button>
+                            {pageList.map((p) => (
+                              <button
+                                key={p.pageNum}
+                                type="button"
+                                onClick={() => setExtractedTextPageTab(p.pageNum)}
+                                className={`px-2 py-0.5 text-[10px] font-bold rounded cursor-pointer transition-colors ${
+                                  extractedTextPageTab === p.pageNum
+                                    ? "bg-white text-blue-700 shadow-2xs"
+                                    : "text-slate-600 hover:text-slate-900"
+                                }`}
+                              >
+                                Page {p.pageNum}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+
+                        <button
+                          type="button"
+                          onClick={handleCopyExtractedText}
+                          className="inline-flex items-center gap-1 text-[11px] font-bold text-blue-700 hover:text-blue-800 cursor-pointer"
+                        >
+                          {copiedText ? (
+                            <>
+                              <Check className="h-3 w-3 text-emerald-600" />
+                              <span className="text-emerald-700">Copied!</span>
+                            </>
+                          ) : (
+                            <>
+                              <Copy className="h-3 w-3" />
+                              Copy Text
+                            </>
+                          )}
+                        </button>
+                      </div>
+
+                      <div className="space-y-2.5 max-h-72 overflow-y-auto pr-1">
+                        {displayedPages.length > 0 && displayedPages[0].content ? (
+                          displayedPages.map((pg) => (
+                            <div
+                              key={pg.pageNum}
+                              className="rounded-lg border border-slate-200 bg-slate-50 p-3 space-y-1.5 shadow-2xs"
+                            >
+                              {pageList.length > 1 && (
+                                <div className="flex items-center justify-between border-b border-slate-200/80 pb-1 text-[10px] text-slate-500 font-bold uppercase tracking-wider">
+                                  <span>Page {pg.pageNum}</span>
+                                  <span>{pg.content.length} characters</span>
+                                </div>
+                              )}
+                              <div className="font-mono text-xs text-slate-800 whitespace-pre-wrap leading-relaxed select-text">
+                                {pg.content}
+                              </div>
+                            </div>
+                          ))
+                        ) : (
+                          <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 font-mono text-xs text-slate-400 italic">
+                            No text extracted.
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
             ) : (
               <div className="py-8 text-center text-xs text-slate-500">

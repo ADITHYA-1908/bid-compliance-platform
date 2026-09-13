@@ -5,10 +5,20 @@ traceable page-by-page mapping, text quality metrics, and OCR requirement detect
 """
 
 import re
+import uuid
+import hashlib
 import logging
+from datetime import datetime, timezone
 from typing import Dict, List, Optional, Tuple
 from dataclasses import dataclass, field
 import fitz  # PyMuPDF
+
+from app.db.models.document_processing import (
+    DocumentProcessing,
+    ExtractionMethod,
+    ProcessingStage,
+    ProcessingStatus,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +37,7 @@ class PDFExtractionError(Exception):
 
 @dataclass
 class PDFPageExtraction:
-    page_number: int
+    page_number: int  # 1-indexed
     raw_text: str
     normalized_text: str
     character_count: int
@@ -123,17 +133,19 @@ def analyze_text_quality(
     return is_digital, metrics
 
 
-def extract_text_from_pdf_bytes(
-    pdf_bytes: bytes,
+def extract_pdf_text(
+    file_bytes: bytes,
     filename: Optional[str] = None,
     min_text_chars: int = MIN_TEXT_CHARACTERS,
     min_chars_per_page: int = MIN_CHARACTERS_PER_PAGE,
 ) -> PDFExtractionResult:
     """
+    Primary Step 4B extraction engine.
     Extracts text page-by-page from raw PDF binary bytes using PyMuPDF (fitz).
     Handles corruption, encryption, page validation, normalization, and OCR requirement detection.
+    Page numbering is 1-indexed. Page boundaries are strictly preserved.
     """
-    if not pdf_bytes or len(pdf_bytes) == 0:
+    if not file_bytes or len(file_bytes) == 0:
         raise PDFExtractionError(
             error_code="EMPTY_FILE",
             error_message="The uploaded document binary is empty (0 bytes).",
@@ -141,7 +153,7 @@ def extract_text_from_pdf_bytes(
 
     # 1. Attempt to open document stream with PyMuPDF
     try:
-        doc = fitz.open(stream=pdf_bytes, filetype="pdf")
+        doc = fitz.open(stream=file_bytes, filetype="pdf")
     except Exception as e:
         logger.warning("PyMuPDF failed to open PDF stream for %s: %s", filename or "unnamed", e)
         raise PDFExtractionError(
@@ -165,7 +177,7 @@ def extract_text_from_pdf_bytes(
                 error_message="The PDF document contains 0 pages.",
             )
 
-        # 4. Extract text page-by-page
+        # 4. Extract text page-by-page (1-indexed)
         raw_pages_text: List[str] = []
         normalized_pages_text: List[str] = []
         page_extractions: List[PDFPageExtraction] = []
@@ -192,15 +204,15 @@ def extract_text_from_pdf_bytes(
                 )
             )
 
-            # Format traceable page boundaries
-            raw_pages_text.append(f"--- Page {page_num} ---\n{page_raw}")
+            # Format traceable page boundaries with [PAGE N] headers
+            raw_pages_text.append(f"[PAGE {page_num}]\n{page_raw}")
             if page_norm:
-                normalized_pages_text.append(f"--- Page {page_num} ---\n{page_norm}")
+                normalized_pages_text.append(f"[PAGE {page_num}]\n{page_norm}")
 
         combined_raw_text = "\n\n".join(raw_pages_text).strip()
         combined_norm_text = "\n\n".join(normalized_pages_text).strip()
 
-        # 5. Evaluate Text Quality & Determine OCR Requirement
+        # 5. Evaluate Text Quality & Determine Digital vs Scanned
         is_digital, quality_metrics = analyze_text_quality(
             raw_text=combined_raw_text,
             page_count=page_count,
@@ -214,7 +226,7 @@ def extract_text_from_pdf_bytes(
             normalized_text=combined_norm_text if is_digital else "",
             is_digital_pdf=is_digital,
             is_ocr_required=not is_digital,
-            extraction_method="DIGITAL_PDF" if is_digital else "NONE",
+            extraction_method=ExtractionMethod.DIGITAL_PDF if is_digital else ExtractionMethod.NONE,
             total_characters=quality_metrics["total_characters"],
             non_whitespace_characters=quality_metrics["non_whitespace_characters"],
             characters_per_page=quality_metrics["characters_per_page"],
@@ -224,3 +236,107 @@ def extract_text_from_pdf_bytes(
 
     finally:
         doc.close()
+
+
+# Alias for backward compatibility
+extract_text_from_pdf_bytes = extract_pdf_text
+
+
+def extract_pdf(
+    doc: any,
+    db: any,
+    file_bytes: Optional[bytes] = None,
+) -> DocumentProcessing:
+    """
+    High-level extraction function for an individual BidDocument.
+    Executes PyMuPDF digital extraction and updates linked DocumentProcessing record.
+    """
+    from app.services.storage_service import storage_service
+
+    proc = doc.processing
+    if not proc:
+        proc = DocumentProcessing(
+            id=uuid.uuid4(),
+            bid_document_id=doc.id,
+            processing_status=ProcessingStatus.QUEUED,
+            processing_stage=ProcessingStage.INGESTION,
+            extraction_method=ExtractionMethod.NONE,
+        )
+        db.add(proc)
+        db.commit()
+        db.refresh(proc)
+
+    # Set status to PROCESSING / TEXT_EXTRACTION
+    proc.processing_status = ProcessingStatus.PROCESSING
+    proc.processing_stage = ProcessingStage.TEXT_EXTRACTION
+    proc.processing_started_at = datetime.now(timezone.utc)
+    proc.error_code = None
+    proc.error_message = None
+    db.commit()
+
+    if file_bytes is None:
+        try:
+            file_bytes = storage_service.download_file(doc.storage_path)
+        except Exception as e:
+            logger.error("Failed to download file from storage for document %s: %s", doc.id, e)
+            proc.processing_status = ProcessingStatus.FAILED
+            proc.processing_stage = ProcessingStage.INGESTION
+            proc.error_code = "STORAGE_DOWNLOAD_FAILED"
+            proc.error_message = "Failed to retrieve document binary from storage."
+            proc.processing_completed_at = datetime.now(timezone.utc)
+            db.commit()
+            db.refresh(proc)
+            return proc
+
+    try:
+        extraction_res = extract_pdf_text(
+            file_bytes=file_bytes,
+            filename=doc.original_filename or doc.document_name,
+        )
+
+        proc.page_count = extraction_res.page_count
+        proc.raw_text = extraction_res.raw_text
+        proc.normalized_text = extraction_res.normalized_text
+        proc.processing_completed_at = datetime.now(timezone.utc)
+
+        if extraction_res.is_digital_pdf:
+            proc.extraction_method = ExtractionMethod.DIGITAL_PDF
+            proc.processing_status = ProcessingStatus.COMPLETED
+            proc.processing_stage = ProcessingStage.COMPLETED
+            proc.error_code = None
+            proc.error_message = None
+
+            if proc.normalized_text:
+                clean_norm = " ".join(proc.normalized_text.lower().split())
+                proc.normalized_content_hash = hashlib.sha256(clean_norm.encode("utf-8")).hexdigest()
+        else:
+            # Scanned / image-only PDF with insufficient digital text
+            proc.extraction_method = ExtractionMethod.NONE
+            proc.processing_status = ProcessingStatus.NEEDS_REVIEW
+            proc.processing_stage = ProcessingStage.TEXT_EXTRACTION
+            proc.error_code = "PDF_NO_EXTRACTABLE_TEXT"
+            proc.error_message = "This document contains little or no extractable digital text and may require OCR processing."
+
+        db.commit()
+        db.refresh(proc)
+        return proc
+
+    except PDFExtractionError as pe:
+        proc.processing_status = ProcessingStatus.FAILED
+        proc.processing_stage = ProcessingStage.TEXT_EXTRACTION
+        proc.error_code = pe.error_code
+        proc.error_message = pe.error_message
+        proc.processing_completed_at = datetime.now(timezone.utc)
+        db.commit()
+        db.refresh(proc)
+        return proc
+    except Exception as e:
+        logger.exception("Unexpected error during PDF extraction on document %s: %s", doc.id, e)
+        proc.processing_status = ProcessingStatus.FAILED
+        proc.processing_stage = ProcessingStage.TEXT_EXTRACTION
+        proc.error_code = "PDF_TEXT_EXTRACTION_FAILED"
+        proc.error_message = "An error occurred while extracting text from the PDF document."
+        proc.processing_completed_at = datetime.now(timezone.utc)
+        db.commit()
+        db.refresh(proc)
+        return proc

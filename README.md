@@ -227,16 +227,22 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 The platform includes comprehensive test suites verifying all backend modules and end-to-end workflows:
 
 ```bash
-# 1. Run Commercial Evaluation Test Suite (L1, QCBS, Ties, Safety Blockers)
+# 1. Run Part 4B: Digital PDF Text Extraction (PyMuPDF) Test Suite
+pytest backend/tests/test_step4b_pdf_extraction.py -v
+
+# 2. Run Step 3: Explain Why + Interactive Evidence Viewer Tests
+pytest backend/tests/test_step3_evidence_viewer.py -v
+
+# 3. Run Commercial Evaluation Test Suite (L1, QCBS, Ties, Safety Blockers)
 python backend/scripts/test_commercial_evaluation.py
 
-# 2. Run Organization Identity & Duplicate Detection Tests
+# 4. Run Organization Identity & Duplicate Detection Tests
 python backend/scripts/test_organization_identity.py
 
-# 3. Run Full End-to-End Procurement Lifecycle Regression (10/10 Steps)
+# 5. Run Full End-to-End Procurement Lifecycle Regression (10/10 Steps)
 python backend/scripts/test_bid_workflow.py
 
-# 4. Run Frontend Typecheck & Build Test
+# 6. Run Frontend Typecheck & Build Test
 cd frontend && npm run build
 ```
 

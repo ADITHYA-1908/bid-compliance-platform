@@ -616,6 +616,101 @@ def get_document_extracted_data(
     )
 
 
+def _get_document_for_procurement(
+    db: Session,
+    current_user: User,
+    bid_id: uuid.UUID,
+    document_id: uuid.UUID,
+) -> Tuple[Profile, Bid, BidDocument]:
+    """
+    Validates procurement officer/admin permissions and retrieves the document.
+    """
+    from app.services.bid_document_service import generate_procurement_download_access
+    doc, _, _ = generate_procurement_download_access(
+        db=db,
+        current_user=current_user,
+        bid_id=bid_id,
+        document_id=document_id,
+    )
+    profile = db.scalars(select(Profile).where(Profile.id == current_user.profile_id)).first()
+    bid = db.scalars(select(Bid).where(Bid.id == bid_id)).first()
+    return profile, bid, doc
+
+
+def get_procurement_document_processing(
+    db: Session,
+    current_user: User,
+    bid_id: uuid.UUID,
+    document_id: uuid.UUID,
+) -> DocumentProcessing:
+    """
+    Retrieves the DocumentProcessing telemetry for a specific BidDocument for Procurement Officer / Admin.
+    """
+    _, _, doc = _get_document_for_procurement(db, current_user, bid_id, document_id)
+    if doc.processing:
+        return doc.processing
+    return create_or_get_processing_record(db, doc.id)
+
+
+def get_procurement_document_extracted_text(
+    db: Session,
+    current_user: User,
+    bid_id: uuid.UUID,
+    document_id: uuid.UUID,
+) -> DocumentExtractedTextResponse:
+    """
+    Retrieves the extracted text and quality telemetry for Procurement Officer / Admin.
+    """
+    _, bid, doc = _get_document_for_procurement(db, current_user, bid_id, document_id)
+    proc = doc.processing or create_or_get_processing_record(db, doc.id)
+
+    char_count = len(proc.raw_text) if proc.raw_text else 0
+    is_ocr = proc.extraction_method in [ExtractionMethod.OCR, ExtractionMethod.HYBRID]
+
+    if proc.extraction_method == ExtractionMethod.DIGITAL_PDF:
+        quality_label = "Digital PDF (Text Extracted)"
+    elif proc.extraction_method == ExtractionMethod.HYBRID:
+        quality_label = "Hybrid Document (Digital + OCR Extracted)"
+    elif proc.extraction_method == ExtractionMethod.OCR:
+        quality_label = "Scanned Document (OCR Extracted)"
+    elif proc.processing_stage == ProcessingStage.OCR:
+        quality_label = "Scanned Document (OCR Required)"
+    else:
+        quality_label = "Pending Processing"
+
+    conf = proc.classification_confidence or 0.0
+    if conf >= 0.80:
+        conf_level = ClassificationConfidenceLevel.HIGH
+    elif conf >= 0.55:
+        conf_level = ClassificationConfidenceLevel.MEDIUM
+    elif conf > 0.0:
+        conf_level = ClassificationConfidenceLevel.LOW
+    else:
+        conf_level = None
+
+    return DocumentExtractedTextResponse(
+        document_id=doc.id,
+        bid_id=bid.id,
+        processing_status=proc.processing_status,
+        processing_stage=proc.processing_stage,
+        extraction_method=proc.extraction_method,
+        page_count=proc.page_count,
+        character_count=char_count,
+        raw_text=proc.raw_text,
+        normalized_text=proc.normalized_text,
+        is_ocr_required=is_ocr or proc.processing_stage == ProcessingStage.OCR,
+        quality_label=quality_label,
+        detected_document_type=proc.detected_document_type,
+        classification_confidence=proc.classification_confidence,
+        classification_confidence_level=conf_level,
+        classification_reason=proc.classification_reason,
+        classification_requires_review=proc.classification_requires_review,
+        extracted_data=proc.extracted_data,
+        extraction_confidence=proc.extraction_confidence,
+        extraction_requires_review=proc.extraction_requires_review,
+    )
+
+
 # ---------------------------------------------------------------------------
 # Internal Pipeline Helper Functions
 # ---------------------------------------------------------------------------

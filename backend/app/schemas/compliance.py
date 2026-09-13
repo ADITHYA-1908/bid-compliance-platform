@@ -3,7 +3,7 @@ Compliance Engine Pydantic Schemas for Part 6A
 Defines serialization models for compliance evaluation requests, rule results, and bid-level summaries.
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from decimal import Decimal
 from typing import Any, Dict, List, Optional
 import uuid
@@ -46,6 +46,13 @@ class ComplianceResultItemResponse(BaseModel):
     reason: Optional[str] = None
     evidence: Optional[Dict[str, Any]] = None
     source_verification_ids: Optional[List[str]] = None
+    document_id: Optional[uuid.UUID] = None
+    document_name: Optional[str] = None
+    page_number: Optional[int] = None
+    download_url: Optional[str] = None
+    evidence_snippet: Optional[str] = None
+    confidence: Optional[float] = None
+    verification_source: Optional[str] = None
     is_mandatory: bool = True
     is_critical: bool = False
     critical_failure: bool = False
@@ -55,8 +62,8 @@ class ComplianceResultItemResponse(BaseModel):
     evaluation_version: int = 1
     is_current: bool = True
     evaluated_at: Optional[datetime] = None
-    created_at: datetime
-    updated_at: datetime
+    created_at: Optional[datetime] = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: Optional[datetime] = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 class ComplianceSummaryCounts(BaseModel):

@@ -234,9 +234,9 @@ def process_document_with_ocr(
                     confidence=1.0,
                 )
                 pages_result.append(page_res)
-                raw_pages_text.append(f"--- Page {page_num} ---\n{digital_raw}")
+                raw_pages_text.append(f"[PAGE {page_num}]\n{digital_raw}")
                 if digital_norm:
-                    norm_pages_text.append(f"--- Page {page_num} ---\n{digital_norm}")
+                    norm_pages_text.append(f"[PAGE {page_num}]\n{digital_norm}")
             else:
                 # Page is scanned image -> Render page and execute OCR
                 has_ocr_pages = True
@@ -261,9 +261,9 @@ def process_document_with_ocr(
                     blocks=blocks,
                 )
                 pages_result.append(page_res)
-                raw_pages_text.append(f"--- Page {page_num} ---\n{ocr_text}")
+                raw_pages_text.append(f"[PAGE {page_num}]\n{ocr_text}")
                 if ocr_norm:
-                    norm_pages_text.append(f"--- Page {page_num} ---\n{ocr_norm}")
+                    norm_pages_text.append(f"[PAGE {page_num}]\n{ocr_norm}")
 
         # Determine overall document extraction method
         if has_digital_pages and has_ocr_pages:

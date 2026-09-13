@@ -42,6 +42,13 @@ export interface ComplianceResultItem {
   reason?: string;
   evidence?: Record<string, any>;
   source_verification_ids?: string[];
+  document_id?: string | null;
+  document_name?: string | null;
+  page_number?: number | null;
+  download_url?: string | null;
+  evidence_snippet?: string | null;
+  confidence?: number | null;
+  verification_source?: string | null;
   is_mandatory: boolean;
   is_critical?: boolean;
   critical_failure?: boolean;

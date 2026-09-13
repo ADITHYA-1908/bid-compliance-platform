@@ -336,6 +336,43 @@ export async function downloadBidDocumentBlob(
 }
 
 /**
+ * Directly downloads document file as a blob for procurement officers.
+ */
+export async function downloadProcurementBidDocumentBlob(
+  bidId: string,
+  documentId: string
+): Promise<{ blob: Blob; filename: string }> {
+  const token = getStoredToken();
+  const url = `${API_BASE_URL}/api/v1/procurement/bids/${bidId}/documents/${documentId}/download`;
+  const res = await fetch(url, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+
+  if (!res.ok) {
+    throw new Error(`Failed to download file (HTTP ${res.status})`);
+  }
+
+  const disposition = res.headers.get("content-disposition");
+  let filename = "document.pdf";
+  if (disposition && disposition.includes("filename=")) {
+    const match = disposition.match(/filename=["']?([^"';]+)["']?/);
+    if (match && match[1]) filename = match[1];
+  }
+
+  const blob = await res.blob();
+  return { blob, filename };
+}
+
+export async function getProcurementBidDocumentDownloadUrl(
+  bidId: string,
+  documentId: string
+): Promise<BidDocumentDownloadResponse> {
+  return api.get<BidDocumentDownloadResponse>(
+    `/api/v1/procurement/bids/${bidId}/documents/${documentId}/download-url`
+  );
+}
+
+/**
  * Replaces an existing active document with a new file.
  */
 export async function replaceBidDocument(

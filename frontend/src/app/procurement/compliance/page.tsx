@@ -61,6 +61,8 @@ import {
   generateProcurementBidAIRecommendation,
   askProcurementBidAIQuestion,
 } from "@/lib/api/ai";
+import { EvidenceDetails } from "@/components/common/EvidenceDetails";
+import { EvidenceViewerModal } from "@/components/common/EvidenceViewerModal";
 
 
 export default function ProcurementCompliancePage() {
@@ -88,6 +90,8 @@ export default function ProcurementCompliancePage() {
 
   // Evidence Drawer / Modal
   const [selectedRule, setSelectedRule] = useState<ComplianceResultItem | null>(null);
+  const [isEvidenceViewerOpen, setIsEvidenceViewerOpen] = useState<boolean>(false);
+  const [viewerRule, setViewerRule] = useState<ComplianceResultItem | null>(null);
 
   const fetchComplianceAndScore = async (bidId: string) => {
     if (!bidId.trim()) return;
@@ -1467,15 +1471,15 @@ export default function ProcurementCompliancePage() {
           </>
         )}
 
-        {/* Evidence Drawer Modal */}
+        {/* Structured Evidence Drawer Modal */}
         {selectedRule && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-xs p-4">
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4">
             <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-              <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between sticky top-0 bg-white">
+              <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between sticky top-0 bg-white z-10">
                 <div>
                   <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
                     <FileText className="w-4 h-4 text-purple-800" />
-                    Clause Audit Detail & Evidence Provenance
+                    Clause Audit Detail &amp; Evidence Provenance
                   </h3>
                   <p className="text-xs font-mono text-slate-500 mt-0.5 flex items-center gap-2">
                     <span>{selectedRule.requirement_code}</span>
@@ -1494,72 +1498,33 @@ export default function ProcurementCompliancePage() {
                 </button>
               </div>
 
-              <div className="p-6 space-y-5">
-                {/* Status and Name */}
-                <div className="flex items-start justify-between gap-4 p-4 rounded-xl bg-slate-50 border border-slate-200">
-                  <div>
-                    <h4 className="text-sm font-bold text-slate-900">{selectedRule.requirement_name}</h4>
-                    <p className="text-xs text-slate-500 mt-0.5">Category: <span className="font-semibold text-slate-700">{selectedRule.category}</span></p>
-                  </div>
-                  {getStatusBadge(selectedRule.compliance_status, selectedRule.is_critical, selectedRule.critical_failure)}
-                </div>
-
-                {/* Human Reason */}
-                <div>
-                  <h5 className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Determination Explanation</h5>
-                  <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-800 font-medium">
-                    {selectedRule.reason}
-                  </div>
-                </div>
-
-                {/* Criteria Comparison Grid */}
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="p-3 rounded-lg border border-slate-200 bg-white">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Operator & Expected Criteria</span>
-                    <p className="text-xs font-mono font-bold text-slate-800 mt-1">
-                      {selectedRule.operator ? `${selectedRule.operator} ` : ""}
-                      {typeof selectedRule.expected_value === "object"
-                        ? JSON.stringify(selectedRule.expected_value)
-                        : String(selectedRule.expected_value ?? "—")}
-                    </p>
-                  </div>
-
-                  <div className="p-3 rounded-lg border border-slate-200 bg-white">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Verified Actual Value</span>
-                    <p className="text-xs font-mono font-bold text-slate-800 mt-1">
-                      {typeof selectedRule.actual_value === "object"
-                        ? JSON.stringify(selectedRule.actual_value)
-                        : String(selectedRule.actual_value ?? "—")}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Verification Source IDs & Evidence Metadata */}
-                {selectedRule.source_verification_ids && selectedRule.source_verification_ids.length > 0 && (
-                  <div>
-                    <h5 className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Source Verification Records</h5>
-                    <div className="flex flex-wrap gap-1.5">
-                      {selectedRule.source_verification_ids.map((id, idx) => (
-                        <span key={idx} className="px-2.5 py-1 rounded-md bg-purple-50 text-purple-900 border border-purple-200 font-mono text-[11px]">
-                          {id}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Structured Evidence Payload */}
-                {selectedRule.evidence && Object.keys(selectedRule.evidence).length > 0 && (
-                  <div>
-                    <h5 className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Evidence Payload</h5>
-                    <pre className="p-3 rounded-lg bg-slate-900 text-slate-100 text-[11px] font-mono overflow-x-auto max-h-48">
-                      {JSON.stringify(selectedRule.evidence, null, 2)}
-                    </pre>
-                  </div>
-                )}
+              <div className="p-6">
+                <EvidenceDetails
+                  rule={selectedRule}
+                  onViewDocument={() => {
+                    const ruleToView = selectedRule;
+                    setSelectedRule(null);
+                    setViewerRule(ruleToView);
+                    setIsEvidenceViewerOpen(true);
+                  }}
+                  showFullHeader={true}
+                />
               </div>
 
-              <div className="px-6 py-4 border-t border-slate-200 bg-slate-50 flex items-center justify-end">
+              <div className="px-6 py-4 border-t border-slate-200 bg-slate-50 flex items-center justify-between">
+                <button
+                  onClick={() => {
+                    const ruleToView = selectedRule;
+                    setSelectedRule(null);
+                    setViewerRule(ruleToView);
+                    setIsEvidenceViewerOpen(true);
+                  }}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+                >
+                  <Eye className="w-4 h-4" />
+                  <span>Open in Document Viewer</span>
+                </button>
+
                 <button
                   onClick={() => setSelectedRule(null)}
                   className="px-4 py-2 text-xs font-bold rounded-lg bg-slate-200 text-slate-700 hover:bg-slate-300 transition-colors"
@@ -1569,6 +1534,23 @@ export default function ProcurementCompliancePage() {
               </div>
             </div>
           </div>
+        )}
+
+        {/* Interactive In-App PDF Evidence Viewer */}
+        {selectedBidId && (
+          <EvidenceViewerModal
+            isOpen={isEvidenceViewerOpen}
+            onClose={() => {
+              setIsEvidenceViewerOpen(false);
+              setViewerRule(null);
+            }}
+            bidId={selectedBidId}
+            documentId={viewerRule?.document_id}
+            initialPage={viewerRule?.page_number}
+            documentName={viewerRule?.document_name}
+            rule={viewerRule}
+            isProcurement={true}
+          />
         )}
       </div>
     </DashboardLayout>

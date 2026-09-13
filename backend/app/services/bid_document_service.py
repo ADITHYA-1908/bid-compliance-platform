@@ -623,3 +623,95 @@ def generate_download_access(
     content_bytes = storage_service.get_file_bytes(doc.storage_path)
 
     return doc, signed_url, content_bytes
+
+
+def generate_procurement_download_access(
+    db: Session,
+    current_user: User,
+    bid_id: uuid.UUID,
+    document_id: uuid.UUID,
+) -> Tuple[BidDocument, Optional[str], bytes]:
+    """
+    Verifies Procurement Officer or Admin organization permissions and retrieves
+    document metadata, signed URL (if configured), or raw bytes for streaming.
+    """
+    profile = db.scalars(
+        select(Profile).where(Profile.id == current_user.profile_id)
+    ).first()
+    if not profile:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User profile not found.",
+        )
+
+    bid = db.scalars(
+        select(Bid).where(
+            and_(
+                Bid.id == bid_id,
+                Bid.is_active == True,
+            )
+        )
+    ).first()
+    if not bid:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Bid submission not found.",
+        )
+
+    tender = db.scalars(
+        select(Tender).where(
+            and_(
+                Tender.id == bid.tender_id,
+                Tender.is_active == True,
+            )
+        )
+    ).first()
+    if not tender:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Tender not found.",
+        )
+
+    role = db.scalars(select(Role).where(Role.id == profile.role_id)).first()
+    role_name = role.name.upper() if role else "UNKNOWN"
+
+    if role_name == "PROCUREMENT_OFFICER":
+        if tender.organization_id != profile.organization_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Access denied: You can only view documents for tenders published by your organization.",
+            )
+    elif role_name == "ADMIN":
+        pass
+    elif role_name == "BIDDER":
+        if bid.bidder_organization_id != profile.organization_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Access denied: You can only view documents uploaded by your organization.",
+            )
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Unauthorized role for document inspection.",
+        )
+
+    doc = db.scalars(
+        select(BidDocument).where(
+            and_(
+                BidDocument.id == document_id,
+                BidDocument.bid_id == bid.id,
+            )
+        )
+    ).first()
+
+    if not doc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Document not found.",
+        )
+
+    signed_url = storage_service.create_signed_url(doc.storage_path, expires_in_seconds=300)
+    content_bytes = storage_service.get_file_bytes(doc.storage_path)
+
+    return doc, signed_url, content_bytes
+
