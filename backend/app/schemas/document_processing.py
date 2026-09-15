@@ -50,6 +50,9 @@ class DocumentProcessingResponse(BaseModel):
     classification_confidence_level: Optional[str] = None
     classification_method: Optional[str] = None
     classification_reason: Optional[str] = None
+    classification_evidence: Optional[str] = None
+    classification_page_number: Optional[int] = None
+    classification_source: Optional[str] = None
     classification_requires_review: bool = False
 
     # Part 4E: Structured Extraction Fields
@@ -89,6 +92,9 @@ class DocumentExtractedTextResponse(BaseModel):
     classification_confidence: Optional[float] = None
     classification_confidence_level: Optional[str] = None
     classification_reason: Optional[str] = None
+    classification_evidence: Optional[str] = None
+    classification_page_number: Optional[int] = None
+    classification_source: Optional[str] = None
     classification_requires_review: bool = False
 
     # Structured Extraction summary (Part 4E)
@@ -108,4 +114,7 @@ class DocumentClassificationResponse(BaseModel):
     confidence_level: str  # HIGH, MEDIUM, LOW
     classification_method: str
     classification_reason: str
+    classification_evidence: Optional[str] = None
+    classification_page_number: Optional[int] = 1
+    classification_source: Optional[str] = None
     classification_requires_review: bool

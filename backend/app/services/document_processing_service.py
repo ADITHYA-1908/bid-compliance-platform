@@ -488,11 +488,14 @@ def get_document_extracted_text(
         classification_confidence=proc.classification_confidence,
         classification_confidence_level=conf_level,
         classification_reason=proc.classification_reason,
-        classification_requires_review=proc.classification_requires_review,
+        classification_evidence=proc.classification_evidence,
+        classification_page_number=proc.classification_page_number,
+        classification_source=proc.classification_source,
+        classification_requires_review=bool(proc.classification_requires_review),
         # Part 4E: Structured Extraction summary
         extracted_data=proc.extracted_data,
         extraction_confidence=proc.extraction_confidence,
-        extraction_requires_review=proc.extraction_requires_review,
+        extraction_requires_review=bool(proc.extraction_requires_review),
     )
 
 
@@ -531,6 +534,9 @@ def get_document_classification(
         confidence_level=conf_level,
         classification_method=proc.classification_method or "RULE_BASED",
         classification_reason=proc.classification_reason or "Pending classification",
+        classification_evidence=proc.classification_evidence,
+        classification_page_number=proc.classification_page_number or 1,
+        classification_source=proc.classification_source,
         classification_requires_review=proc.classification_requires_review,
     )
 
@@ -704,10 +710,13 @@ def get_procurement_document_extracted_text(
         classification_confidence=proc.classification_confidence,
         classification_confidence_level=conf_level,
         classification_reason=proc.classification_reason,
-        classification_requires_review=proc.classification_requires_review,
+        classification_evidence=proc.classification_evidence,
+        classification_page_number=proc.classification_page_number,
+        classification_source=proc.classification_source,
+        classification_requires_review=bool(proc.classification_requires_review),
         extracted_data=proc.extracted_data,
         extraction_confidence=proc.extraction_confidence,
-        extraction_requires_review=proc.extraction_requires_review,
+        extraction_requires_review=bool(proc.extraction_requires_review),
     )
 
 

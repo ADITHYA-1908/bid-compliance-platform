@@ -286,24 +286,66 @@ To maximize OCR text recognition accuracy on noisy, low-contrast, or faded gover
 
 ---
 
+## 🔍 Part 4D — Document Classification Pipeline
+
+> **Scope Note**: Part 4D identifies the type of uploaded document along with deterministic confidence scores, 1-indexed page-level evidence snippets, and review requirement flags. It does not extract structured fields, perform external verification, or calculate compliance decisions (which belong to later modules).
+
+### 1. Classification Architecture & Layered Strategy
+
+```
+                      Extracted Document Text (from Digital PDF or PaddleOCR)
+                                                ↓
+               Layer 1: Document Text Structural Inspection & Page Parsing
+                                                ↓
+               Layer 2: Strong Statutory Headings & Anchor Phrases
+                                                ↓
+               Layer 3: Statutory Identifier Regex Patterns & Keyword Density
+                                                ↓
+               Layer 4: Requirement Context & Weak Filename Hints (≤ 0.05 Weight)
+                                                ↓
+               Layer 5: Specificity Hierarchy & Anti-Collision Adjustments
+                                                ↓
+               Deterministic Confidence Scoring (0.0 - 1.0) & Provenance Extraction
+                                                ↓
+               Result: Document Type + Page Number + Evidence Snippet + Review Flag
+```
+
+### 2. Supported Procurement Document Categories (24 Types)
+- **Statutory & Identity**: `GST_CERTIFICATE`, `PAN_CERTIFICATE` / `PAN`, `UDYAM_CERTIFICATE`, `INCORPORATION_CERTIFICATE`, `DPIIT_STARTUP_CERTIFICATE`, `NSIC_CERTIFICATE`, `EPFO_CERTIFICATE`, `ESIC_CERTIFICATE`.
+- **Financial & Tax**: `BALANCE_SHEET`, `PROFIT_LOSS_STATEMENT`, `FINANCIAL_STATEMENT`, `TURNOVER_CERTIFICATE`, `ITR_DOCUMENT`.
+- **Commercial & Quality**: `OEM_AUTHORIZATION`, `WORK_ORDER`, `COMPLETION_CERTIFICATE`, `EXPERIENCE_CERTIFICATE`, `LOCAL_CONTENT_CERTIFICATE` / `LOCAL_CONTENT_DECLARATION`, `BIS_CERTIFICATE`, `QUALITY_CERTIFICATE`, `NON_BLACKLISTING_DECLARATION` / `BLACKLIST_DECLARATION`, `TENDER_UNDERTAKING`, `TECHNICAL_DATASHEET` / `TECHNICAL_DOCUMENT`.
+- **Fallbacks**: `OTHER`, `UNKNOWN`.
+
+### 3. Key Design Principles
+1. **Document Content Over Filename**: Document text always overrides filenames. A file named `GST_Certificate.pdf` containing PAN card text will classify as `PAN_CERTIFICATE`.
+2. **Specificity Hierarchy**: Specific document types (e.g. `BALANCE_SHEET`, `PROFIT_LOSS_STATEMENT`, `WORK_ORDER`, `COMPLETION_CERTIFICATE`) are prioritized over general categories (`FINANCIAL_STATEMENT`, `EXPERIENCE_CERTIFICATE`).
+3. **Anti-Collision Protection**: Special dampening prevents false positives on documents containing secondary statutory numbers (e.g. GST certificates displaying the PAN embedded in the GSTIN).
+4. **Real Provenance & Zero Fabrication**: Every classification outcome identifies the exact 1-indexed `page_number` and authentic `evidence_snippet` surrounding the match. Confidences reflect actual deterministic formulas ($0.0 \dots 1.0$).
+5. **Safe Handling of Ambiguous Documents**: Documents with insufficient text ($< 15$ non-whitespace chars) or low pattern match scores ($< 0.35$) safely return `UNKNOWN` with `confidence = 0.0` and `requires_review = True`.
+
+---
+
 ## 🧪 Running Test Suites
 
 The platform includes comprehensive test suites verifying all backend modules and end-to-end workflows:
 
 ```bash
-# 1. Run Part 4C: OCR + OpenCV + PaddleOCR Test Suite (17 Comprehensive Tests)
+# 1. Run Part 4D: Document Classification Test Suite (14 Comprehensive Tests)
+pytest backend/tests/test_step4d_classification.py -v
+
+# 2. Run Part 4C: OCR + OpenCV + PaddleOCR Test Suite (17 Comprehensive Tests)
 pytest backend/tests/test_step4c_ocr_processing.py -v
 
-# 2. Run Part 4B: Digital PDF Text Extraction (PyMuPDF) Regression
+# 3. Run Part 4B: Digital PDF Text Extraction (PyMuPDF) Regression
 pytest backend/tests/test_step4b_pdf_extraction.py -v
 
-# 3. Run Step 3: Explain Why + Interactive Evidence Viewer Regression
+# 4. Run Step 3: Explain Why + Interactive Evidence Viewer Regression
 pytest backend/tests/test_step3_evidence_viewer.py -v
 
-# 4. Run Full Document AI Ingestion Regression Suite (32/32 Passed)
-pytest backend/tests/test_step4b_pdf_extraction.py backend/tests/test_step4c_ocr_processing.py backend/tests/test_step3_evidence_viewer.py -v
+# 5. Run Full Document AI Ingestion Regression Suite (46/46 Passed)
+pytest backend/tests/test_step4d_classification.py backend/tests/test_step4c_ocr_processing.py backend/tests/test_step4b_pdf_extraction.py backend/tests/test_step3_evidence_viewer.py -v
 
-# 5. Run Frontend Production Build & TypeScript Typecheck
+# 6. Run Frontend Production Build & TypeScript Typecheck
 cd frontend && npm run build
 ```
 
