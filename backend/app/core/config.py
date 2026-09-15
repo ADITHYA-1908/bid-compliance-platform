@@ -61,6 +61,14 @@ class Settings(BaseSettings):
     QUALITY_SCORE_ACCEPTABLE_THRESHOLD: float = 70.0
     QUALITY_SCORE_POOR_THRESHOLD: float = 40.0
 
+    # Optical Character Recognition (OCR) Configuration (Part 4C)
+    OCR_ENGINE: str = "PADDLEOCR"  # 'PADDLEOCR', 'EASYOCR', 'TESSERACT'
+    OCR_LANGUAGE: str = "en"  # Default OCR recognition language
+    OCR_RENDER_DPI: int = 200  # Resolution for PDF page image rendering (200-300 DPI)
+    OCR_CONFIDENCE_THRESHOLD: float = 0.50  # Confidence threshold for low-quality alerts
+    OCR_ENABLE_DESKEW: bool = False  # Whether to apply conservative deskewing during image preprocessing
+
+
 
     @property
     def cors_origins_list(self) -> List[str]:

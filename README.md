@@ -222,31 +222,93 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ---
 
+## 📑 Part 4C — OCR + OpenCV + PaddleOCR
+
+Part 4C enables **BidVerify AI** to process scanned/image-based procurement PDFs and standalone images that lack machine-readable digital text streams.
+
+> [!IMPORTANT]
+> **Part 4C Scope Boundary**:
+> Part 4C adds OCR processing for scanned/image-based documents. It does not perform document classification, structured field extraction, AI verification, compliance evaluation, or government API verification.
+
+### 1. Dual-Path Routing Architecture (Digital PDF vs. Scanned PDF)
+When a bid document is submitted for ingestion, the processing engine analyzes the embedded text quality:
+* **Digital PDF Path (Part 4B)**: If PyMuPDF detects valid selectable digital text ($\ge 50$ total non-whitespace characters and $\ge 30$ characters/page average), the document is extracted directly via `PyMuPDF` and completes immediately as `DIGITAL_PDF` without invoking unnecessary OCR models.
+* **Scanned PDF Path (Part 4C)**: If the document is an image-only/scanned PDF (`is_ocr_required = True`), the engine routes the document into the Part 4C OCR pipeline (`ExtractionMethod.OCR` or `ExtractionMethod.HYBRID`).
+
+```
+Uploaded Bid Document
+        ↓
+DocumentProcessing Record (QUEUED)
+        ↓
+Part 4B — PyMuPDF Text Analysis
+        ↓
+Digital Text Available?
+   ├── YES ──→ PyMuPDF Digital Extraction ──→ DIGITAL_PDF (COMPLETED)
+   └── NO  ──→ Part 4C OCR Pipeline
+                    ↓
+               Render PDF Pages to Images (200 DPI via PyMuPDF)
+                    ↓
+               OpenCV Preprocessing (Grayscale, Bilateral Denoise, CLAHE, Safe Deskew)
+                    ↓
+               PaddleOCR Deep Learning Engine (Detection + Recognition)
+                    ↓
+               Page-wise OCR Text & Bounding Boxes (1-indexed: [PAGE 1], [PAGE 2])
+                    ↓
+               Real OCR Confidence Telemetry (Document + Page-Level)
+                    ↓
+               Conservative Text Normalization (Preserving PAN, GSTIN, Udyam, ₹, Dates)
+                    ↓
+               Processing Result (COMPLETED / NEEDS_REVIEW / FAILED)
+```
+
+### 2. PDF Page Rendering (PyMuPDF)
+- Multi-page PDFs are rendered page-by-page into OpenCV BGR image matrices in memory at a configurable resolution (`settings.OCR_RENDER_DPI`, default 200 DPI, range 200–300 DPI).
+- The original uploaded document binary remains unchanged in secure private storage.
+- All temporary rendering buffers and pixmaps are explicitly freed after execution.
+
+### 3. Conservative OpenCV Preprocessing Pipeline
+To maximize OCR text recognition accuracy on noisy, low-contrast, or faded government stamps without destroying statutory alphanumeric patterns:
+1. **Grayscale Conversion**: Standardizes 3-channel BGR image matrices into single-channel luminance maps.
+2. **Conservative Deskewing**: Rotates skewed scans if orientation angle is reliably detectable ($\pm 0.5^\circ \dots \pm 45^\circ$), strictly preserving document margins.
+3. **Bilateral Filtering**: Smooths paper texture noise while preserving sharp character boundaries for critical identifiers (PAN: `ABCDE1234F`, GSTIN: `33ABCDE1234F1Z5`, Udyam: `UDYAM-TN-00-1234567`).
+4. **CLAHE Contrast Enhancement**: Applies Contrast Limited Adaptive Histogram Equalization ($clipLimit=2.0, tileGrid=(8,8)$) to recover faded dot-matrix print and seals.
+
+### 4. PaddleOCR Engine Integration & Telemetry
+- **Model Execution**: Lazy-loaded singleton initialized with `use_angle_cls=True, lang=settings.OCR_LANGUAGE` (default English).
+- **Page-wise Traceability**: Extracts text per page with 1-indexed headers (`[PAGE 1]`, `[PAGE 2]`, ...). Zero-indexed pages are never presented.
+- **Zero-Fabrication Confidence**: Average document confidence is calculated as the exact arithmetic mean of actual model line probabilities ($0.0 \dots 1.0$). If confidence is unavailable, `None` is returned.
+- **Bounding Boxes**: Preserves polygonal bounding boxes `[ [x1,y1], [x2,y2], [x3,y3], [x4,y4] ]` returned by the model.
+
+### 5. Document Quality & Error Handling
+- **Low-Quality Scans**: If OCR yields $< 10$ non-whitespace characters or very low confidence ($< 0.25$), the processing state transitions to `NEEDS_REVIEW` with structured code `OCR_LOW_QUALITY` or `OCR_NO_EXTRACTABLE_TEXT`.
+- **Corrupted / Empty Files**: Unreadable binaries fail safely with structured codes `PDF_CORRUPTED`, `EMPTY_FILE`, or `PASSWORD_PROTECTED_PDF` without exposing server stack traces to users.
+- **Idempotency & Version Isolation**: Re-processing already extracted documents returns cached records; replacing a document provisions an isolated `DocumentProcessing` record tied strictly to the new version.
+
+---
+
 ## 🧪 Running Test Suites
 
 The platform includes comprehensive test suites verifying all backend modules and end-to-end workflows:
 
 ```bash
-# 1. Run Part 4B: Digital PDF Text Extraction (PyMuPDF) Test Suite
+# 1. Run Part 4C: OCR + OpenCV + PaddleOCR Test Suite (17 Comprehensive Tests)
+pytest backend/tests/test_step4c_ocr_processing.py -v
+
+# 2. Run Part 4B: Digital PDF Text Extraction (PyMuPDF) Regression
 pytest backend/tests/test_step4b_pdf_extraction.py -v
 
-# 2. Run Step 3: Explain Why + Interactive Evidence Viewer Tests
+# 3. Run Step 3: Explain Why + Interactive Evidence Viewer Regression
 pytest backend/tests/test_step3_evidence_viewer.py -v
 
-# 3. Run Commercial Evaluation Test Suite (L1, QCBS, Ties, Safety Blockers)
-python backend/scripts/test_commercial_evaluation.py
+# 4. Run Full Document AI Ingestion Regression Suite (32/32 Passed)
+pytest backend/tests/test_step4b_pdf_extraction.py backend/tests/test_step4c_ocr_processing.py backend/tests/test_step3_evidence_viewer.py -v
 
-# 4. Run Organization Identity & Duplicate Detection Tests
-python backend/scripts/test_organization_identity.py
-
-# 5. Run Full End-to-End Procurement Lifecycle Regression (10/10 Steps)
-python backend/scripts/test_bid_workflow.py
-
-# 6. Run Frontend Typecheck & Build Test
+# 5. Run Frontend Production Build & TypeScript Typecheck
 cd frontend && npm run build
 ```
 
 ---
+
 
 ## 📁 Repository Structure
 

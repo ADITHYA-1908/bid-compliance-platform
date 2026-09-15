@@ -13,6 +13,7 @@ from typing import Optional, Tuple
 import cv2
 import numpy as np
 import fitz  # PyMuPDF
+from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +29,7 @@ class ImagePreprocessingError(Exception):
 def render_pdf_page_to_image(
     pdf_bytes: bytes,
     page_number: int,
-    dpi: int = 200,
+    dpi: Optional[int] = None,
 ) -> np.ndarray:
     """
     Renders a single PDF page into a high-resolution BGR OpenCV image matrix.
@@ -36,6 +37,9 @@ def render_pdf_page_to_image(
     """
     if not pdf_bytes or len(pdf_bytes) == 0:
         raise ImagePreprocessingError("EMPTY_PDF_BYTES", "Cannot render page from empty PDF binary.")
+
+    target_dpi = dpi if dpi is not None else settings.OCR_RENDER_DPI
+
 
     try:
         doc = fitz.open(stream=pdf_bytes, filetype="pdf")
@@ -51,7 +55,7 @@ def render_pdf_page_to_image(
             )
 
         page = doc.load_page(page_number - 1)
-        zoom = dpi / 72.0  # 72 points per inch standard PDF coordinate system
+        zoom = target_dpi / 72.0  # 72 points per inch standard PDF coordinate system
         matrix = fitz.Matrix(zoom, zoom)
         pix = page.get_pixmap(matrix=matrix, alpha=False)
 
